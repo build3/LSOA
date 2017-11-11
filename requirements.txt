@@ -1,0 +1,21 @@
+## CORE REQUIREMENTS
+Django==1.11.4                      # Web framework
+psycopg2==2.7.3                     # Postgres connector
+dj-database-url==0.4.2              # DB config via ENV vars
+pytz==2017.2                        # Timezone support
+django-extensions==1.8.1            # Various Django extras
+ipython==6.1.0                      # Better Django shell experience
+
+## ASYNC TASKS
+celery==4.1.0                       # Async Task Framework
+django-celery-beat==1.0.1           # Scheduler via Django
+django-celery-results==1.0.1        # Store results via Django
+
+## PRODUCTION REQUIREMENTS
+whitenoise==3.3.0                   # Serve static files via app server
+gevent==1.2.2                       # Event-driven web server patch
+gunicorn==19.7.1                    # Threaded WSGI server
+hiredis==0.2.0                      # C-based redis driver
+django-redis-cache==1.7.1           # Redis connector
+raven==6.3.0                        # Sentry connector
+

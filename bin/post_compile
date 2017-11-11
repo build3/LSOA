@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Things added here get run at the end of the slug compilation step
+# Run things like `./manage.py compress` for django-compressor here
