@@ -2,7 +2,7 @@ import os
 
 import dj_database_url
 
-APP_NAME = 'template-app'
+APP_NAME = 'losa'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # BASIC DJANGO SETTINGS
@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'RESETME')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = '*'
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
@@ -40,9 +40,11 @@ THIRD_PARTY_APPS = [
     'django_celery_beat',                   # db-backed periodic task defs
     'django_celery_results',                # db-backed celery results (if needed)
     'raven.contrib.django.raven_compat',    # sentry-django connector
+    'reversion',                            # Tracking model changes
 ]
 LOCAL_APPS = [
     'taskapp',
+    'losa',
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
