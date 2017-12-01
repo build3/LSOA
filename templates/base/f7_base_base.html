@@ -1,36 +1,48 @@
-{% load staticfiles %}
+{% load staticfiles compress %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Title</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>{% block title %}{% endblock %}</title>
+  {% compress css %}
+    <link href="{% static 'vendor/framework7/css/framework7.ios.min.css' %}" rel="stylesheet">
+    <link href="{% static 'vendor/framework7/css/framework7.ios.colors.min.css' %}" rel="stylesheet">
+    <link href="{% static 'vendor/fontawesome4/css/font-awesome.min.css' %}" rel="stylesheet">
+  {% endcompress %}
+  {% block extrastyles %}
+  {% endblock %}
 </head>
 <body>
+{% block base-content %}
+{% endblock %}
 
 <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/framework7/js/framework7.min.js' %}"></script>
 <script type="text/javascript">
-  var myApp = new Framework7({
-    material: true, cache: false, preloadPreviousPage: false, pushState: true,
-    pushStateSeparator: '#'
-  });
-  var $$ = Dom7;
-  var leftView = myApp.addView(".view-left", {dynamicNavbar: true});
-  var mainView = myApp.addView(".view-main", {dynamicNavbar: true});
+    myApp = new Framework7();  // make it global
+    var $$ = Dom7;
+    var leftView = myApp.addView('.view-left', {dynamicNavbar: true});
+    mainView = myApp.addView('.view-main', {dynamicNavbar: true}); // also global
 
-  {# We want to automatically run scripts on freshly loaded pages #}
-  $$(document).on("pageInit", function (e) {
-    var page = e.detail.page;
-    $$(page.container).find("script").each(function (el) {
-      if ($(this).attr("src")) {
-        $.getScript($(this).attr("src"));
-      }
-      else {
-        eval($(this).text());
-      }
+    {# We want to automatically run scripts on freshly loaded pages #}
+    $$(document).on("pageInit", function (e) {
+        var page = e.detail.page;
+        $$(page.container).find("script").each(function (el) {
+            if ($(this).attr("src")) {
+                $.getScript($(this).attr("src"));
+            }
+            else {
+                eval($(this).text());
+            }
+        });
     });
-  });
-  mainView.router.loadPage('{% url 'home' %}');
+    {# mainView.router.loadPage('{% url 'home' %}');  #}
 </script>
+{% block extrascripts %}
+{% endblock %}
 </body>
 </html>

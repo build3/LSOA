@@ -1,0 +1,161 @@
+<div class="page">
+  <div class="page-content">
+    <div class="row no-gutter full-height">
+      <div class="col-50 full-height">
+        <img src="https://placeimg.com/512/384/people?now={% now "U" %}" style="width: 100%; height: calc(50vw * .75)">
+        <div class="buttons-row" style="height:30px;">
+          <a class="button">Take photo</a>
+          <a class="button">Take video</a>
+        </div>
+        <div style="height: 100px;">
+          <div class="chip active">
+            <div class="chip-label">ToMA 1A</div>
+          </div>
+          <div class="chip">
+            <div class="chip-label">ToMA 1B</div>
+          </div>
+          <div class="chip">
+            <div class="chip-label">ToMA 1C</div>
+          </div>
+          <div class="chip">
+            <div class="chip-label">ToMA 2A</div>
+          </div>
+        </div>
+        <div style="width: 100%; height:200px; overflow-y: scroll;">
+          <p>Sunt vitaes magicae ferox, lotus axonaes. Castus luna sapienter gratias tabes est. Alter vortex superbe
+            manifestums vox est. Est fatalis vortex, cesaris. Ecce, germanus advena! Fidess ortum in ferox vasa!
+            Heu, nobilis fraticinida! Ubi est dexter animalis? Cannabiss unda, tanquam emeritis mensa. Index altus
+            absolutio est.
+            Detriuss ire! Terrors mori! Medicina tolerares, tanquam placidus demolitione. Galataes peregrinationes,
+            tanquam regius species.
+            Lotus, albus repressors una anhelare de dexter, castus historia. Raptus pulchritudines ducunt ad
+            ratione.</p>
+          <p>Primus humani generiss ducunt ad aonides. A falsis, advena neuter palus. Cum demissio volare, omnes canises
+            examinare
+            flavum, castus specieses. Clinias potuss, tanquam rusticus particula. Ortum etiam ducunt ad grandis
+            accola.</p>
+        </div>
+      </div>
+      <div class="col-25 full-height">
+        <h4 style="text-align: center; margin: 0;">Notes</h4>
+        <textarea style="width: calc(100% - 6px); height: 359px;"></textarea>
+        <h4 style="text-align: center; margin: 0;">Some Other Component</h4>
+
+        <div class="list-block">
+          <ul>
+            <li>
+              <div class="item-content">
+                <div class="item-inner">
+                  <div class="item-input">
+                    <input type="text" placeholder="Your name">
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="item-content">
+                <div class="item-inner">
+                  <div class="item-input">
+                    <input type="email" placeholder="E-mail">
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="item-content">
+                <div class="item-inner">
+                  <div class="item-input">
+                    <select>
+                      <option>Male</option>
+                      <option>Female</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="item-content">
+                <div class="item-inner">
+                  <div class="item-input">
+                    <input type="date" placeholder="Birth day" value="2017-11-30">
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+      <div class="col-25 full-height">
+        <h4 style="text-align: center; margin: 0;">Students</h4>
+        <div class="list-block" style="margin: 0;">
+          <ul>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Steven Tyler</div>
+              </div>
+            </li>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Joe Perry</div>
+              </div>
+            </li>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Brad Whitford</div>
+              </div>
+            </li>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Tom Hamilton</div>
+              </div>
+            </li>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Joey Kramer</div>
+              </div>
+            </li>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Ray Tabano</div>
+              </div>
+            </li>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Jimmy Crespo</div>
+              </div>
+            </li>
+            <li class="item-content student">
+              <div class="item-inner">
+                <div class="item-title">Rick Dufay</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="#" onclick="mainView.router.refreshPage();" class="floating-button color-green">
+      <i class="fa fa-2x fa-plus"></i>
+
+    </a>
+  </div>
+  <script>
+      var pageInit = function () {
+          $$('.chip').on('click', function (e) {
+              $$(this).toggleClass('bg-blue')
+          });
+          $$('.student').on('click', function (e) {
+              $$(this).toggleClass('bg-blue')
+          });
+          {% for message in messages %}
+              myApp.alert('{{ message }}', {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
+          {% endfor %}
+      };
+      if (typeof $$ !== 'undefined') {
+          pageInit();
+      } else {
+          document.addEventListener("DOMContentLoaded", pageInit);
+      }
+
+  </script>
+</div>

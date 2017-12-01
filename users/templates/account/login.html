@@ -11,11 +11,13 @@
       </div>
     </div>
     <div class="row">
-      {% bootstrap_messages %}
-      {% csrf_token %}
-      {% if redirect_field_value %}
-        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
-      {% endif %}
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_messages %}
+        {% csrf_token %}
+        {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+        {% endif %}
+      </div>
     </div>
     <div class="row">
       <div class="col-md-6 offset-md-3">
