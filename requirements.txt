@@ -1,11 +1,11 @@
 ## CORE REQUIREMENTS
 Django==1.11.4                      # Web framework
-psycopg2==2.7.3                     # Postgres connector
+psycopg2==2.7.3.2                   # Postgres connector
 dj-database-url==0.4.2              # DB config via ENV vars
-pytz==2017.2                        # Timezone support
-django-extensions==1.8.1            # Various Django extras
-ipython==6.1.0                      # Better Django shell experience
-django-reversion==2.0.10            # Tracking model changes
+
+## FRONTEND REQUIREMENTS
+django-compressor==2.2              # asset compressor
+django-bootstrap4==0.0.4            # bootstrap4 forms
 
 ## ASYNC TASKS
 celery==4.1.0                       # Async Task Framework

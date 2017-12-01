@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% load django_bootstrap_breadcrumbs %}
+{% load utils %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block breadcrumbs %}
+  {{ block.super }}
+  {% breadcrumb "Users" "" %}
+  {% if view.name == '' %}
+
+  {% endif %}
+  {% breadcrumb "Pending Users" "pending_users" %}
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xs-12">
+      <ul class="nav nav-pills">
+        <li class="{% active 'pending_users' %}"><a href="{% url 'pending_users' %}">Pending Users</a></li>
+        <li class="{% active 'approved_users' %}"><a href="{% url 'approved_users' %}">Approved Users</a></li>
+        <li class="{% active 'denied_users' %}"><a href="{% url 'denied_users' %}">Denied Users</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="row mar-top">
+    <div class="col-xs-12">
+      <table class="table table-bordered table-striped display">
+        <thead>
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>E-mail Address</th>
+          <th>Sign up date</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        {% for user in object_list %}
+          <tr>
+            <td>{{ user.first_name }}</td>
+            <td>{{ user.last_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.created }}</td>
+            <td>
+              <ul class="list-unstyled list-inline">
+                {% for action in view.actions %}
+                  <li>
+                    <a href="{% url action.0 user.id %}?redirect={{ request.path }}" class="btn btn-sm btn-primary">
+                      {{ action.1 }}</a>
+                  </li>
+                {% endfor %}
+              </ul>
+            </td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extrascripts %}
+  <script>
+      $(document).ready(function () {
+          $('table.display').DataTable({
+              aLengthMenu: [
+                  [25, 50, 100, 200, -1],
+                  [25, 50, 100, 200, "All"]
+              ],
+              iDisplayLength: 25
+          });
+      });
+  </script>
+{% endblock %}

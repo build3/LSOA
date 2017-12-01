@@ -1,0 +1,36 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+
+<script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/framework7/js/framework7.min.js' %}"></script>
+<script type="text/javascript">
+  var myApp = new Framework7({
+    material: true, cache: false, preloadPreviousPage: false, pushState: true,
+    pushStateSeparator: '#'
+  });
+  var $$ = Dom7;
+  var leftView = myApp.addView(".view-left", {dynamicNavbar: true});
+  var mainView = myApp.addView(".view-main", {dynamicNavbar: true});
+
+  {# We want to automatically run scripts on freshly loaded pages #}
+  $$(document).on("pageInit", function (e) {
+    var page = e.detail.page;
+    $$(page.container).find("script").each(function (el) {
+      if ($(this).attr("src")) {
+        $.getScript($(this).attr("src"));
+      }
+      else {
+        eval($(this).text());
+      }
+    });
+  });
+  mainView.router.loadPage('{% url 'home' %}');
+</script>
+</body>
+</html>

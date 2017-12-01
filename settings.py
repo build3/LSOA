@@ -1,8 +1,9 @@
 import os
 
 import dj_database_url
+from django.urls import reverse_lazy
 
-APP_NAME = 'losa'
+APP_NAME = 'lsoa'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # BASIC DJANGO SETTINGS
@@ -35,18 +36,23 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 ]
-THIRD_PARTY_APPS = [
+BACKEND_THIRD_PARTY_APPS = [
     'django_extensions',                    # all kinds of goodness
     'django_celery_beat',                   # db-backed periodic task defs
     'django_celery_results',                # db-backed celery results (if needed)
     'raven.contrib.django.raven_compat',    # sentry-django connector
-    'reversion',                            # Tracking model changes
+
+FRONTEND_THIRD_PARTY_APPS = [
+    'compressor',                           # asset compression
+    'bootstrap4',                           # handy b4 template tags
+    'tz_detect',                            # async JS timezone detector
 ]
 LOCAL_APPS = [
     'taskapp',
-    'losa',
+    'users',
+    'lsoa',
 ]
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + BACKEND_THIRD_PARTY_APPS + FRONTEND_THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tz_detect.middleware.TimezoneMiddleware',
 ]
 
 # DATABASES AND CACHING
@@ -128,6 +135,26 @@ STATICFILES_FINDERS = [
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+# AUTHENTICATION SETTINGS
+
+ACCOUNT_AUTHENTICATION_METHOD = 'email'  # require email instead of username
+ACCOUNT_EMAIL_REQUIRED = True  # require email instead of username
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # so that users must confirm their e-mail address first
+ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy('account_login')
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # we no longer have a username field (email instead)
+ACCOUNT_USERNAME_REQUIRED = False  # require email instead of username
+ACCOUNT_ADAPTER = 'users.adapters.PendingUserAccountAdapter'  # allows correct "pending approval" flow
+AUTH_USER_MODEL = 'users.User'  # to use our model instead of the default Django one (ours uses email == username)
+ACCOUNT_SIGNUP_FORM_CLASS = 'users.forms.SignupForm'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+LOGIN_URL = reverse_lazy('account_login')  # to use allauth instead of django admin login page
+LOGIN_REDIRECT_URL = '/'  # TODO
+
 
 # CELERY SETTINGS
 
