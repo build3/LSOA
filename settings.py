@@ -41,6 +41,9 @@ BACKEND_THIRD_PARTY_APPS = [
     'django_celery_beat',                   # db-backed periodic task defs
     'django_celery_results',                # db-backed celery results (if needed)
     'raven.contrib.django.raven_compat',    # sentry-django connector
+    'allauth',                              # Authentication/Registration
+    'allauth.account',                      # Authentication/Registration
+]
 
 FRONTEND_THIRD_PARTY_APPS = [
     'compressor',                           # asset compression

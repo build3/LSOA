@@ -1,17 +1,16 @@
+from django.contrib.auth import get_user_model
 from django.db import models
-from django.contrib.auth.models import User as AuthUser
-import reversion
 
 
-@reversion.register()
 class Course(models.Model):
     """
     A single class
     """
 
     name = models.CharField(max_length=100, null=False, blank=False)
-    students = models.ManyToManyField(AuthUser, related_name='student_courses')
-    teachers = models.ManyToManyField(AuthUser, related_name='teacher_courses')
+    # students = models.ManyToManyField(get_user_model(), related_name='student_courses')
+    # todo students never log in, no need to make them users
+    teachers = models.ManyToManyField(get_user_model(), related_name='teacher_courses')
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         for student in self.students:
