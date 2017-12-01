@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'RESETME')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = '*'
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
@@ -41,9 +41,7 @@ BACKEND_THIRD_PARTY_APPS = [
     'django_celery_beat',                   # db-backed periodic task defs
     'django_celery_results',                # db-backed celery results (if needed)
     'raven.contrib.django.raven_compat',    # sentry-django connector
-    'allauth',                              # Authentication/Registration
-    'allauth.account',                      # Authentication/Registration
-]
+
 FRONTEND_THIRD_PARTY_APPS = [
     'compressor',                           # asset compression
     'bootstrap4',                           # handy b4 template tags
@@ -52,6 +50,7 @@ FRONTEND_THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'taskapp',
     'users',
+    'lsoa',
 ]
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + BACKEND_THIRD_PARTY_APPS + FRONTEND_THIRD_PARTY_APPS
 
