@@ -1,14 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from model_utils.models import TimeStampedModel
+from lsoa.models import Student
 
 
-class Course(models.Model):
+class Course(TimeStampedModel):
     """
     A single class
     """
 
     name = models.CharField(max_length=100, null=False, blank=False)
-    # students = models.ManyToManyField(get_user_model(), related_name='student_courses')
+    students = models.ManyToManyField(Student, related_name='student_courses')
     # todo students never log in, no need to make them users
     teachers = models.ManyToManyField(get_user_model(), related_name='teacher_courses')
 
