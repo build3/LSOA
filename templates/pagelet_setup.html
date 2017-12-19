@@ -1,0 +1,66 @@
+<div class="page">
+  <div class="page-content">
+    <form action="{% url 'observation_setup_view' %}" method="post">
+      {% csrf_token %}
+      <div class="row no-gutter full-height">
+        <div class="col-25 full-height">
+
+        </div>
+        <div class="col-50 full-height">
+          <p><a href="{% url 'admin:index' %}" class="button external">Set Up Students/Groups</a></p>
+          <div class="list-block">
+            <ul>
+              <li>
+                <div class="item-content">
+                  <div class="item-inner">
+                    <div class="item-title label">Course</div>
+                    <div class="item-input">
+                      {{ form.course }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="item-content">
+                  <div class="item-inner">
+                    <div class="item-title label">Groupings</div>
+                    <div class="item-input">
+                      {{ form.grouping }}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-25 full-height">
+
+        </div>
+      </div>
+      <button type="submit" class="floating-button color-green">
+        <i class="fa fa-2x fa-play"></i>
+
+      </button>
+    </form>
+  </div>
+
+  <script>
+      var pageInit = function () {
+          $$('.chip').on('click', function (e) {
+              $$(this).toggleClass('bg-blue')
+          });
+          $$('.student').on('click', function (e) {
+              $$(this).toggleClass('bg-blue')
+          });
+          {% for message in messages %}
+              myApp.alert('{{ message }}',
+                  {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
+          {% endfor %}
+      };
+      if (typeof $$ !== 'undefined') {
+          pageInit();
+      } else {
+          document.addEventListener("DOMContentLoaded", pageInit);
+      }
+
+  </script>
+</div>

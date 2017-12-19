@@ -14,6 +14,7 @@ class EmailUserManager(BaseUserManager):
         """
         Creates and saves a User with the given email and password.
         """
+        extra_fields.setdefault('is_staff', True)
         if not email:
             raise ValueError('The Email must be set')
         email = self.normalize_email(email)
@@ -41,7 +42,7 @@ class User(AbstractBaseUser, TimeStampedModel, PermissionsMixin):
     email = models.EmailField(unique=True)
     is_staff = models.BooleanField(
         _('staff status'),
-        default=False,
+        default=True,
         help_text=_('Designates whether the user can log into this site.'),
     )
     is_pending = models.BooleanField(

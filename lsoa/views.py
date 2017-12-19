@@ -1,19 +1,45 @@
-from django.shortcuts import render, HttpResponseRedirect, resolve_url
-from lsoa.models import Course, Student
-from django.contrib.auth.decorators import login_required
+from urllib.parse import urlencode
 
-@login_required
-def default_homepage(request):
-    # If it's a teacher, redirect to a class
-    classes = request.user.teacher_courses.order_by('-created')
-    return HttpResponseRedirect(resolve_url('view_course', classes.first().id))
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseRedirect
+from django.urls import reverse_lazy, reverse
+from django.views.generic import FormView
+
+from lsoa.forms import ObservationForm, ObservationSetupForm
+from lsoa.models import StudentGrouping, Course
+from utils.pagelets import PageletMixin
 
 
-@login_required
-def view_course(request, course_id):
-    course = Course.objects.get(id=course_id)
-    data = {
-        'course': course,
-        'all_classes': request.user.teacher_courses.order_by('-created').all()
-    }
-    return render(request, 'course.html', data)
+class ObservationSetupView(LoginRequiredMixin, PageletMixin, FormView):
+    pagelet_name = 'pagelet_setup.html'
+    form_class = ObservationSetupForm
+
+    def form_valid(self, form):
+        self.form = form
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        grouping = self.form.cleaned_data['grouping']
+        course = self.form.cleaned_data['course']
+        params = {
+            'course': course.id
+        }
+        if grouping:
+            params['grouping'] = grouping.id
+        return reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True)
+
+
+class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
+    pagelet_name = 'pagelet_observation.html'
+    form_class = ObservationForm
+
+    def get(self, request, *args, **kwargs):
+        if not self.request.GET.get('course'):
+            return HttpResponseRedirect(reverse('observation_setup_view'))
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        if self.request.GET.get('grouping'):
+            kwargs['grouping'] = StudentGrouping.objects.filter(pk=self.request.GET.get('grouping')).first()
+        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).first()
+        return super().get_context_data(**kwargs)
