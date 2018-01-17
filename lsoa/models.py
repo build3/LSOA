@@ -75,6 +75,40 @@ class LearningConstruct(TimeStampedModel):
     A LearningConstruct is a ...
     '''
     name = models.CharField(max_length=255)
+    abbreviation = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.name
+        return '{} ({})'.format(self.name, self.abbreviation)
+
+
+class LearningConstructLevel(TimeStampedModel):
+    '''
+    Some description here...
+    '''
+    construct = models.ForeignKey('lsoa.LearningConstruct')
+    level = models.IntegerField()
+    description = models.TextField()
+
+    def __str__(self):
+        return '{} {}'.format(self.construct.abbreviation, self.level)
+
+class LearningConstructSublevel(TimeStampedModel):
+    '''
+    Some description here...
+    '''
+    level = models.ForeignKey('lsoa.LearningConstructLevel')
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+
+    def __str__(self):
+        return '{}'.format(self.name)
+
+class LearningConstructSublevelExample(TimeStampedModel):
+    '''
+    Some description here...
+    '''
+    sublevel = models.ForeignKey('lsoa.LearningConstructSublevel', related_name='examples')
+    text = models.TextField()
+
+    def __str__(self):
+        return '({}) {}'.format(self.sublevel.name, self.text[:50])

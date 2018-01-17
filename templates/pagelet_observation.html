@@ -1,5 +1,17 @@
 {% load staticfiles %}
 <div class="page">
+  <style>
+    .swiper-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      height: 100%;
+    }
+
+  </style>
   <div class="page-content">
     <div class="row no-gutter full-height">
       <div class="col-50 full-height">
@@ -17,76 +29,49 @@
           <a id="cancel" class="button">Cancel</a>
           <a id="finish" class="button">Finish</a>
         </div>
-        <div style="height: 100px;">
-          <div class="chip active">
-            <div class="chip-label">ToMA 1A</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 1B</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 1C</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 2A</div>
-          </div>
+        <div style="">
+          {% for sublevel in constructs %}
+            <div class="chip" data-value="{{ sublevel.id }}">
+              <div class="chip-label sublevel">
+                {{ sublevel.name }}
+                <div class="sublevel-desc" style="display: none;">
+                  <h4>{{ sublevel.name }}</h4>
+                  <p>{{ sublevel.description }}</p>
+                </div>
+                <div class="sublevel-example" style="display: none;">
+                  <div class="swiper-container" data-pagination=".swiper-pagination">
+
+                    <div class="swiper-wrapper">
+                      {% for example in sublevel.examples.all %}
+                        <div class="swiper-slide" style="text-align: center;">
+                          <h4>{{ sublevel.name }}</h4>
+                          <p>{{ example.text }}</p>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="swiper-pagination"></div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          {% endfor %}
         </div>
-        <div style="width: 100%; height:200px; overflow-y: scroll;">
-          <p>Sunt vitaes magicae ferox, lotus axonaes. Castus luna sapienter gratias tabes est. Alter vortex
-            manifestums vox est. Est fatalis vortex, cesaris. Ecce, germanus advena! Fidess ortum!</p>
-          <p>Primus humani generiss ducunt ad aonides. A falsis, advena neuter palus. Cum demissio volare,
-            omnes canises examinare accola.</p>
+        <hr/>
+        <div id="sublevel-description" style="width: 100%; height:200px; overflow-y: scroll;">
+          <h4>Learning Construct Details</h4>
+          <p>Once you select a learning construct using the toggle buttons above, the description will
+            be displayed here.</p>
         </div>
       </div>
       <div class="col-25 full-height">
         <h4 style="text-align: center; margin: 0;">Notes</h4>
         <textarea style="width: calc(100% - 6px); height: 359px;"></textarea>
-        <h4 style="text-align: center; margin: 0;">Some Other Component</h4>
-
-        <div class="list-block">
-          <ul>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <input type="text" placeholder="Your name">
-                  </div>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <input type="email" placeholder="E-mail">
-                  </div>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <select>
-                      <option>Male</option>
-                      <option>Female</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <input type="date" placeholder="Birth day" value="2017-11-30">
-                  </div>
-                </div>
-              </div>
-            </li>
-          </ul>
+        <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
+        <div id="sublevel-examples" style="height: 300px;">
+          <p>Once you select a learning construct using the toggle buttons to the left, different
+            examples of the learning constructs will be shown here.</p>
         </div>
-
       </div>
       <div class="col-25 full-height">
         <h4 style="text-align: center; margin: 0;">Students</h4>
@@ -301,7 +286,14 @@
 
 
           $$('.chip').on('click', function (e) {
-              $$(this).toggleClass('bg-blue')
+              var chip = $$(this);
+              chip.toggleClass('bg-blue');
+              var text = chip.find('.sublevel-desc').html();
+              $$('#sublevel-description').html(text);
+
+              var example = chip.find('.sublevel-example').html();
+              $$('#sublevel-examples').html(example);
+              new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
           });
           $$('.student').on('click', function (e) {
               $$(this).toggleClass('bg-blue')
@@ -310,6 +302,8 @@
               myApp.alert('{{ message }}',
                   {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
           {% endfor %}
+
+
 
       };
       if (typeof $$ !== 'undefined') {

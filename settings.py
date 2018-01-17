@@ -43,6 +43,7 @@ BACKEND_THIRD_PARTY_APPS = [
     'raven.contrib.django.raven_compat',    # sentry-django connector
     'allauth',                              # Authentication/Registration
     'allauth.account',                      # Authentication/Registration
+    'formtools',
 ]
 
 FRONTEND_THIRD_PARTY_APPS = [
