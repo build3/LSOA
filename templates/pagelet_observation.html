@@ -10,15 +10,16 @@
 <div class="page">
 <div class="page-content">
     <div class="row no-gutter full-height">
-      <div class="col-50 full-height">
-      <div style="position: relative;">
+      <div class="col-50 full-height" style="position: relative;">
         <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
              style="width: 100%; height: calc(50vw * .75)">
         <video id="temp" style="display:none;width: 100%; height: calc(50vw * .75)" autoplay muted></video>
         <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" controls></video>
         <canvas id="canvas" style="display: none;"></canvas>
-        <canvas id="easel-canvas" style="display: none;width: 100%; height: calc(50vw * .75);position: absolute;left: 0;right: 0;bottom: 0;top: 0;"></canvas>
-        </div>
+
+        {#        easeljs   #}
+        <canvas id="easel-canvas" width="500" height="300" style="display: none;height: calc(50vw * .75); width: 100%;position: absolute;top: 0;left: 0;"></canvas>
+
         <div id="row-media-buttons" class="buttons-row" style="height:30px;">
           <a id="startphoto" class="button">Take photo</a>
           <a id="startvideo" class="button">Take video</a>
@@ -317,7 +318,7 @@ if (!(location.protocol === 'https:' ||
               mediaRecorder.start(10); // collect 10ms of data
               console.log('MediaRecorder started', mediaRecorder);
           }
-          
+
 
                       function stopRecording(ev) {
               mediaRecorder.stop();
