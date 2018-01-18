@@ -1,321 +1,465 @@
 {% load staticfiles %}
+
+{% block extrastyles %}
+    <link rel="stylesheet" href="/static/observation.css">
+{% endblock %}
+{% block extrascripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/EaselJS/1.0.2/easeljs.min.js"></script>
+{% endblock %}
+
 <div class="page">
-  <div class="page-content">
-    <div class="row no-gutter full-height">
-      <div class="col-50 full-height">
-        <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
-             style="width: 100%; height: calc(50vw * .75)">
-        <video id="temp" style="display:none;width: 100%; height: calc(50vw * .75)" autoplay muted></video>
-        <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" controls></video>
-        <canvas id="canvas" style="display: none;"></canvas>
-        <div id="row-media-buttons" class="buttons-row" style="height:30px;">
-          <a id="startphoto" class="button">Take photo</a>
-          <a id="startvideo" class="button">Take video</a>
-          <a id="startaudio" class="button">Record Audio</a>
-        </div>
-        <div id="row-capture-buttons" class="buttons-row" style="display:none; height:30px;">
-          <a id="cancel" class="button">Cancel</a>
-          <a id="finish" class="button">Finish</a>
-        </div>
-        <div style="height: 100px;">
-          <div class="chip active">
-            <div class="chip-label">ToMA 1A</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 1B</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 1C</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 2A</div>
-          </div>
-        </div>
-        <div style="width: 100%; height:200px; overflow-y: scroll;">
-          <p>Sunt vitaes magicae ferox, lotus axonaes. Castus luna sapienter gratias tabes est. Alter vortex
-            manifestums vox est. Est fatalis vortex, cesaris. Ecce, germanus advena! Fidess ortum!</p>
-          <p>Primus humani generiss ducunt ad aonides. A falsis, advena neuter palus. Cum demissio volare,
-            omnes canises examinare accola.</p>
-        </div>
-      </div>
-      <div class="col-25 full-height">
-        <h4 style="text-align: center; margin: 0;">Notes</h4>
-        <textarea style="width: calc(100% - 6px); height: 359px;"></textarea>
-        <h4 style="text-align: center; margin: 0;">Some Other Component</h4>
+    <div class="page-content">
+        <div class="row no-gutter full-height">
+            <div class="col-50 full-height" style="position: relative;">
+                <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
+                     style="width: 100%; height: calc(50vw * .75)">
+                <video id="temp" style="display:none;width: 100%; height: calc(50vw * .75)" autoplay muted></video>
+                <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" controls></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                {# EaselJS #}
+                <canvas id="easel-canvas" width="500" height="300"
+                        style="display: none;height: calc(50vw * .75); width: 100%;position: absolute;top: 0;left: 0;"></canvas>
 
-        <div class="list-block">
-          <ul>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <input type="text" placeholder="Your name">
-                  </div>
+                <div id="row-media-buttons" class="buttons-row" style="height:30px;">
+                    <a id="startphoto" class="button">Take photo</a>
+                    <a id="startvideo" class="button">Take video</a>
+                    <a id="startaudio" class="button">Record Audio</a>
                 </div>
-              </div>
-            </li>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <input type="email" placeholder="E-mail">
-                  </div>
+                <div id="row-capture-buttons" class="buttons-row" style="display:none; height:30px;">
+                    <a id="cancel" class="button">Cancel</a>
+                    <a id="finish" class="button">Finish</a>
+                    <a id="enable-draw" class="button enab disabled">
+                        <span class="enab">Enable</span>
+                        <span class="disa">Clear</span> Drawing </a>
+                    <a id="drawing-color-button" class="disabled button">Change Color <span id="drawing-color"></span></a>
                 </div>
-              </div>
-            </li>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <select>
-                      <option>Male</option>
-                      <option>Female</option>
-                    </select>
-                  </div>
+                <div style="height: 100px;">
+                    <div class="chip active">
+                        <div class="chip-label">ToMA 1A</div>
+                    </div>
+                    <div class="chip">
+                        <div class="chip-label">ToMA 1B</div>
+                    </div>
+                    <div class="chip">
+                        <div class="chip-label">ToMA 1C</div>
+                    </div>
+                    <div class="chip">
+                        <div class="chip-label">ToMA 2A</div>
+                    </div>
                 </div>
-              </div>
-            </li>
-            <li>
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-input">
-                    <input type="date" placeholder="Birth day" value="2017-11-30">
-                  </div>
+                <div style="width: 100%; height:200px; overflow-y: scroll;">
+                    <p>Sunt vitaes magicae ferox, lotus axonaes. Castus luna sapienter gratias tabes est. Alter vortex
+                        manifestums vox est. Est fatalis vortex, cesaris. Ecce, germanus advena! Fidess ortum!</p>
+                    <p>Primus humani generiss ducunt ad aonides. A falsis, advena neuter palus. Cum demissio volare,
+                        omnes canises examinare accola.</p>
                 </div>
-              </div>
-            </li>
-          </ul>
-        </div>
+            </div>
+            <div class="col-25 full-height">
+                <h4 style="text-align: center; margin: 0;">Notes</h4>
+                <textarea style="width: calc(100% - 6px); height: 359px;"></textarea>
+                <h4 style="text-align: center; margin: 0;">Some Other Component</h4>
 
-      </div>
-      <div class="col-25 full-height">
-        <h4 style="text-align: center; margin: 0;">Students</h4>
-        <div class="list-block" style="margin: 0;">
-          <ul>
-            {% if grouping %}
-              {% for group in grouping.groups.all %}
-                <li class="item-content student">
-                  <div class="item-inner">
-                    <div class="item-title">{{ group }}</div>
-                  </div>
-                </li>
-              {% endfor %}
-            {% else %}
-              {% for student in course.students.all %}
-                <li class="item-content student">
-                  <div class="item-inner">
-                    <div class="item-title">{{ student }}</div>
-                  </div>
-                </li>
-              {% endfor %}
-            {% endif %}
-          </ul>
+                <div class="list-block">
+                    <ul>
+                        <li>
+                            <div class="item-content">
+                                <div class="item-inner">
+                                    <div class="item-input">
+                                        <input type="text" placeholder="Your name">
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="item-content">
+                                <div class="item-inner">
+                                    <div class="item-input">
+                                        <input type="email" placeholder="E-mail">
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="item-content">
+                                <div class="item-inner">
+                                    <div class="item-input">
+                                        <select>
+                                            <option>Male</option>
+                                            <option>Female</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="item-content">
+                                <div class="item-inner">
+                                    <div class="item-input">
+                                        <input type="date" placeholder="Birth day" value="2017-11-30">
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+            <div class="col-25 full-height">
+                <h4 style="text-align: center; margin: 0;">Students</h4>
+                <div class="list-block" style="margin: 0;">
+                    <ul>
+                        {% if grouping %}
+                            {% for group in grouping.groups.all %}
+                                <li class="item-content student">
+                                    <div class="item-inner">
+                                        <div class="item-title">{{ group }}</div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            {% for student in course.students.all %}
+                                <li class="item-content student">
+                                    <div class="item-inner">
+                                        <div class="item-title">{{ student }}</div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
         </div>
-      </div>
+        <a href="#" onclick="mainView.router.refreshPage();" class="floating-button color-green">
+            <i class="fa fa-2x fa-plus"></i>
+
+        </a>
     </div>
-    <a href="#" onclick="mainView.router.refreshPage();" class="floating-button color-green">
-      <i class="fa fa-2x fa-plus"></i>
-
-    </a>
-  </div>
-  <script>
-      if (!(location.protocol === 'https:' ||
-              location.hostname === 'localhost' ||
-              location.hostname === '127.0.0.1')) {
-          alert('getUserMedia() must be run from a secure origin: HTTPS or localhost.' +
-              '\n\nChanging protocol to HTTPS');
-          location.protocol = 'HTTPS';
-      }
+    <script>
+        if (!(location.protocol === 'https:' ||
+            location.hostname === 'localhost' ||
+            location.hostname === '127.0.0.1')) {
+            alert('getUserMedia() must be run from a secure origin: HTTPS or localhost.' +
+                '\n\nChanging protocol to HTTPS');
+            location.protocol = 'HTTPS';
+        }
 
 
-      var pageInit = function () {
-          var startPhoto = document.querySelector('a#startphoto');
-          var startVideo = document.querySelector('a#startvideo');
-          var startAudio = document.querySelector('a#startaudio');
-          var image = document.querySelector('img#image');
-          var cancel = document.querySelector('a#cancel');
-          var finish = document.querySelector('a#finish');
-          var canvas = document.querySelector('canvas#canvas');
+        var pageInit = function () {
+            var startPhoto = document.querySelector('a#startphoto');
+            var startVideo = document.querySelector('a#startvideo');
+            var startAudio = document.querySelector('a#startaudio');
+            var image = document.querySelector('img#image');
+            var cancel = document.querySelector('a#cancel');
+            var finish = document.querySelector('a#finish');
+            var enableDisableDraw = document.querySelector('a#enable-draw');
+            var drawingColorButton = document.querySelector('a#drawing-color-button');
+            var drawingColorDisplay = document.querySelector('#drawing-color');
+            var canvas = document.querySelector('canvas#canvas');
 
-          var isAudio = false;
-          var isVideo = false;
-          var isPhoto = false;
+            var isAudio = false;
+            var isVideo = false;
+            var isPhoto = false;
 
-          var rowMediaButtons = document.querySelector('div#row-media-buttons');
-          var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
+            var rowMediaButtons = document.querySelector('div#row-media-buttons');
+            var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
 
-          var tempVideo = document.querySelector('video#temp');
-          var recordedVideo = document.querySelector('video#recorded');
+            var tempVideo = document.querySelector('video#temp');
+            var recordedVideo = document.querySelector('video#recorded');
 
-          var mediaRecorder;
-          var recordedBlobs;
-          var sourceBuffer;
+            var mediaRecorder;
+            var recordedBlobs;
+            var sourceBuffer;
 
-          function handleSuccess(stream) {
-              console.log('getUserMedia() got stream: ', stream);
-              // we just started recording here
-              rowMediaButtons.style.display = 'none';
-              rowCaptureButtons.style.display = '';
-              window.stream = stream;
-              tempVideo.srcObject = stream;
-              tempVideo.play();
-              if (isVideo) {
-                  image.style.display = 'none';
-                  tempVideo.style.display = '';
-                  finish.innerHTML = 'Stop Recording'
-              } else if (isPhoto) {
-                  image.style.display = 'none';
-                  tempVideo.style.display = '';
-                  finish.innerHTML = 'Take Photo'
-              } else {
-                  finish.innerHTML = 'Stop Recording';
-                  image.src = '{% static "images/microphone.svg" %}';
-              }
-              finish.classList.remove('disabled');
-              startRecording();
-          }
-
-          function handleError(error) {
-              console.log('navigator.getUserMedia error: ', error);
-          }
-
-          function startRecording() {
-              recordedBlobs = [];
-              var options = {mimeType: 'video/webm;codecs=vp9'};
-              if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                  console.log(options.mimeType + ' is not Supported');
-                  options = {mimeType: 'video/webm;codecs=vp8'};
-                  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                      console.log(options.mimeType + ' is not Supported');
-                      options = {mimeType: 'video/webm'};
-                      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                          console.log(options.mimeType + ' is not Supported');
-                          options = {mimeType: ''};
-                      }
-                  }
-              }
-              try {
-                  mediaRecorder = new MediaRecorder(window.stream, options);
-              } catch (e) {
-                  console.error('Exception while creating MediaRecorder: ' + e);
-                  alert('Exception while creating MediaRecorder: '
-                      + e + '. mimeType: ' + options.mimeType);
-                  return;
-              }
-              console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
-              mediaRecorder.onstop = function (event) {
-                  console.log('Recorder stopped: ', event);
-              };
-              mediaRecorder.ondataavailable = function (event) {
-                  if (event.data && event.data.size > 0) {
-                      // first blob seems to always be camera warming up
-                      recordedBlobs.push(event.data);
-                  }
-              };
-              mediaRecorder.start(10); // collect 10ms of data
-              console.log('MediaRecorder started', mediaRecorder);
-          }
-
-          function stopRecording(ev) {
-              mediaRecorder.stop();
-              console.log('Recorded Blobs: ', recordedBlobs);
-              if (isAudio) {
-                  image.style.display = 'none';
-                  recordedVideo.controls = true;
-                  recordedVideo.style.display = '';
-              } else if (isVideo) {
-                  recordedVideo.controls = true;
-                  recordedVideo.style.display = '';
-              } else {  // isPhoto
-                  var context = canvas.getContext('2d');
-                  console.log('width: ' + tempVideo.videoWidth);
-                  console.log('height: ' + tempVideo.videoHeight);
-                  canvas.width = tempVideo.videoWidth;
-                  canvas.height = tempVideo.videoHeight;
-                  context.drawImage(tempVideo, 0, 0, tempVideo.videoWidth, tempVideo.videoHeight);
-                  var data = canvas.toDataURL('image/png');
-                  image.setAttribute('src', data);
-                  image.style.display = '';
-              }
-              finish.classList.add('disabled');
-              cancel.innerHTML = 'Reset';
-
-              tempVideo.style.display = 'none';
-
-              play();
-          }
-
-          finish.addEventListener("click", stopRecording);
-
-          function cancelOrReset(ev) {
-              if (mediaRecorder.state === 'recording') {
-                  mediaRecorder.stop();
-              }
-              rowMediaButtons.style.display = '';
-              rowCaptureButtons.style.display = 'none';
-              image.style.display = '';
-              image.src = '{% static "images/photo-placeholder.svg" %}';
-              tempVideo.style.display = 'none';
-              recordedVideo.style.display = 'none';
-          }
-
-          cancel.addEventListener("click", cancelOrReset);
-
-          function play() {
-              var superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
-              recordedVideo.src = window.URL.createObjectURL(superBuffer);
-          }
-
-          var mediaSource = new MediaSource();
-          mediaSource.addEventListener('sourceopen', function (event) {
-              console.log('MediaSource opened');
-              // TODO adjust sourcebuffer for audio vs video?
-              sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
-              console.log('Source buffer: ', sourceBuffer);
-          }, false);
-
-          startPhoto.addEventListener("click", function (e) {
-              navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(handleSuccess).catch(handleError);
-              isPhoto = true;
-              isVideo = false;
-              isAudio = false;
-          });
-          startVideo.addEventListener("click", function (e) {
-              navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(handleSuccess).catch(handleError);
-              isPhoto = false;
-              isVideo = true;
-              isAudio = false;
-          });
-          startAudio.addEventListener("click", function (e) {
-              navigator.mediaDevices.getUserMedia({audio: true, video: false}).then(handleSuccess).catch(handleError);
-              isPhoto = false;
-              isVideo = false;
-              isAudio = true;
-          });
-
-          recordedVideo.addEventListener('error', function (ev) {
-              console.error('MediaRecording.recordedMedia.error()');
-              alert('Your browser can not play\n\n' + recordedVideo.src
-                  + '\n\n media clip. event: ' + JSON.stringify(ev));
-          }, true);
+            setUpEasel();
+            function setUpEasel() {
+                var canvas = document.querySelector('#easel-canvas');
+                var color, oldMidPt, oldPt, stage, drawingCanvas;
+                var index = parseInt(Math.random() * 100);
+                title = new createjs.Text("Click and Drag to draw", "28px Arial", "#FFF");
+                title.x = 100;
+                title.y = 100;
+                var colors = [
+                    "#1abc9c", "#2ecc71",
+                    "#3498db", "#9b59b6",
+                    "#34495e", "#ecf0f1",
+                    "#e74c3c", "#95a5a6",
+                    "#e67e22", "#f1c40f"
+                ];
+                color = colors[(index++) % colors.length];
 
 
-          $$('.chip').on('click', function (e) {
-              $$(this).toggleClass('bg-blue')
-          });
-          $$('.student').on('click', function (e) {
-              $$(this).toggleClass('bg-blue')
-          });
-          {% for message in messages %}
-              myApp.alert('{{ message }}',
-                  {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
-          {% endfor %}
+                initStage(title);
+                initEnableDisable();
+                initChangeColorButton();
+                updateDrawingColorDisplay();
 
-      };
-      if (typeof $$ !== 'undefined') {
-          pageInit();
-      } else {
-          document.addEventListener("DOMContentLoaded", pageInit);
-      }
-  </script>
+                function initStage(title) {
+                    stage = new createjs.Stage(canvas);
+
+                    stage.autoClear = false;
+                    stage.enableDOMEvents(true);
+                    createjs.Touch.enable(stage);
+                    createjs.Ticker.framerate = 24;
+
+                    drawingCanvas = new createjs.Shape();
+
+                    stage.addEventListener("stagemousedown", handleMouseDown);
+                    stage.addEventListener("stagemouseup", handleMouseUp);
+                    if (title) {
+                        stage.addChild(title);
+                    }
+
+                    stage.addChild(drawingCanvas);
+                    stage.update();
+                }
+
+                function handleMouseDown(event) {
+                    if (!event.primary) {
+                        return;
+                    }
+                    if (stage.contains(title)) {
+                        stage.clear();
+                        stage.removeChild(title);
+                    }
+                    stroke = .05 * 10 + (10 | 0);
+                    oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
+                    oldMidPt = oldPt.clone();
+                    stage.addEventListener("stagemousemove", handleMouseMove);
+                }
+
+                function handleMouseUp(event) {
+                    if (!event.primary) {
+                        return;
+                    }
+                    stage.removeEventListener("stagemousemove", handleMouseMove);
+                }
+
+                function handleMouseMove(event) {
+                    if (!event.primary) {
+                        return;
+                    }
+                    var midPt = new createjs.Point(oldPt.x + stage.mouseX >> 1, oldPt.y + stage.mouseY >> 1);
+
+                    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(color).moveTo(midPt.x, midPt.y).curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
+
+                    oldPt.x = stage.mouseX;
+                    oldPt.y = stage.mouseY;
+
+                    oldMidPt.x = midPt.x;
+                    oldMidPt.y = midPt.y;
+
+                    stage.update();
+                }
+
+                function updateDrawingColorDisplay(){
+                    drawingColorDisplay.style.backgroundColor = color;
+                }
+
+                function initChangeColorButton(){
+                    drawingColorButton.onclick = function(){
+                        color = colors[(index++) % colors.length];
+                        updateDrawingColorDisplay();
+                    }
+                }
+
+                function initEnableDisable() {
+                    enableDisableDraw.onclick = function () {
+                        if (enableDisableDraw.classList.contains('enab')) {
+                            // Enable drawing
+                            enableDisableDraw.classList.remove('enab');
+                            enableDisableDraw.classList.add('disa');
+                            drawingColorButton.classList.remove('disabled');
+                            canvas.style.display = 'Block';
+                        }
+                        else if (enableDisableDraw.classList.contains('disa')) {
+                            // Disable drawing
+                            stage = new createjs.Stage(canvas);
+                            stage.removeAllChildren();
+                            stage.update();
+                            initStage();
+                        }
+                    }
+                }
+            }
+
+            function handleSuccess(stream) {
+                console.log('getUserMedia() got stream: ', stream);
+                // we just started recording here
+                rowMediaButtons.style.display = 'none';
+                rowCaptureButtons.style.display = '';
+                window.stream = stream;
+                tempVideo.srcObject = stream;
+                tempVideo.play();
+                if (isVideo) {
+                    image.style.display = 'none';
+                    tempVideo.style.display = '';
+                    finish.innerHTML = 'Stop Recording'
+                    enableDisableDraw.classList.add('disabled');
+                } else if (isPhoto) {
+                    image.style.display = 'none';
+                    tempVideo.style.display = '';
+                    finish.innerHTML = 'Take Photo';
+                    enableDisableDraw.classList.add('disabled');
+                } else {
+                    finish.innerHTML = 'Stop Recording';
+                    image.src = '{% static "images/microphone.svg" %}';
+                }
+                finish.classList.remove('disabled');
+                startRecording();
+            }
+
+            function handleError(error) {
+                console.log('navigator.getUserMedia error: ', error);
+            }
+
+            function startRecording() {
+                recordedBlobs = [];
+                var options = {mimeType: 'video/webm;codecs=vp9'};
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    console.log(options.mimeType + ' is not Supported');
+                    options = {mimeType: 'video/webm;codecs=vp8'};
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        console.log(options.mimeType + ' is not Supported');
+                        options = {mimeType: 'video/webm'};
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                            console.log(options.mimeType + ' is not Supported');
+                            options = {mimeType: ''};
+                        }
+                    }
+                }
+                try {
+                    mediaRecorder = new MediaRecorder(window.stream, options);
+                } catch (e) {
+                    console.error('Exception while creating MediaRecorder: ' + e);
+                    alert('Exception while creating MediaRecorder: '
+                        + e + '. mimeType: ' + options.mimeType);
+                    return;
+                }
+                console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
+                mediaRecorder.onstop = function (event) {
+                    console.log('Recorder stopped: ', event);
+                };
+                mediaRecorder.ondataavailable = function (event) {
+                    if (event.data && event.data.size > 0) {
+                        // first blob seems to always be camera warming up
+                        recordedBlobs.push(event.data);
+                    }
+                };
+                mediaRecorder.start(10); // collect 10ms of data
+                console.log('MediaRecorder started', mediaRecorder);
+            }
+
+            function stopRecording(ev) {
+                mediaRecorder.stop();
+                console.log('Recorded Blobs: ', recordedBlobs);
+                if (isAudio) {
+                    image.style.display = 'none';
+                    recordedVideo.controls = true;
+                    recordedVideo.style.display = '';
+                } else if (isVideo) {
+                    recordedVideo.controls = true;
+                    recordedVideo.style.display = '';
+                } else {  // isPhoto
+                    var context = canvas.getContext('2d');
+                    console.log('width: ' + tempVideo.videoWidth);
+                    console.log('height: ' + tempVideo.videoHeight);
+                    canvas.width = tempVideo.videoWidth;
+                    canvas.height = tempVideo.videoHeight;
+                    context.drawImage(tempVideo, 0, 0, tempVideo.videoWidth, tempVideo.videoHeight);
+                    var data = canvas.toDataURL('image/png');
+                    image.setAttribute('src', data);
+                    image.style.display = '';
+                }
+                finish.classList.add('disabled');
+                cancel.innerHTML = 'Reset';
+
+                tempVideo.style.display = 'none';
+                enableDisableDraw.classList.remove('disabled');
+
+                play();
+            }
+
+            finish.addEventListener("click", stopRecording);
+
+            function cancelOrReset(ev) {
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+                rowMediaButtons.style.display = '';
+                rowCaptureButtons.style.display = 'none';
+                image.style.display = '';
+                image.src = '{% static "images/photo-placeholder.svg" %}';
+                tempVideo.style.display = 'none';
+                recordedVideo.style.display = 'none';
+                enableDisableDraw.classList.add('disabled');
+            }
+
+            cancel.addEventListener("click", cancelOrReset);
+
+            function play() {
+                var superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
+                recordedVideo.src = window.URL.createObjectURL(superBuffer);
+            }
+
+            var mediaSource = new MediaSource();
+            mediaSource.addEventListener('sourceopen', function (event) {
+                console.log('MediaSource opened');
+                // TODO adjust sourcebuffer for audio vs video?
+                sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+                console.log('Source buffer: ', sourceBuffer);
+            }, false);
+
+            startPhoto.addEventListener("click", function (e) {
+                navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: true
+                }).then(handleSuccess).catch(handleError);
+                isPhoto = true;
+                isVideo = false;
+                isAudio = false;
+            });
+            startVideo.addEventListener("click", function (e) {
+                navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: true
+                }).then(handleSuccess).catch(handleError);
+                isPhoto = false;
+                isVideo = true;
+                isAudio = false;
+            });
+            startAudio.addEventListener("click", function (e) {
+                navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: false
+                }).then(handleSuccess).catch(handleError);
+                isPhoto = false;
+                isVideo = false;
+                isAudio = true;
+            });
+
+            recordedVideo.addEventListener('error', function (ev) {
+                console.error('MediaRecording.recordedMedia.error()');
+                alert('Your browser can not play\n\n' + recordedVideo.src
+                    + '\n\n media clip. event: ' + JSON.stringify(ev));
+            }, true);
+
+
+            $$('.chip').on('click', function (e) {
+                $$(this).toggleClass('bg-blue')
+            });
+            $$('.student').on('click', function (e) {
+                $$(this).toggleClass('bg-blue')
+            });
+            {% for message in messages %}
+                myApp.alert('{{ message }}',
+                    {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
+            {% endfor %}
+
+        };
+        if (typeof $$ !== 'undefined') {
+            pageInit();
+        } else {
+            document.addEventListener("DOMContentLoaded", pageInit);
+        }
+    </script>
 </div>
