@@ -8,30 +8,32 @@
 {% endblock %}
 
 <div class="page">
-    <div class="page-content">
-        <div class="row no-gutter full-height">
-            <div class="col-50 full-height" style="position: relative;">
-                <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
-                     style="width: 100%; height: calc(50vw * .75)">
-                <video id="temp" style="display:none;width: 100%; height: calc(50vw * .75)" autoplay muted></video>
-                <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" controls></video>
-                <canvas id="canvas" style="display: none;"></canvas>
-                {# EaselJS #}
-                <canvas id="easel-canvas" width="500" height="300"
-                        style="display: none;height: calc(50vw * .75); width: 100%;position: absolute;top: 0;left: 0;"></canvas>
-        <div style="height: 100px;">
-          <div class="chip active">
-            <div class="chip-label">ToMA 1A</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 1B</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 1C</div>
-          </div>
-          <div class="chip">
-            <div class="chip-label">ToMA 2A</div>
-          </div>
+<div class="page-content">
+    <div class="row no-gutter full-height">
+      <div class="col-50 full-height">
+      <div style="position: relative;">
+        <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
+             style="width: 100%; height: calc(50vw * .75)">
+        <video id="temp" style="display:none;width: 100%; height: calc(50vw * .75)" autoplay muted></video>
+        <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" controls></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <canvas id="easel-canvas" style="display: none;width: 100%; height: calc(50vw * .75);position: absolute;left: 0;right: 0;bottom: 0;top: 0;"></canvas>
+        </div>
+        <div id="row-media-buttons" class="buttons-row" style="height:30px;">
+          <a id="startphoto" class="button">Take photo</a>
+          <a id="startvideo" class="button">Take video</a>
+          <a id="startaudio" class="button">Record Audio</a>
+        </div>
+        <div id="row-capture-buttons" class="buttons-row" style="display:none; height:30px;">
+          <a id="cancel" class="button">Cancel</a>
+          <a id="finish" class="button">Finish</a>
+            <a id="enable-draw" class="button enab disabled">
+                <span class="enab">Enable</span>
+                <span class="disa">Clear</span> Drawing</a>
+            <a id="drawing-color-button" class="disabled button">Change Color <span id="drawing-color"></span></a>
+        </div>
+
+        {#    Constructs    #}
         <div style="">
           {% for sublevel in constructs %}
             <div class="chip" data-value="{{ sublevel.id }}">
@@ -54,162 +56,91 @@
                     </div>
                     <div class="swiper-pagination"></div>
                   </div>
-
                 </div>
               </div>
             </div>
           {% endfor %}
-
-                <div id="row-media-buttons" class="buttons-row" style="height:30px;">
-                    <a id="startphoto" class="button">Take photo</a>
-                    <a id="startvideo" class="button">Take video</a>
-                    <a id="startaudio" class="button">Record Audio</a>
-                </div>
-                <div id="row-capture-buttons" class="buttons-row" style="display:none; height:30px;">
-                    <a id="cancel" class="button">Cancel</a>
-                    <a id="finish" class="button">Finish</a>
-                    <a id="enable-draw" class="button enab disabled">
-                        <span class="enab">Enable</span>
-                        <span class="disa">Clear</span> Drawing </a>
-                    <a id="drawing-color-button" class="disabled button">Change Color <span id="drawing-color"></span></a>
-                </div>
-                <div style="height: 100px;">
-                    <div class="chip active">
-                        <div class="chip-label">ToMA 1A</div>
-                    </div>
-                    <div class="chip">
-                        <div class="chip-label">ToMA 1B</div>
-                    </div>
-                    <div class="chip">
-                        <div class="chip-label">ToMA 1C</div>
-                    </div>
-                    <div class="chip">
-                        <div class="chip-label">ToMA 2A</div>
-                    </div>
-                </div>
-                <div style="width: 100%; height:200px; overflow-y: scroll;">
-                    <p>Sunt vitaes magicae ferox, lotus axonaes. Castus luna sapienter gratias tabes est. Alter vortex
-                        manifestums vox est. Est fatalis vortex, cesaris. Ecce, germanus advena! Fidess ortum!</p>
-                    <p>Primus humani generiss ducunt ad aonides. A falsis, advena neuter palus. Cum demissio volare,
-                        omnes canises examinare accola.</p>
-                </div>
-            </div>
-            <div class="col-25 full-height">
-                <h4 style="text-align: center; margin: 0;">Notes</h4>
-                <textarea style="width: calc(100% - 6px); height: 359px;"></textarea>
-                <h4 style="text-align: center; margin: 0;">Some Other Component</h4>
-
-                <div class="list-block">
-                    <ul>
-                        <li>
-                            <div class="item-content">
-                                <div class="item-inner">
-                                    <div class="item-input">
-                                        <input type="text" placeholder="Your name">
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="item-content">
-                                <div class="item-inner">
-                                    <div class="item-input">
-                                        <input type="email" placeholder="E-mail">
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="item-content">
-                                <div class="item-inner">
-                                    <div class="item-input">
-                                        <select>
-                                            <option>Male</option>
-                                            <option>Female</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="item-content">
-                                <div class="item-inner">
-                                    <div class="item-input">
-                                        <input type="date" placeholder="Birth day" value="2017-11-30">
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-
-            </div>
-            <div class="col-25 full-height">
-                <h4 style="text-align: center; margin: 0;">Students</h4>
-                <div class="list-block" style="margin: 0;">
-                    <ul>
-                        {% if grouping %}
-                            {% for group in grouping.groups.all %}
-                                <li class="item-content student">
-                                    <div class="item-inner">
-                                        <div class="item-title">{{ group }}</div>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        {% else %}
-                            {% for student in course.students.all %}
-                                <li class="item-content student">
-                                    <div class="item-inner">
-                                        <div class="item-title">{{ student }}</div>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
         </div>
+        {#    End Constructs    #}
+        <hr/>
 
-        <a href="#" onclick="mainView.router.refreshPage();" class="floating-button color-green">
-            <i class="fa fa-2x fa-plus"></i>
-
-        </a>
+        <div id="sublevel-description" style="width: 100%; height:200px; overflow-y: scroll;">
+          <h4>Learning Construct Details</h4>
+          <p>Once you select a learning construct using the toggle buttons above, the description will
+            be displayed here.</p>
+        </div>
+      </div>
+      <div class="col-25 full-height">
+        <h4 style="text-align: center; margin: 0;">Notes</h4>
+        <textarea style="width: calc(100% - 6px); height: 359px; font-size: 2em;"></textarea>
+        <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
+        <div id="sublevel-examples" style="height: 300px;">
+          <p>Once you select a learning construct using the toggle buttons to the left, different
+            examples of the learning constructs will be shown here.</p>
+        </div>
+      </div>
+      <div class="col-25 full-height">
+        <h4 style="text-align: center; margin: 0;">Students</h4>
+        <div class="list-block" style="margin: 0;">
+          <ul>
+            {% if grouping %}
+              {% for group in grouping.groups.all %}
+                <li class="item-content student">
+                  <div class="item-inner">
+                    <div class="item-title">{{ group }}</div>
+                  </div>
+                </li>
+              {% endfor %}
+            {% else %}
+              {% for student in course.students.all %}
+                <li class="item-content student">
+                  <div class="item-inner">
+                    <div class="item-title">{{ student }}</div>
+                  </div>
+                </li>
+              {% endfor %}
+            {% endif %}
+          </ul>
+        </div>
+      </div>
     </div>
-    <script>
-        if (!(location.protocol === 'https:' ||
-            location.hostname === 'localhost' ||
-            location.hostname === '127.0.0.1')) {
-            alert('getUserMedia() must be run from a secure origin: HTTPS or localhost.' +
-                '\n\nChanging protocol to HTTPS');
-            location.protocol = 'HTTPS';
-        }
+    <a href="#" onclick="mainView.router.refreshPage();" class="floating-button color-green">
+      <i class="fa fa-2x fa-plus"></i>
 
+    </a>
+  </div>
+    <script>
+if (!(location.protocol === 'https:' ||
+              location.hostname === 'localhost' ||
+              location.hostname === '127.0.0.1')) {
+          alert('getUserMedia() must be run from a secure origin: HTTPS or localhost.' +
+              '\n\nChanging protocol to HTTPS');
+          location.protocol = 'HTTPS';
+      }
 
         var pageInit = function () {
-            var startPhoto = document.querySelector('a#startphoto');
-            var startVideo = document.querySelector('a#startvideo');
-            var startAudio = document.querySelector('a#startaudio');
-            var image = document.querySelector('img#image');
-            var cancel = document.querySelector('a#cancel');
-            var finish = document.querySelector('a#finish');
+          var startPhoto = document.querySelector('a#startphoto');
+          var startVideo = document.querySelector('a#startvideo');
+          var startAudio = document.querySelector('a#startaudio');
+          var image = document.querySelector('img#image');
+          var cancel = document.querySelector('a#cancel');
+          var finish = document.querySelector('a#finish');
+          var canvas = document.querySelector('canvas#canvas');
             var enableDisableDraw = document.querySelector('a#enable-draw');
             var drawingColorButton = document.querySelector('a#drawing-color-button');
             var drawingColorDisplay = document.querySelector('#drawing-color');
-            var canvas = document.querySelector('canvas#canvas');
 
-            var isAudio = false;
-            var isVideo = false;
-            var isPhoto = false;
+        var isAudio = false;
+          var isVideo = false;
+          var isPhoto = false;
+          var rowMediaButtons = document.querySelector('div#row-media-buttons');
+          var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
+          var tempVideo = document.querySelector('video#temp');
+          var recordedVideo = document.querySelector('video#recorded');
+          var mediaRecorder;
+          var recordedBlobs;
+          var sourceBuffer;
 
-            var rowMediaButtons = document.querySelector('div#row-media-buttons');
-            var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
-
-            var tempVideo = document.querySelector('video#temp');
-            var recordedVideo = document.querySelector('video#recorded');
-
-            var mediaRecorder;
-            var recordedBlobs;
-            var sourceBuffer;
 
             setUpEasel();
             function setUpEasel() {
@@ -324,162 +255,170 @@
             }
 
             function handleSuccess(stream) {
-                console.log('getUserMedia() got stream: ', stream);
-                // we just started recording here
-                rowMediaButtons.style.display = 'none';
-                rowCaptureButtons.style.display = '';
-                window.stream = stream;
-                tempVideo.srcObject = stream;
-                tempVideo.play();
-                if (isVideo) {
-                    image.style.display = 'none';
-                    tempVideo.style.display = '';
-                    finish.innerHTML = 'Stop Recording'
-                    enableDisableDraw.classList.add('disabled');
-                } else if (isPhoto) {
-                    image.style.display = 'none';
-                    tempVideo.style.display = '';
-                    finish.innerHTML = 'Take Photo';
-                    enableDisableDraw.classList.add('disabled');
-                } else {
-                    finish.innerHTML = 'Stop Recording';
-                    image.src = '{% static "images/microphone.svg" %}';
-                }
-                finish.classList.remove('disabled');
-                startRecording();
-            }
+              console.log('getUserMedia() got stream: ', stream);
+              // we just started recording here
+              rowMediaButtons.style.display = 'none';
+              rowCaptureButtons.style.display = '';
+              window.stream = stream;
+              tempVideo.srcObject = stream;
+              tempVideo.play();
+              if (isVideo) {
+                  image.style.display = 'none';
+                  tempVideo.style.display = '';
+                  finish.innerHTML = 'Stop Recording'
+              } else if (isPhoto) {
+                  image.style.display = 'none';
+                  tempVideo.style.display = '';
+                  finish.innerHTML = 'Take Photo'
+              } else {
+                  finish.innerHTML = 'Stop Recording';
+                  image.src = '{% static "images/microphone.svg" %}';
+              }
+              finish.classList.remove('disabled');
+              startRecording();
+          }
 
             function handleError(error) {
-                console.log('navigator.getUserMedia error: ', error);
-            }
+              console.log('navigator.getUserMedia error: ', error);
+          }
+          function startRecording() {
+              recordedBlobs = [];
+              var options = {mimeType: 'video/webm;codecs=vp9'};
+              if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                  console.log(options.mimeType + ' is not Supported');
+                  options = {mimeType: 'video/webm;codecs=vp8'};
+                  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                      console.log(options.mimeType + ' is not Supported');
+                      options = {mimeType: 'video/webm'};
+                      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                          console.log(options.mimeType + ' is not Supported');
+                          options = {mimeType: ''};
+                      }
+                  }
+              }
+              try {
+                  mediaRecorder = new MediaRecorder(window.stream, options);
+              } catch (e) {
+                  console.error('Exception while creating MediaRecorder: ' + e);
+                  alert('Exception while creating MediaRecorder: '
+                      + e + '. mimeType: ' + options.mimeType);
+                  return;
+              }
+              console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
+              mediaRecorder.onstop = function (event) {
+                  console.log('Recorder stopped: ', event);
+              };
+              mediaRecorder.ondataavailable = function (event) {
+                  if (event.data && event.data.size > 0) {
+                      // first blob seems to always be camera warming up
+                      recordedBlobs.push(event.data);
+                  }
+              };
+              mediaRecorder.start(10); // collect 10ms of data
+              console.log('MediaRecorder started', mediaRecorder);
+          }
+          
 
-            function startRecording() {
-                recordedBlobs = [];
-                var options = {mimeType: 'video/webm;codecs=vp9'};
-                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                    console.log(options.mimeType + ' is not Supported');
-                    options = {mimeType: 'video/webm;codecs=vp8'};
-                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                        console.log(options.mimeType + ' is not Supported');
-                        options = {mimeType: 'video/webm'};
-                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                            console.log(options.mimeType + ' is not Supported');
-                            options = {mimeType: ''};
-                        }
-                    }
-                }
-                try {
-                    mediaRecorder = new MediaRecorder(window.stream, options);
-                } catch (e) {
-                    console.error('Exception while creating MediaRecorder: ' + e);
-                    alert('Exception while creating MediaRecorder: '
-                        + e + '. mimeType: ' + options.mimeType);
-                    return;
-                }
-                console.log('Created MediaRecorder', mediaRecorder, 'with options', options);
-                mediaRecorder.onstop = function (event) {
-                    console.log('Recorder stopped: ', event);
-                };
-                mediaRecorder.ondataavailable = function (event) {
-                    if (event.data && event.data.size > 0) {
-                        // first blob seems to always be camera warming up
-                        recordedBlobs.push(event.data);
-                    }
-                };
-                mediaRecorder.start(10); // collect 10ms of data
-                console.log('MediaRecorder started', mediaRecorder);
-            }
-
-            function stopRecording(ev) {
-                mediaRecorder.stop();
-                console.log('Recorded Blobs: ', recordedBlobs);
-                if (isAudio) {
-                    image.style.display = 'none';
-                    recordedVideo.controls = true;
-                    recordedVideo.style.display = '';
-                } else if (isVideo) {
-                    recordedVideo.controls = true;
-                    recordedVideo.style.display = '';
-                } else {  // isPhoto
-                    var context = canvas.getContext('2d');
-                    console.log('width: ' + tempVideo.videoWidth);
-                    console.log('height: ' + tempVideo.videoHeight);
-                    canvas.width = tempVideo.videoWidth;
-                    canvas.height = tempVideo.videoHeight;
-                    context.drawImage(tempVideo, 0, 0, tempVideo.videoWidth, tempVideo.videoHeight);
-                    var data = canvas.toDataURL('image/png');
-                    image.setAttribute('src', data);
-                    image.style.display = '';
-                }
-                finish.classList.add('disabled');
-                cancel.innerHTML = 'Reset';
-
-                tempVideo.style.display = 'none';
+                      function stopRecording(ev) {
+              mediaRecorder.stop();
+              console.log('Recorded Blobs: ', recordedBlobs);
+              if (isAudio) {
+                  image.style.display = 'none';
+                  recordedVideo.controls = true;
+                  recordedVideo.style.display = '';
+              } else if (isVideo) {
+                  recordedVideo.controls = true;
+                  recordedVideo.style.display = '';
+              } else {  // isPhoto
+                  var context = canvas.getContext('2d');
+                  console.log('width: ' + tempVideo.videoWidth);
+                  console.log('height: ' + tempVideo.videoHeight);
+                  canvas.width = tempVideo.videoWidth;
+                  canvas.height = tempVideo.videoHeight;
+                  context.drawImage(tempVideo, 0, 0, tempVideo.videoWidth, tempVideo.videoHeight);
+                  var data = canvas.toDataURL('image/png');
+                  image.setAttribute('src', data);
+                  image.style.display = '';
+              }
+              finish.classList.add('disabled');
+              cancel.innerHTML = 'Reset';
                 enableDisableDraw.classList.remove('disabled');
+              tempVideo.style.display = 'none';
+              play();
+          }
 
-                play();
-            }
 
             finish.addEventListener("click", stopRecording);
-
-            function cancelOrReset(ev) {
-                if (mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                }
-                rowMediaButtons.style.display = '';
-                rowCaptureButtons.style.display = 'none';
-                image.style.display = '';
-                image.src = '{% static "images/photo-placeholder.svg" %}';
-                tempVideo.style.display = 'none';
-                recordedVideo.style.display = 'none';
-                enableDisableDraw.classList.add('disabled');
-            }
-
-            cancel.addEventListener("click", cancelOrReset);
-
-            function play() {
-                var superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
-                recordedVideo.src = window.URL.createObjectURL(superBuffer);
-            }
-
-            var mediaSource = new MediaSource();
-            mediaSource.addEventListener('sourceopen', function (event) {
-                console.log('MediaSource opened');
-                // TODO adjust sourcebuffer for audio vs video?
-                sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
-                console.log('Source buffer: ', sourceBuffer);
-            }, false);
-
+          function cancelOrReset(ev) {
+              if (mediaRecorder.state === 'recording') {
+                  mediaRecorder.stop();
+              }
+              rowMediaButtons.style.display = '';
+              rowCaptureButtons.style.display = 'none';
+              image.style.display = '';
+              image.src = '{% static "images/photo-placeholder.svg" %}';
+              tempVideo.style.display = 'none';
+              recordedVideo.style.display = 'none';
+          }
+          cancel.addEventListener("click", cancelOrReset);
+          function play() {
+              var superBuffer = new Blob(recordedBlobs, {type: 'video/webm'});
+              recordedVideo.src = window.URL.createObjectURL(superBuffer);
+          }
+          var mediaSource = new MediaSource();
+          mediaSource.addEventListener('sourceopen', function (event) {
+              console.log('MediaSource opened');
+              // TODO adjust sourcebuffer for audio vs video?
+              sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+              console.log('Source buffer: ', sourceBuffer);
+          }, false);
+          startPhoto.addEventListener("click", function (e) {
+              navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(handleSuccess).catch(handleError);
+              isPhoto = true;
+              isVideo = false;
+              isAudio = false;
+          });
+          startVideo.addEventListener("click", function (e) {
+              navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(handleSuccess).catch(handleError);
+              isPhoto = false;
+              isVideo = true;
+              isAudio = false;
+          });
+          startAudio.addEventListener("click", function (e) {
+              navigator.mediaDevices.getUserMedia({audio: true, video: false}).then(handleSuccess).catch(handleError);
+              isPhoto = false;
+              isVideo = false;
+              isAudio = true;
+          });
+          recordedVideo.addEventListener('error', function (ev) {
+              console.error('MediaRecording.recordedMedia.error()');
+              alert('Your browser can not play\n\n' + recordedVideo.src
+                  + '\n\n media clip. event: ' + JSON.stringify(ev));
+          }, true);
           $$('.chip').on('click', function (e) {
               var chip = $$(this);
               chip.toggleClass('bg-blue');
               var text = chip.find('.sublevel-desc').html();
               $$('#sublevel-description').html(text);
-
               var example = chip.find('.sublevel-example').html();
               $$('#sublevel-examples').html(example);
               new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
-            recordedVideo.addEventListener('error', function (ev) {
-                console.error('MediaRecording.recordedMedia.error()');
-                alert('Your browser can not play\n\n' + recordedVideo.src
-                    + '\n\n media clip. event: ' + JSON.stringify(ev));
-            }, true);
+          });
+          $$('.student').on('click', function (e) {
+              $$(this).toggleClass('bg-blue')
+          });
+          {% for message in messages %}
+              myApp.alert('{{ message }}',
+                  {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
+          {% endfor %}
 
+            };
 
-
-            $$('.student').on('click', function (e) {
-                $$(this).toggleClass('bg-blue')
-            });
-            {% for message in messages %}
-                myApp.alert('{{ message }}',
-                    {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
-            {% endfor %}
-
-        };
         if (typeof $$ !== 'undefined') {
             pageInit();
         } else {
             document.addEventListener("DOMContentLoaded", pageInit);
         }
+
     </script>
 </div>
