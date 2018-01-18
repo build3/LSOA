@@ -19,6 +19,46 @@
                 {# EaselJS #}
                 <canvas id="easel-canvas" width="500" height="300"
                         style="display: none;height: calc(50vw * .75); width: 100%;position: absolute;top: 0;left: 0;"></canvas>
+        <div style="height: 100px;">
+          <div class="chip active">
+            <div class="chip-label">ToMA 1A</div>
+          </div>
+          <div class="chip">
+            <div class="chip-label">ToMA 1B</div>
+          </div>
+          <div class="chip">
+            <div class="chip-label">ToMA 1C</div>
+          </div>
+          <div class="chip">
+            <div class="chip-label">ToMA 2A</div>
+          </div>
+        <div style="">
+          {% for sublevel in constructs %}
+            <div class="chip" data-value="{{ sublevel.id }}">
+              <div class="chip-label sublevel">
+                {{ sublevel.name }}
+                <div class="sublevel-desc" style="display: none;">
+                  <h4>{{ sublevel.name }}</h4>
+                  <p>{{ sublevel.description }}</p>
+                </div>
+                <div class="sublevel-example" style="display: none;">
+                  <div class="swiper-container" data-pagination=".swiper-pagination">
+
+                    <div class="swiper-wrapper">
+                      {% for example in sublevel.examples.all %}
+                        <div class="swiper-slide" style="text-align: center;">
+                          <h4>{{ sublevel.name }}</h4>
+                          <p>{{ example.text }}</p>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="swiper-pagination"></div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          {% endfor %}
 
                 <div id="row-media-buttons" class="buttons-row" style="height:30px;">
                     <a id="startphoto" class="button">Take photo</a>
@@ -129,6 +169,7 @@
                 </div>
             </div>
         </div>
+
         <a href="#" onclick="mainView.router.refreshPage();" class="floating-button color-green">
             <i class="fa fa-2x fa-plus"></i>
 
@@ -409,34 +450,15 @@
                 console.log('Source buffer: ', sourceBuffer);
             }, false);
 
-            startPhoto.addEventListener("click", function (e) {
-                navigator.mediaDevices.getUserMedia({
-                    audio: false,
-                    video: true
-                }).then(handleSuccess).catch(handleError);
-                isPhoto = true;
-                isVideo = false;
-                isAudio = false;
-            });
-            startVideo.addEventListener("click", function (e) {
-                navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: true
-                }).then(handleSuccess).catch(handleError);
-                isPhoto = false;
-                isVideo = true;
-                isAudio = false;
-            });
-            startAudio.addEventListener("click", function (e) {
-                navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false
-                }).then(handleSuccess).catch(handleError);
-                isPhoto = false;
-                isVideo = false;
-                isAudio = true;
-            });
+          $$('.chip').on('click', function (e) {
+              var chip = $$(this);
+              chip.toggleClass('bg-blue');
+              var text = chip.find('.sublevel-desc').html();
+              $$('#sublevel-description').html(text);
 
+              var example = chip.find('.sublevel-example').html();
+              $$('#sublevel-examples').html(example);
+              new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
             recordedVideo.addEventListener('error', function (ev) {
                 console.error('MediaRecording.recordedMedia.error()');
                 alert('Your browser can not play\n\n' + recordedVideo.src
@@ -444,9 +466,7 @@
             }, true);
 
 
-            $$('.chip').on('click', function (e) {
-                $$(this).toggleClass('bg-blue')
-            });
+
             $$('.student').on('click', function (e) {
                 $$(this).toggleClass('bg-blue')
             });

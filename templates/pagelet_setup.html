@@ -1,56 +1,70 @@
 <div class="page">
+  {{ wizard.form.media }}
   <div class="page-content">
-    <form action="{% url 'observation_setup_view' %}" method="post">
-      {% csrf_token %}
-      <div class="row no-gutter full-height">
-        <div class="col-25 full-height">
+    <div class="row no-gutter full-height">
+      <div class="col-25 full-height">
 
-        </div>
-        <div class="col-50 full-height">
-          <p><a href="{% url 'admin:index' %}" class="button external">Set Up Students/Groups</a></p>
-          <div class="list-block">
+      </div>
+      <div class="col-50 full-height">
+        <p>Setup: Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+        <form action="{% url 'observation_setup_view' %}" method="post">
+          {% csrf_token %}
+          {{ wizard.management_form }}
+
+          <div class="list-block inputs-list">
             <ul>
-              <li>
-                <div class="item-content">
-                  <div class="item-inner">
-                    <div class="item-title label">Course</div>
-                    <div class="item-input">
-                      {{ form.course }}
+              {% for field in wizard.form %}
+                <li>
+                  {% if field.field.widget.input_type == 'select' %}
+                    <a href="#" class="item-link smart-select">
+                      {{ field }}
+                      <div class="item-content">
+                        <div class="item-inner">
+                          <div class="item-title label">{{ field.label }}</div>
+                        </div>
+                      </div>
+                      {% if field.errors %}
+                        {% for error in field.errors %}
+                        <div class="item-content small color-red">{{ error }}</div>
+                        {% endfor %}
+                      {% endif %}
+                    </a>
+                  {% else %}
+                    <div class="item-content">
+                      <div class="item-inner">
+                        <div class="item-title label">{{ field.label }}</div>
+                        <div class="item-input">
+                          {{ field }}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                <div class="item-content">
-                  <div class="item-inner">
-                    <div class="item-title label">Groupings</div>
-                    <div class="item-input">
-                      {{ form.grouping }}
-                    </div>
-                  </div>
-                </div>
-              </li>
+                  {% endif %}
+                </li>
+              {% endfor %}
             </ul>
           </div>
-        </div>
-        <div class="col-25 full-height">
-
-        </div>
+          {% if wizard.steps.prev %}
+            <p class="buttons-row">
+              <button class="button button-big color-gray" name="wizard_goto_step" type="submit"
+                      value="{{ wizard.steps.prev }}">Previous Step
+              </button>
+            </p>
+          {% endif %}
+        {% if wizard.steps.next %}
+          <input class="button button-big" type="submit" value="Next"/>
+        {% else %}
+          <input class="button button-big" type="submit" value="Submit"/>
+        {% endif %}
+        </form>
       </div>
-      <button type="submit" class="floating-button color-green">
-        <i class="fa fa-2x fa-play"></i>
+      <div class="col-25 full-height">
 
-      </button>
-    </form>
+      </div>
+    </div>
   </div>
 
   <script>
       var pageInit = function () {
-          $$('.chip').on('click', function (e) {
-              $$(this).toggleClass('bg-blue')
-          });
-          $$('.student').on('click', function (e) {
-              $$(this).toggleClass('bg-blue')
-          });
           {% for message in messages %}
               myApp.alert('{{ message }}',
                   {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
