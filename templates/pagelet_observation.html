@@ -8,8 +8,18 @@
 {% endblock %}
 
 <div class="page">
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="title sliding">{% block title %}LSOA: Observation{% endblock %}</div>
+      <div class="right">
+        <a href="#" data-panel="left" class="link panel-open icon-only">
+          <i class="fa fa-bars"></i>
+        </a>
+      </div>
+    </div>
+  </div>
   <div class="page-content">
-    <div class="row no-gutter full-height">
+    <div class="row no-gap full-height">
       <div class="col-50 full-height" style="position: relative;">
         <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
              style="width: 100%; height: calc(50vw * .75)">
@@ -21,12 +31,12 @@
         <canvas id="easel-canvas" width="500" height="300"
                 style="display: none;height: calc(50vw * .75); width: 100%;position: absolute;top: 0;left: 0;"></canvas>
 
-        <div id="row-media-buttons" class="buttons-row" style="height:30px;">
+        <div id="row-media-buttons" class="segmented" style="height:30px;">
           <a id="startphoto" class="button">Take photo</a>
           <a id="startvideo" class="button">Take video</a>
           <a id="startaudio" class="button">Record Audio</a>
         </div>
-        <div id="row-capture-buttons" class="buttons-row" style="display:none; height:30px;">
+        <div id="row-capture-buttons" class="segmented" style="display:none; height:30px;">
           <a id="cancel" class="button">Cancel</a>
           <a id="finish" class="button">Finish</a>
           <a id="enable-draw" class="button enab disabled">
@@ -47,8 +57,7 @@
                   <p>{{ sublevel.description }}</p>
                 </div>
                 <div class="sublevel-example" style="display: none;">
-                  <div class="swiper-container" data-pagination=".swiper-pagination">
-
+                  <div class="swiper-container swiper-init">
                     <div class="swiper-wrapper">
                       {% for example in sublevel.examples.all %}
                         <div class="swiper-slide" style="text-align: center;">
@@ -57,7 +66,7 @@
                         </div>
                       {% endfor %}
                     </div>
-                    <div class="swiper-pagination"></div>
+
                   </div>
                 </div>
               </div>
@@ -75,7 +84,7 @@
       </div>
       <div class="col-25 full-height">
         <h4 style="text-align: center; margin: 0;">Notes</h4>
-        <textarea style="width: calc(100% - 6px); height: 359px; font-size: 2em;"></textarea>
+        <textarea style="width: calc(100% - 6px); height: 359px; font-size: 2em; background-color: white;"></textarea>
         <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
         <div id="sublevel-examples" style="height: 300px;">
           <p>Once you select a learning construct using the toggle buttons to the left, different
@@ -84,7 +93,7 @@
       </div>
       <div class="col-25 full-height">
         <h4 style="text-align: center; margin: 0;">Students</h4>
-        <div class="list-block" style="margin: 0;">
+        <div class="list" style="margin: 0;">
           <ul>
             {% if grouping %}
               {% for group in grouping.groups.all %}
@@ -95,7 +104,7 @@
                     </div>
                   </a>
                   <div class="accordion-item-content">
-                    <div class="list-block">
+                    <div class="list">
                       <ul>
                         {% for student in group.students.all %}
                           <li>
@@ -124,10 +133,11 @@
         </div>
       </div>
     </div>
-    <a href="#" onclick="mainView.router.refreshPage();" class="floating-button color-green">
-      <i class="fa fa-2x fa-plus"></i>
-
-    </a>
+    <div class="fab fab-right-bottom color-green">
+      <a href="#" onclick="location.reload();">
+        <i class="fa fa-2x fa-plus"></i>
+      </a>
+    </div>
   </div>
   <script>
 
@@ -432,7 +442,7 @@
           }, true);
           $$('.chip').on('click', function (e) {
               var chip = $$(this);
-              chip.toggleClass('bg-blue');
+              chip.toggleClass('bg-color-blue');
               var text = chip.find('.sublevel-desc').html();
               $$('#sublevel-description').html(text);
               var example = chip.find('.sublevel-example').html();
@@ -440,14 +450,12 @@
               new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
           });
           $$('.student').on('click', function (e) {
-              $$(this).toggleClass('bg-blue')
+              $$(this).toggleClass('bg-color-blue')
           });
           $$('.group').on('click', function (e) {
               $$(this).toggleClass('selected-group');
-              if ($$(this).hasClass('selected-group')) {
-                $$(this).closest('.accordion-item').find('.student').addClass('bg-blue');
-              } else {
-                $$(this).closest('.accordion-item').find('.student').removeClass('bg-blue');
+              if (!$$(this).hasClass('selected-group')) {
+                  $$(this).closest('.accordion-item').find('.student').removeClass('bg-color-blue');
               }
           });
 

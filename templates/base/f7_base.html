@@ -18,32 +18,14 @@
 
 {% block base-content %}
 
-  <div class="statusbar-overlay"></div>
-
-  <div class="panel-overlay"></div>
+  <div class="statusbar"></div>
 
   <div class="panel panel-left panel-cover">
     {% include 'components/_leftpanel.html' %}
   </div>
 
-  <div class="panel panel-right panel-reveal">
-    {% include 'components/_rightpanel.html' %}
-  </div>
-
-  <div class="views">
-    <div class="view view-main navbar-through">
-      <div class="navbar">
-        <div class="navbar-inner">
-          <div class="center sliding">{% block title %}{% endblock %}</div>
-          <div class="right"><a href="#" data-panel="left" class="link open-panel icon-only"><i
-              class="icon icon-bars"></i></a></div>
-        </div>
-      </div>
-
-      <div class="pages">
-        {% block content %}
-        {% endblock %}
-      </div>
-    </div>
+  <div class="view view-main">
+      {% block content %}
+      {% endblock %}
   </div>
 {% endblock %}

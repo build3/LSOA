@@ -1,4 +1,15 @@
 <div class="page">
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="title sliding">{% block title %}LSOA: Setup{% endblock %}</div>
+      <div class="right">
+        <a href="#" data-panel="left" class="link panel-open icon-only">
+          <i class="fa fa-bars"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
   {{ wizard.form.media }}
   <div class="page-content">
     <div class="row no-gutter full-height">
@@ -11,35 +22,36 @@
           {% csrf_token %}
           {{ wizard.management_form }}
 
-          <div class="list-block inputs-list">
+          <div class="list">
             <ul>
               {% for field in wizard.form %}
-                <li>
-                  {% if field.field.widget.input_type == 'select' %}
-                    <a href="#" class="item-link smart-select">
+                {% if field.field.widget.input_type == 'select' %}
+                  <li>
+                    <a href="#" class="item-link smart-select smart-select-init"
+                       data-close-on-select="true">
                       {{ field }}
                       <div class="item-content">
                         <div class="item-inner">
-                          <div class="item-title label">{{ field.label }}</div>
+                          <div class="item-title">{{ field.label }}</div>
                         </div>
                       </div>
                       {% if field.errors %}
                         {% for error in field.errors %}
-                        <div class="item-content small color-red">{{ error }}</div>
+                          <div class="item-content small color-red">{{ error }}</div>
                         {% endfor %}
                       {% endif %}
                     </a>
-                  {% else %}
-                    <div class="item-content">
-                      <div class="item-inner">
-                        <div class="item-title label">{{ field.label }}</div>
-                        <div class="item-input">
-                          {{ field }}
-                        </div>
+                  </li>
+                {% else %}
+                  <li class="item-content item-input">
+                    <div class="item-inner">
+                      <div class="item-title item-label">{{ field.label }}</div>
+                      <div class="item-input-wrap">
+                        {{ field }}
                       </div>
                     </div>
-                  {% endif %}
-                </li>
+                  </li>
+                {% endif %}
               {% endfor %}
             </ul>
           </div>
@@ -50,11 +62,11 @@
               </button>
             </p>
           {% endif %}
-        {% if wizard.steps.next %}
-          <input class="button button-big" type="submit" value="Next"/>
-        {% else %}
-          <input class="button button-big" type="submit" value="Submit"/>
-        {% endif %}
+          {% if wizard.steps.next %}
+            <input class="button button-big" type="submit" value="Next"/>
+          {% else %}
+            <input class="button button-big" type="submit" value="Submit"/>
+          {% endif %}
         </form>
       </div>
       <div class="col-25 full-height">

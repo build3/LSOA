@@ -6,27 +6,39 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#2196f3">
   <title>{% block title %}{% endblock %}</title>
   {% compress css %}
-    <link href="{% static 'vendor/framework7/css/framework7.ios.min.css' %}" rel="stylesheet">
-    <link href="{% static 'vendor/framework7/css/framework7.ios.colors.min.css' %}" rel="stylesheet">
+    <link href="{% static 'vendor/framework7/css/framework7.min.css' %}" rel="stylesheet">
     <link href="{% static 'vendor/fontawesome4/css/font-awesome.min.css' %}" rel="stylesheet">
   {% endcompress %}
   {% block extrastyles %}
   {% endblock %}
 </head>
 <body>
-{% block base-content %}
-{% endblock %}
+<div id="app">
+  {% block base-content %}
+  {% endblock %}
+</div>
 
 <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/framework7/js/framework7.min.js' %}"></script>
 <script type="text/javascript">
-    myApp = new Framework7();  // make it global
+    myApp = new Framework7({
+        // App root element
+        root: '#app',
+        // App Name
+        name: 'LSOA App',
+        // App id
+        id: 'com.trailblazingtech.lsoa',
+        // Enable swipe panel
+        panel: {
+            swipe: 'left'
+        }
+    });  // make it global
     var $$ = Dom7;
-    var leftView = myApp.addView('.view-left', {dynamicNavbar: true});
-    mainView = myApp.addView('.view-main', {dynamicNavbar: true}); // also global
+    var leftView = myApp.views.create('.view-left', {dynamicNavbar: true});
+    mainView = myApp.views.create('.view-main', {dynamicNavbar: true, preloadPreviousPage: false}); // also global
 
     {# We want to automatically run scripts on freshly loaded pages #}
     $$(document).on("pageInit", function (e) {

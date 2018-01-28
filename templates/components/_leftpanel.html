@@ -1,64 +1,60 @@
-<div class="view view-left navbar-through">
-  <div class="navbar">
-    <div class="navbar-inner">
-      <div class="left"></div>
-      <div class="center sliding">Menu</div>
-      <div class="right"></div>
+<div class="view view-left">
+  <div class="page">
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="title">Menu</div>
+      </div>
     </div>
-  </div>
-  <div class="pages">
-    <div data-page="index-left" class="page">
-      <div class="page-content">
-        <div class="content-block-title">Current Class</div>
-        <div class="list-block">
-          <ul>
-            <li><a href="#" class="item-link close-panel" data-view=".view-main">
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-title">Edit Last Observation</div>
-                </div>
+    <div class="page-content">
+      <div class="content-block-title">Current Class</div>
+      <div class="list-block">
+        <ul>
+          <li><a href="#" class="item-link close-panel" data-view=".view-main">
+            <div class="item-content">
+              <div class="item-inner">
+                <div class="item-title">Edit Last Observation</div>
               </div>
-            </a></li>
-            <li><a href="{% url 'observation_setup_view' %}" class="item-link close-panel" data-view=".view-main">
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-title">End Class</div>
-                </div>
+            </div>
+          </a></li>
+          <li><a href="{% url 'observation_setup_view' %}" class="item-link close-panel" data-view=".view-main">
+            <div class="item-content">
+              <div class="item-inner">
+                <div class="item-title">End Class</div>
               </div>
-            </a></li>
-          </ul>
-        </div>
-        <div class="content-block-title">Settings</div>
-        <div class="list-block">
-          <ul>
-            <li><a href="{% url 'admin:index' %}" class="item-link close-panel external">
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-title">Set Up Students/Groups</div>
-                </div>
+            </div>
+          </a></li>
+        </ul>
+      </div>
+      <div class="content-block-title">Settings</div>
+      <div class="list-block">
+        <ul>
+          <li><a href="{% url 'admin:index' %}" class="item-link close-panel external">
+            <div class="item-content">
+              <div class="item-inner">
+                <div class="item-title">Set Up Students/Groups</div>
               </div>
-            </a></li>
-{#            <li><a href="#" data-view=".view-main" class="item-link close-panel">#}
-{#              <div class="item-content">#}
-{#                <div class="item-inner">#}
-{#                  <div class="item-title">Disable Something</div>#}
-{#                </div>#}
-{#              </div>#}
-{#            </a></li>#}
+            </div>
+          </a></li>
+          {#            <li><a href="#" data-view=".view-main" class="item-link close-panel">#}
+          {#              <div class="item-content">#}
+          {#                <div class="item-inner">#}
+          {#                  <div class="item-title">Disable Something</div>#}
+          {#                </div>#}
+          {#              </div>#}
+          {#            </a></li>#}
 
-          </ul>
-        </div>
-        <div class="list-block">
-          <ul>
-            <li><a href="{% url 'account_logout' %}" class="external">
-              <div class="item-content bg-red color-white">
-                <div class="item-inner">
-                  <div class="item-title">Log Out</div>
-                </div>
+        </ul>
+      </div>
+      <div class="list-block">
+        <ul>
+          <li><a href="{% url 'account_logout' %}" class="external">
+            <div class="item-content bg-red color-white">
+              <div class="item-inner">
+                <div class="item-title">Log Out</div>
               </div>
-            </a></li>
-          </ul>
-        </div>
+            </div>
+          </a></li>
+        </ul>
       </div>
     </div>
   </div>
