@@ -49,7 +49,7 @@
         {#    Constructs    #}
         <div style="">
           {% for sublevel in constructs %}
-            <div class="chip" data-value="{{ sublevel.id }}" style="padding: 15px 15px;" onclick="">
+            <div class="chip" data-value="{{ sublevel.id }}" style="padding: 15px 15px;">
               <div class="chip-label sublevel">
                 {{ sublevel.name }}
                 <div class="sublevel-desc" style="display: none;">
@@ -122,7 +122,7 @@
               {% endfor %}
             {% else %}
               {% for student in course.students.all %}
-                <li class="item-content student" onclick="">
+                <li class="item-content student">
                   <div class="item-inner">
                     <div class="item-title">{{ student }}</div>
                   </div>
@@ -410,6 +410,7 @@
               recordedVideo.src = window.URL.createObjectURL(superBuffer);
           }
 
+          /*
           var mediaSource = new MediaSource();
           mediaSource.addEventListener('sourceopen', function (event) {
               console.log('MediaSource opened');
@@ -417,6 +418,7 @@
               sourceBuffer = mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
               console.log('Source buffer: ', sourceBuffer);
           }, false);
+          */
           startPhoto.addEventListener("click", function (e) {
               navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(handleSuccess).catch(handleError);
               isPhoto = true;
@@ -440,7 +442,7 @@
               alert('Your browser can not play\n\n' + recordedVideo.src
                   + '\n\n media clip. event: ' + JSON.stringify(ev));
           }, true);
-          $$('.chip').on('click', function (e) {
+          $$('.chip').on('touchstart', function (e) {
               var chip = $$(this);
               chip.toggleClass('bg-color-blue');
               var text = chip.find('.sublevel-desc').html();
@@ -448,11 +450,11 @@
               var example = chip.find('.sublevel-example').html();
               $$('#sublevel-examples').html(example);
               new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
-          });
+          });;
           $$('.student').on('click', function (e) {
               $$(this).toggleClass('bg-color-blue')
           });
-          $$('.group').on('click', function (e) {
+          $$('.group').on('touchstart', function (e) {
               $$(this).toggleClass('selected-group');
               if (!$$(this).hasClass('selected-group')) {
                   $$(this).closest('.accordion-item').find('.student').removeClass('bg-color-blue');
@@ -462,7 +464,7 @@
       };
 
       {% for message in messages %}
-          myApp.alert('{{ message }}',
+          window.myApp.alert('{{ message }}',
               {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
       {% endfor %}
 

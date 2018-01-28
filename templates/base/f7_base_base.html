@@ -36,9 +36,10 @@
             swipe: 'left'
         }
     });  // make it global
+    window.myApp = myApp;
     var $$ = Dom7;
-    var leftView = myApp.views.create('.view-left', {dynamicNavbar: true});
-    mainView = myApp.views.create('.view-main', {dynamicNavbar: true, preloadPreviousPage: false}); // also global
+    var leftView = myApp.views.create('.view-left', {});
+    mainView = myApp.views.create('.view-main', {preloadPreviousPage: false}); // also global
 
     {# We want to automatically run scripts on freshly loaded pages #}
     $$(document).on("pageInit", function (e) {
