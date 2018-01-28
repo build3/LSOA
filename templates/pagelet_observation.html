@@ -426,7 +426,7 @@
               isAudio = false;
           });
           startVideo.addEventListener("click", function (e) {
-              navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(handleSuccess).catch(handleError);
+              navigator.mediaDevices.getUserMedia({audio: true, video: {facingMode: "environment"}}).then(handleSuccess).catch(handleError);
               isPhoto = false;
               isVideo = true;
               isAudio = false;
