@@ -440,7 +440,7 @@
               alert('Your browser can not play\n\n' + recordedVideo.src
                   + '\n\n media clip. event: ' + JSON.stringify(ev));
           }, true);
-          $$('.chip').on('click', function (e) {
+          $$('.chip').on('touchstart', function (e) {
               var chip = $$(this);
               chip.toggleClass('bg-color-blue');
               var text = chip.find('.sublevel-desc').html();
@@ -449,10 +449,10 @@
               $$('#sublevel-examples').html(example);
               new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
           });
-          $$('.student').on('click', function (e) {
+          $$('.student').on('touchstart', function (e) {
               $$(this).toggleClass('bg-color-blue')
           });
-          $$('.group').on('click', function (e) {
+          $$('.group').on('touchstart', function (e) {
               $$(this).toggleClass('selected-group');
               if (!$$(this).hasClass('selected-group')) {
                   $$(this).closest('.accordion-item').find('.student').removeClass('bg-color-blue');
