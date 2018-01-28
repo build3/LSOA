@@ -23,8 +23,8 @@
       <div class="col-50 full-height" style="position: relative;">
         <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
              style="width: 100%; height: calc(50vw * .75)">
-        <video id="temp" style="display:none;width: 100%; height: calc(50vw * .75)" autoplay muted></video>
-        <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" controls></video>
+        <video id="temp" style="display:none;width: 100%; height: calc(50vw * .75)" autoplay muted playsinline></video>
+        <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" controls playsinline></video>
         <canvas id="canvas" style="display: none;"></canvas>
 
         {#        easeljs   #}
