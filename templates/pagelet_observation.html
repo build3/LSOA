@@ -420,7 +420,7 @@
           }, false);
           */
           startPhoto.addEventListener("click", function (e) {
-              navigator.mediaDevices.getUserMedia({audio: false, video: true}).then(handleSuccess).catch(handleError);
+              navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: 'user'}}).then(handleSuccess).catch(handleError);
               isPhoto = true;
               isVideo = false;
               isAudio = false;
@@ -450,7 +450,7 @@
               var example = chip.find('.sublevel-example').html();
               $$('#sublevel-examples').html(example);
               new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
-          });;
+          });
           $$('.student').on('click', function (e) {
               $$(this).toggleClass('bg-color-blue')
           });
@@ -464,8 +464,9 @@
       };
 
       {% for message in messages %}
-          window.myApp.alert('{{ message }}',
-              {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
+          window.myApp.toast.create({
+              text: '{{ message }}'
+          }).open();
       {% endfor %}
 
       if (typeof $$ !== 'undefined') {
