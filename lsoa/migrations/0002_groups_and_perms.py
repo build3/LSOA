@@ -61,6 +61,7 @@ def create_groups_and_permissions(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ('lsoa', '0001_initial'),
+        ('sites', '0001_initial'),
     ]
 
     operations = [
