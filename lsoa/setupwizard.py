@@ -46,8 +46,6 @@ class ConstructModelMultipleChoiceField(CustomModelMultipleChoiceField):
 
         try:
             self.choices = [(cat_name, data) for cat_name, data in _choices.items()]
-            print('choices')
-            print(self.choices)
         except:
             pass
 
