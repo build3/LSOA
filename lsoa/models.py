@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.db import models
 from django.utils.deconstruct import deconstructible
 from django_extensions.db.models import TimeStampedModel
+from tinymce.models import HTMLField
 
 from utils.ownership import OwnerMixin
 
@@ -130,7 +131,7 @@ class LearningConstructSublevelExample(TimeStampedModel):
     proper content.
     """
     sublevel = models.ForeignKey('lsoa.LearningConstructSublevel', related_name='examples', on_delete=models.CASCADE)
-    text = models.TextField()
+    text = HTMLField()
     image = models.ImageField(upload_to=UploadToPathAndRename('example_images/'), blank=True, null=True)
     order = models.IntegerField(default=0)
 

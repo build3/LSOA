@@ -5,7 +5,7 @@ from .models import Course, LearningConstruct, LearningConstructLevel, LearningC
 
 admin.site.site_header = 'LSOA Settings'
 admin.site.site_title = 'LSOA Admin'
-admin.site.site_url = None
+admin.site.site_url = '/'
 admin.site.index_title = 'Settings'
 
 

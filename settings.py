@@ -37,18 +37,20 @@ DJANGO_APPS = [
     'django.contrib.sites',
 ]
 BACKEND_THIRD_PARTY_APPS = [
-    'django_extensions',                    # all kinds of goodness
-    'raven.contrib.django.raven_compat',    # sentry-django connector
-    'allauth',                              # Authentication/Registration
-    'allauth.account',                      # Authentication/Registration
-    'formtools',                            # for wizard views
-    'storages',
+    'django_extensions',  # all kinds of goodness
+    'raven.contrib.django.raven_compat',  # sentry-django connector
+    'allauth',  # Authentication/Registration
+    'allauth.account',  # Authentication/Registration
+    'formtools',  # for wizard views
+    'storages',  # for S3-backed media
 ]
 
 FRONTEND_THIRD_PARTY_APPS = [
-    'compressor',                           # asset compression
-    'bootstrap4',                           # handy b4 template tags
-    'tz_detect',                            # async JS timezone detector
+    'compressor',  # asset compression
+    'bootstrap4',  # handy b4 template tags
+    'tz_detect',  # async JS timezone detector
+    'related_select',  # for AJAX-powered related select boxes
+    'tinymce',  # for HTML editor for sublevel examples
 ]
 LOCAL_APPS = [
     'taskapp',
@@ -159,7 +161,6 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = reverse_lazy('account_login')  # to use allauth instead of django admin login page
 LOGIN_REDIRECT_URL = '/'  # TODO
 
-
 # CELERY SETTINGS
 
 CELERY_BROKER_URL = REDIS_LOCATION
@@ -221,3 +222,6 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_REGION_NAME = 'us-east-2'
+
+# OTHER PLUGIN SETTINGS
+TINYMCE_DEFAULT_CONFIG = {'height': 400, 'width': 600}

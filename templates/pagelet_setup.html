@@ -1,7 +1,9 @@
+{% load staticfiles %}
 <div class="page">
   <div class="navbar">
     <div class="navbar-inner">
-      <div class="title sliding">{% block title %}LSOA: Setup{% endblock %}</div>
+      <div class="left"></div>
+      <div class="title">{% block title %}LSOA: Setup{% endblock %}</div>
       <div class="right">
         <a href="#" data-panel="left" class="link panel-open icon-only">
           <i class="fa fa-bars"></i>
@@ -10,21 +12,24 @@
     </div>
   </div>
 
-  {{ wizard.form.media }}
+  {{ form.media }}
+
   <div class="page-content">
     <div class="row no-gutter full-height">
       <div class="col-25 full-height">
 
       </div>
       <div class="col-50 full-height">
-        <p>Setup: Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
         <form action="{% url 'observation_setup_view' %}" method="post">
+          {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+              <div class="item-content small color-red">{{ error }}</div>
+            {% endfor %}
+          {% endif %}
           {% csrf_token %}
-          {{ wizard.management_form }}
-
           <div class="list">
             <ul>
-              {% for field in wizard.form %}
+              {% for field in form %}
                 {% if field.field.widget.input_type == 'select' %}
                   <li>
                     <a href="#" class="item-link smart-select smart-select-init"
@@ -51,23 +56,23 @@
                       </div>
                     </div>
                   </li>
+                  {% if field.errors %}
+                    {% for error in field.errors %}
+                      <div class="item-content small color-red">{{ error }}</div>
+                    {% endfor %}
+                  {% endif %}
                 {% endif %}
               {% endfor %}
             </ul>
           </div>
-          {% if wizard.steps.prev %}
-            <p class="buttons-row">
-              <button class="button button-big color-gray" name="wizard_goto_step" type="submit"
-                      value="{{ wizard.steps.prev }}">Previous Step
-              </button>
-            </p>
-          {% endif %}
-          {% if wizard.steps.next %}
-            <input class="button button-big" type="submit" value="Next"/>
-          {% else %}
-            <input class="button button-big" type="submit" value="Submit"/>
-          {% endif %}
+          <input class="button button-big" type="submit" value="Submit"/>
         </form>
+        <br/>
+        <div>
+          <a href="{% url 'admin:index' %}" class="button button-big external">
+            Set Up Students/Groups
+          </a>
+        </div>
       </div>
       <div class="col-25 full-height">
 
@@ -76,17 +81,18 @@
   </div>
 
   <script>
-      var pageInit = function () {
-          {% for message in messages %}
-              myApp.alert('{{ message }}',
-                  {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
-          {% endfor %}
-      };
-      if (typeof $$ !== 'undefined') {
-          pageInit();
-      } else {
-          document.addEventListener("DOMContentLoaded", pageInit);
-      }
+    var pageInit = function () {
+      {% for message in messages %}
+        myApp.alert('{{ message }}',
+          {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
+      {% endfor %}
+    };
+    if (typeof $$ !== 'undefined') {
+      pageInit();
+    } else {
+      document.addEventListener("DOMContentLoaded", pageInit);
+    }
 
   </script>
+  <script src='{% static "django-related-select.js" %}'></script>
 </div>

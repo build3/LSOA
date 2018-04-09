@@ -14,6 +14,7 @@
   {% endcompress %}
   {% block extrastyles %}
   {% endblock %}
+  <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 </head>
 <body>
 <div id="app">
@@ -21,7 +22,7 @@
   {% endblock %}
 </div>
 
-<script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+
 <script type="text/javascript" src="{% static 'vendor/framework7/js/framework7.min.js' %}"></script>
 <script type="text/javascript">
     myApp = new Framework7({
@@ -34,7 +35,6 @@
     });  // make it global
     window.myApp = myApp;
     var $$ = Dom7;
-    var leftView = myApp.views.create('.view-left', {});
     mainView = myApp.views.create('.view-main', {preloadPreviousPage: false}); // also global
 
     {# We want to automatically run scripts on freshly loaded pages #}

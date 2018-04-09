@@ -18,6 +18,8 @@ Pillow==5.1.0                       # to deal with images
 ## FRONTEND REQUIREMENTS
 django-compressor==2.2              # asset compressor
 django-bootstrap4==0.0.6            # bootstrap4 forms
+django-related-select==0.9.1        # for related select fields on forms with AJAX
+django-tinymce==2.7.0               # for HTML editor for examples
 
 ## ASYNC TASKS
 celery==4.1.0                       # Async Task Framework

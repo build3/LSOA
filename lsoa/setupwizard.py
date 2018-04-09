@@ -51,7 +51,7 @@ class ConstructModelMultipleChoiceField(CustomModelMultipleChoiceField):
 
 
 class ChooseLearningConstructSublevelsForm(forms.Form):
-    constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(),)
+    constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(), )
 
 
 class SetupWizard(LoginRequiredMixin, PageletMixin, SessionWizardView):
