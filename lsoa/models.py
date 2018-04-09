@@ -1,7 +1,25 @@
+import os
+from uuid import uuid4
+
 from django.db import models
+from django.utils.deconstruct import deconstructible
 from django_extensions.db.models import TimeStampedModel
 
 from utils.ownership import OwnerMixin
+
+
+@deconstructible
+class UploadToPathAndRename(object):
+
+    def __init__(self, path):
+        self.sub_path = path
+
+    def __call__(self, instance, filename):
+        ext = filename.split('.')[-1]
+        # get filename
+        filename = '{}.{}'.format(uuid4().hex, ext)
+        # return the whole path to the file
+        return os.path.join(self.sub_path, filename)
 
 
 class Course(TimeStampedModel, OwnerMixin):
@@ -106,11 +124,18 @@ class LearningConstructSublevel(TimeStampedModel):
 
 
 class LearningConstructSublevelExample(TimeStampedModel):
-    '''
-    Some description here...
-    '''
+    """
+    An example that goes in the bottom-center help box. Selecting/deselecting a sublevel (the blue/white tags on the
+    bottom left of the observation panel) will cause this box (as well as the description box) to populate with the
+    proper content.
+    """
     sublevel = models.ForeignKey('lsoa.LearningConstructSublevel', related_name='examples', on_delete=models.CASCADE)
     text = models.TextField()
+    image = models.ImageField(upload_to=UploadToPathAndRename('example_images/'), blank=True, null=True)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
 
     def __str__(self):
         return '({}) {}'.format(self.sublevel.name, self.text[:50])

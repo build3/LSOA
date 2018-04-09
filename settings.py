@@ -41,7 +41,8 @@ BACKEND_THIRD_PARTY_APPS = [
     'raven.contrib.django.raven_compat',    # sentry-django connector
     'allauth',                              # Authentication/Registration
     'allauth.account',                      # Authentication/Registration
-    'formtools',
+    'formtools',                            # for wizard views
+    'storages',
 ]
 
 FRONTEND_THIRD_PARTY_APPS = [
@@ -212,3 +213,11 @@ LOGGING = {
         },
     },
 }
+
+# MEDIA SETTINGS
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_REGION_NAME = 'us-east-2'
