@@ -82,6 +82,8 @@
       </div>
       <div class="col-25 full-height">
         <h4 style="text-align: center; margin: 0;">Notes</h4>
+          <video id="recordedNote" style="display:none;width: 100%; height: 150px" muted autoplay controls playsinline></video>
+          <input style="display:none;" type="file" accept="video/*" id="videoNoteUpload"><label class="button" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio note</label>
         <textarea style="width: calc(100% - 6px); height: 359px; font-size: 2em; background-color: white;"></textarea>
         <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
         <div id="sublevel-examples" style="height: 300px;">
@@ -141,6 +143,7 @@
       var pageInit = function () {
           var photoUpload = document.querySelector('input#photoUpload');
           var videoUpload = document.querySelector('input#videoUpload');
+          var videoNoteUpload = document.querySelector('input#videoNoteUpload');
           var image = document.querySelector('img#image');
           var reset = document.querySelector('a#reset');
           var enableDisableDraw = document.querySelector('a#enable-draw');
@@ -150,6 +153,7 @@
           var rowMediaButtons = document.querySelector('div#row-media-buttons');
           var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
           var recordedVideo = document.querySelector('video#recorded');
+          var recordedVideoNote = document.querySelector('video#recordedNote');
 
           $$("#videoUpload").on("change", function (e) {
               recordedVideo.src = URL.createObjectURL(this.files[0]);
@@ -161,6 +165,13 @@
               rowMediaButtons.style.display = 'none';
               // show the annotation buttons
               rowCaptureButtons.style.display = '';
+          });
+
+          $$("#videoNoteUpload").on("change", function (e) {
+              recordedVideoNote.src = URL.createObjectURL(this.files[0]);
+              recordedVideoNote.play();
+              recordedVideoNote.style.display = '';
+              $$('#videoNoteUploadVerb').text('Replace')
           });
 
           $$("#photoUpload").on("change", function (e) {

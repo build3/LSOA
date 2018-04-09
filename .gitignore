@@ -46,3 +46,6 @@ ENV/
 
 # django specific things
 staticfiles/
+
+# DB
+dumpfile.gz
