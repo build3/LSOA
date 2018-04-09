@@ -90,7 +90,8 @@ class OwnerMixinBase(models.Model):
 
 
 class OwnerMixin(OwnerMixinBase):
-    owner = models.ForeignKey(get_user_model(), verbose_name=_('owner'), related_name='%(app_label)s_%(class)s_owner')
+    owner = models.ForeignKey(get_user_model(), verbose_name=_('owner'), related_name='%(app_label)s_%(class)s_owner',
+                              on_delete=models.PROTECT)
 
     class Meta:
         abstract = True
@@ -98,7 +99,8 @@ class OwnerMixin(OwnerMixinBase):
 
 class OptionalOwnerMixin(OwnerMixinBase):
     owner = models.ForeignKey(get_user_model(), verbose_name=_('owner'),
-                              related_name='%(app_label)s_%(class)s_owner', null=True, blank=True)
+                              related_name='%(app_label)s_%(class)s_owner', null=True, blank=True,
+                              on_delete=models.SET_NULL)
 
     class Meta:
         abstract = True

@@ -1,26 +1,24 @@
 ## CORE REQUIREMENTS
-Django==1.11.4                      # Web framework
-psycopg2==2.7.3.2                   # Postgres connector
-dj-database-url==0.4.2              # DB config via ENV vars
-pytz==2017.3                        # Timezone support
-django-tz-detect==0.2.8             # Timezone support on templates
-django-extensions==1.9.7            # Various Django extras
-ipython==6.2.1                      # Better Django shell experience
-django-allauth==0.34.0              # Auth/Registration
+Django==2.0.4                       # Web framework
+psycopg2-binary==2.7.4              # Postgres connector
+dj-database-url==0.5.0              # DB config via ENV vars
+pytz==2018.3                        # Timezone support
+django-tz-detect==0.2.9             # Timezone support on templates
+django-extensions==2.0.6            # Various Django extras
+ipython==6.3.1                      # Better Django shell experience
+django-allauth==0.35.0              # Auth/Registration
 django-formtools==2.1               # Wizard-type forms
 
 ## INFRASTRUCTURE REQUIREMENTS
-boto3==1.6.1
-django-storages==1.6.5
+boto3==1.7.2
+django-storages==1.6.6
 
 ## FRONTEND REQUIREMENTS
 django-compressor==2.2              # asset compressor
-django-bootstrap4==0.0.4            # bootstrap4 forms
+django-bootstrap4==0.0.6            # bootstrap4 forms
 
 ## ASYNC TASKS
 celery==4.1.0                       # Async Task Framework
-django-celery-beat==1.0.1           # Scheduler via Django
-django-celery-results==1.0.1        # Store results via Django
 
 ## PRODUCTION REQUIREMENTS
 whitenoise==3.3.0                   # Serve static files via app server
@@ -28,5 +26,5 @@ gevent==1.2.2                       # Event-driven web server patch
 gunicorn==19.7.1                    # Threaded WSGI server
 hiredis==0.2.0                      # C-based redis driver
 django-redis-cache==1.7.1           # Redis connector
-raven==6.3.0                        # Sentry connector
-newrelic==3.2.0.91                   # New Relic connector
+raven==6.6.0                        # Sentry connector
+newrelic==3.2.0.91                  # New Relic connector

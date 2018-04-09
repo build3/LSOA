@@ -38,8 +38,6 @@ DJANGO_APPS = [
 ]
 BACKEND_THIRD_PARTY_APPS = [
     'django_extensions',                    # all kinds of goodness
-    'django_celery_beat',                   # db-backed periodic task defs
-    'django_celery_results',                # db-backed celery results (if needed)
     'raven.contrib.django.raven_compat',    # sentry-django connector
     'allauth',                              # Authentication/Registration
     'allauth.account',                      # Authentication/Registration
