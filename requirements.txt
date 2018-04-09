@@ -9,6 +9,10 @@ ipython==6.2.1                      # Better Django shell experience
 django-allauth==0.34.0              # Auth/Registration
 django-formtools==2.1               # Wizard-type forms
 
+## INFRASTRUCTURE REQUIREMENTS
+boto3==1.6.1
+django-storages==1.6.5
+
 ## FRONTEND REQUIREMENTS
 django-compressor==2.2              # asset compressor
 django-bootstrap4==0.0.4            # bootstrap4 forms
@@ -25,3 +29,4 @@ gunicorn==19.7.1                    # Threaded WSGI server
 hiredis==0.2.0                      # C-based redis driver
 django-redis-cache==1.7.1           # Redis connector
 raven==6.3.0                        # Sentry connector
+newrelic=3.2.0.91                   # New Relic connector
