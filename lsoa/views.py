@@ -19,7 +19,8 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
         initial = super(SetupView, self).get_initial()
         initial.update({
             'course': self.request.session.get('course'),
-            'grouping': self.request.session.get('grouping')
+            'grouping': self.request.session.get('grouping'),
+            'request': self.request
         })
         return initial
 
