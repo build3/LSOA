@@ -28,10 +28,9 @@ class TagField(forms.ModelMultipleChoiceField):
                 try:
                     tags.append(ContextTag.objects.get(id=tag_text, owner=user))
                 except Exception:
-                    tags.append(ContextTag(text=tag_text, owner=user).save())
-            else:
-                print(type(tag_text), tag_text)
-
+                    ct = ContextTag(text=tag_text, owner=user)
+                    ct.save()
+                    tags.append(ct)
         return tags
 
 
