@@ -5,6 +5,7 @@ from django.forms import FileField, ValidationError
 from django.urls import reverse_lazy
 from django.forms.widgets import SelectMultiple
 from related_select.fields import RelatedChoiceField
+from threadlocals.threadlocals import get_current_request
 
 from lsoa.models import Course, LearningConstructSublevel, ContextTag
 
@@ -19,16 +20,17 @@ class TagField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         return obj.text
 
-    def clean(self, value, user):
+    def clean(self, value):
         assert type(value) == list
         tags = []
+        request = get_current_request()
 
         for tag_text in value:
             if type(tag_text) == str:
                 try:
-                    tags.append(ContextTag.objects.get(id=tag_text, owner=user))
+                    tags.append(ContextTag.objects.get(id=tag_text, owner=request.user))
                 except Exception:
-                    ct = ContextTag(text=tag_text, owner=user)
+                    ct = ContextTag(text=tag_text, owner=request.user)
                     ct.save()
                     tags.append(ct)
         return tags
@@ -68,31 +70,8 @@ class SetupForm(forms.Form):
         if self.is_bound:
             self.fields['grouping'].init_bound_field(self.data.get('course'))
 
-        if self.initial['request']:
-            self.user = self.initial['request'].user
-            self.fields['context_tags'].queryset = ContextTag.objects.filter(owner=self.user)
-
-    def _clean_fields(self):
-        for name, field in self.fields.items():
-            """Custom because we need to support TagField and pass in user"""
-            if field.disabled:
-                value = self.get_initial_for_field(field, name)
-            else:
-                value = field.widget.value_from_datadict(self.data, self.files, self.add_prefix(name))
-            try:
-                if isinstance(field, FileField):
-                    initial = self.get_initial_for_field(field, name)
-                    value = field.clean(value, initial)
-                elif isinstance(field, TagField):
-                    value = field.clean(value, self.user)
-                else:
-                    value = field.clean(value)
-                self.cleaned_data[name] = value
-                if hasattr(self, 'clean_%s' % name):
-                    value = getattr(self, 'clean_%s' % name)()
-                    self.cleaned_data[name] = value
-            except ValidationError as e:
-                self.add_error(name, e)
+        request = get_current_request()
+        self.fields['context_tags'].queryset = ContextTag.objects.filter(owner=request.user)
 
 
 class ObservationForm(forms.Form):
