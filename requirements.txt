@@ -9,6 +9,7 @@ ipython==6.3.1                      # Better Django shell experience
 django-allauth==0.35.0              # Auth/Registration
 django-formtools==2.1               # Wizard-type forms
 django-dotenv==1.4.2                # To read .env file (because this project is open source)
+django-threadlocals==0.8            # To get current request
 
 ## INFRASTRUCTURE REQUIREMENTS
 boto3==1.7.2                        # to talk with amazon

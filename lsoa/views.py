@@ -19,7 +19,8 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
         initial = super(SetupView, self).get_initial()
         initial.update({
             'course': self.request.session.get('course'),
-            'grouping': self.request.session.get('grouping')
+            'grouping': self.request.session.get('grouping'),
+            'request': self.request
         })
         return initial
 
@@ -28,9 +29,11 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
         grouping = d['grouping']
         course = d['course']
         constructs = d['constructs']
+        tags = d['context_tags']
         params = {
             'course': course.id,
-            'constructs': [c.id for c in constructs]
+            'constructs': [c.id for c in constructs],
+            'context_tags': [ct.id for ct in tags]
         }
         if grouping:
             params['grouping'] = grouping

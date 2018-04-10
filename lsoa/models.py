@@ -2,6 +2,7 @@ import os
 from uuid import uuid4
 
 from django.db import models
+from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from django_extensions.db.models import TimeStampedModel
 from tinymce.models import HTMLField
@@ -140,3 +141,19 @@ class LearningConstructSublevelExample(TimeStampedModel):
 
     def __str__(self):
         return '({}) {}'.format(self.sublevel.name, self.text[:50])
+
+
+class ContextTag(TimeStampedModel, OwnerMixin):
+    """
+    A context tag for tagging observations
+    """
+    text = models.CharField(max_length=255)
+    last_used = models.DateTimeField(auto_now=True)
+
+    def use(self):
+        self.last_used = timezone.now()
+        self.save()
+        return self
+
+    class Meta:
+        ordering = ['-last_used']
