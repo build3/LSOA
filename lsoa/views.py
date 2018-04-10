@@ -29,9 +29,11 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
         grouping = d['grouping']
         course = d['course']
         constructs = d['constructs']
+        tags = d['context_tags']
         params = {
             'course': course.id,
-            'constructs': [c.id for c in constructs]
+            'constructs': [c.id for c in constructs],
+            'context_tags': [ct.id for ct in tags]
         }
         if grouping:
             params['grouping'] = grouping
