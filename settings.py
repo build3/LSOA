@@ -69,7 +69,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'tz_detect.middleware.TimezoneMiddleware',
-    'threadlocals.middleware.ThreadLocalMiddleware',
+    'middleware.DjangoThreadLocalMiddleware',
 ]
 
 # DATABASES AND CACHING
