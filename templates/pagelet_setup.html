@@ -20,7 +20,7 @@
 
             </div>
             <div class="col-50 full-height">
-                <form action="{% url 'observation_setup_view' %}" method="post">
+                <form action="{% url 'observation_setup_view' %}" method="post" novalidate>
                     {% if form.non_field_errors %}
                         {% for error in form.non_field_errors %}
                             <div class="item-content small color-red">{{ error }}</div>
@@ -42,7 +42,7 @@
                                             </div>
                                             {% if field.errors %}
                                                 {% for error in field.errors %}
-                                                    <div class="item-content small color-red">{{ error }}</div>
+                                                    <div class="item-content small" style="color: red;">{{ error }}</div>
                                                 {% endfor %}
                                             {% endif %}
                                         </a>
@@ -113,6 +113,13 @@
                     }
                 }
             })
+
+            // grouping dependent select in F7 isn't smart enough to change the visual when the underlying select changes
+            $('#id_course').change(function(event) {
+                $("#id_grouping option[value='']").attr('selected', true);
+                $$("#id_grouping").parent().find('.item-after').text('Individuals');
+            });
+
         };
         if (typeof $$ !== 'undefined') {
             pageInit();

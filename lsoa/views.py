@@ -45,6 +45,11 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
         print(form.errors)
         return super(SetupView, self).form_invalid(form)
 
+    def get_context_data(self, **kwargs):
+        r = super(SetupView, self).get_context_data(**kwargs)
+        r['form'].fields['grouping'].init_bound_field(r['form'].initial.get('course'))
+        return r
+
 
 class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
     pagelet_name = 'pagelet_observation.html'
@@ -65,6 +70,11 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
 
 
 class GroupingRelatedSelectView(RelatedSelectView):
+
+    @staticmethod
+    def blank_value():
+        return '', 'Individuals'
+
     @staticmethod
     def filter(value, **kwargs):
         return StudentGrouping.objects.filter(course_id=value)

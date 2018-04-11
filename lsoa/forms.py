@@ -1,9 +1,8 @@
 from collections import defaultdict
 
 from django import forms
-from django.forms import FileField, ValidationError
-from django.urls import reverse_lazy
 from django.forms.widgets import SelectMultiple
+from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 

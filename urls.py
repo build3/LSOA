@@ -1,7 +1,6 @@
 from django.conf.urls import include, url
 from django.contrib import admin
 
-import lsoa.setupwizard
 import lsoa.views
 
 urlpatterns = [
