@@ -7,7 +7,7 @@ from django.views.generic import FormView
 from related_select.views import RelatedSelectView
 
 from lsoa.forms import ObservationForm, SetupForm
-from lsoa.models import Course, StudentGrouping, LearningConstructSublevel
+from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, LearningConstructLevel
 from utils.pagelets import PageletMixin
 
 
@@ -41,13 +41,29 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
         self.request.session['grouping'] = grouping
         return HttpResponseRedirect(reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True))
 
-    def form_invalid(self, form):
-        print(form.errors)
-        return super(SetupView, self).form_invalid(form)
-
     def get_context_data(self, **kwargs):
         r = super(SetupView, self).get_context_data(**kwargs)
         r['form'].fields['grouping'].init_bound_field(r['form'].initial.get('course'))
+        r['constructs'] = []
+        for lc in LearningConstruct.objects.all():
+            construct = {
+                'name': lc.name,
+                'levels': [],
+            }
+            for lcl in lc.learningconstructlevel_set.all():
+                level = {
+                    'name': '{}) {}'.format(lcl.level, lcl.description),
+                    'sublevels': []
+                }
+                for lcsl in lcl.learningconstructsublevel_set.all():
+                    sublevel = {
+                        'id': lcsl.id,
+                        'name': lcsl.name,
+                        'description': lcsl.description
+                    }
+                    level['sublevels'].append(sublevel)
+                construct['levels'].append(level)
+            r['constructs'].append(construct)
         return r
 
 

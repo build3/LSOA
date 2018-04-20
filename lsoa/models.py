@@ -112,6 +112,9 @@ class LearningConstructLevel(TimeStampedModel):
     def __str__(self):
         return '{} {}'.format(self.construct.abbreviation, self.level)
 
+    class Meta:
+        ordering = ['level']
+
 
 class LearningConstructSublevel(TimeStampedModel):
     """
@@ -123,6 +126,9 @@ class LearningConstructSublevel(TimeStampedModel):
 
     def __str__(self):
         return '{}'.format(self.name)
+
+    class Meta:
+        ordering = ['name']
 
 
 class LearningConstructSublevelExample(TimeStampedModel):

@@ -61,12 +61,13 @@ class SetupForm(forms.Form):
     course = forms.ModelChoiceField(queryset=Course.objects.all())
     grouping = RelatedChoiceField(related_dependent='course', related_url=reverse_lazy('student-groupings-ajax'),
                                   empty_label='Individuals', required=False)
-    constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all())
+    constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(),
+                                                   widget=forms.CheckboxSelectMultiple)
     context_tags = TagField(queryset=ContextTag.objects.all(), required=False)
 
     def __init__(self, **kwargs):
         super(SetupForm, self).__init__(**kwargs)
-        if self.is_bound:
+        if self.is_bound and self.data.get('course'):
             self.fields['grouping'].init_bound_field(self.data.get('course'))
 
         request = get_current_request()
