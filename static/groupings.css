@@ -134,7 +134,7 @@
   z-index: 99999999;
 }
 
-.student.blink {
+.student.blink, input.blink {
   -webkit-animation: blinking 250ms infinite; /* Safari 4+ */
   -moz-animation: blinking 250ms infinite; /* Fx 5+ */
   -o-animation: blinking 250ms infinite; /* Opera 12+ */
@@ -218,4 +218,38 @@
 
 .splits .split-into input:focus{
   background-color: rgba(255,255,255, 0);
+}
+
+.subnavbar{
+  background-color: #fff !important;
+  display: flex;
+  justify-content: space-between;
+}
+
+.subnavbar input{
+  border-bottom: 1px solid #444;
+  font-size: 16px;
+  color: #444;
+  font-weight: bold;
+  padding: 0 2px;
+}
+
+.subnavbar input::placeholder{
+  color: #b2bec3;
+  font-weight: bolder;
+}
+
+.subnavbar input.input-with-value{
+  color: #444;
+}
+
+.subnavbar button{
+  width: 100px;
+  background-color: #00b894;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+  border-radius: 5px;
+  padding: 5px 0;
 }

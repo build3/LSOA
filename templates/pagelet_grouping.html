@@ -23,11 +23,15 @@
 <div class="page">
   <div class="navbar">
     <div class="navbar-inner">
+      <div class="left">&nbsp;</div>
       <div class="title">{% block title %}LSOA: New Groupset{% endblock %}</div>
-      <div class="right">
-        <a href="#" data-panel="left" class="link panel-open icon-only">
-          <i class="fa fa-bars"></i>
-        </a>
+      <div class="subnavbar">
+        <div class="subnavbar-inner">
+          <!-- Subnavbar content, for example tabs buttons -->
+          <input required type="text" id="id_grouping_name" placeholder="Grouping Name">
+          <button class="save">Save</button>
+          <input type="hidden" value="{{ course.id }}" id="id_course">
+        </div>
       </div>
     </div>
   </div>
@@ -170,8 +174,21 @@
         });
       }
 
+      function setUpSaveFunction() {
+
+        $('button.save').on('click', trySave);
+
+        function trySave() {
+          var data = getDataForSaving();
+          if (!data.valid) {
+            alert(data.reasons.join('\n'));
+          }
+        }
+      }
+
       setUpTools();
       setUpSplitWarnings();
+      setUpSaveFunction();
       initializeSplits();
       initializeNewColumnColumn();
       initializeBucketColumns();
@@ -436,21 +453,40 @@
     }
 
     function getDataForSaving() {
-      var data = [];
+      var data = {
+        course_id: $('#id_course').val(),
+        grouping_name: $('#id_grouping_name').val(),
+        groupings: [],
+        valid: true,
+        reasons: [],
+      };
 
-      $('.bucket-column--group').each(function (i, colElem) {
+      $('.buckets .bucket-column--group').each(function (i, colElem) {
         var group = {
           name: $(colElem).find('.bucket__title').first().val(),
           studentIds: []
         };
 
-        $(colElem).find('.student[data-student-id]').each(function(i, student){
+        $(colElem).find('.student[data-student-id]').each(function (i, student) {
           group.studentIds.push($(student).data('student-id'));
         });
 
-        data.push(group);
+        data.groupings.push(group);
       });
 
+      if (data.grouping_name.length <= 0) {
+        data.valid = false;
+        data.reasons.push('Must supply grouping name');
+        var $errorfield = $('#id_grouping_name');
+        $errorfield.addClass('blink');
+        setTimeout(function () {
+          $errorfield.removeClass('blink')
+        }, 1000);
+      }
+      if (!data.groupings.length) {
+        data.valid = false;
+        data.reasons.push('Must create atleast one group');
+      }
       return data;
     }
 
