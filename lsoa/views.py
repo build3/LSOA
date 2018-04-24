@@ -78,6 +78,13 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
 
     def get_context_data(self, **kwargs):
         kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).prefetch_related('students').first()
+        if self.request.GET.get('grouping'):
+            kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.GET.get('grouping'))
+        else:
+            kwargs['grouping'] = StudentGrouping(course=kwargs['course'])
+        kwargs['initial_grouping_dict'] = {}
+        if kwargs['grouping'].id:
+            kwargs['initial_grouping_dict'] = {g.id: {'name': g.name, 'student_ids':[i for i in g.students.values_list('id', flat=True)]} for g in kwargs['grouping'].groups.all()}
         return super().get_context_data(**kwargs)
 
 

@@ -139,6 +139,19 @@
     .select2-container.select2-container--default.select2-container--open {
       z-index: 99999999;
     }
+    [value="make-new-grouping"] ~ .item-inner .item-title {
+      position: relative;
+      top: -2px;
+      color: #1b9a59;
+    }
+    [value="make-new-grouping"] ~ .item-inner .item-title:before{
+      content: '+';
+      position: relative;
+      top: -2px;
+      color: #1b9a59;
+      margin-right: 5px;
+      display: inline-block;
+    }
   </style>
   <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
 

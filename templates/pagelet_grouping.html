@@ -28,9 +28,10 @@
       <div class="subnavbar">
         <div class="subnavbar-inner">
           <!-- Subnavbar content, for example tabs buttons -->
-          <input required type="text" id="id_grouping_name" placeholder="Grouping Name">
+          <input required type="text" id="id_grouping_name" placeholder="Grouping Name" value="{{ grouping.name }}">
           <button class="save">Save</button>
           <input type="hidden" value="{{ course.id }}" id="id_course">
+          <input type="hidden" value="{{ grouping.id }}" id="id_grouping">
         </div>
       </div>
     </div>
@@ -123,6 +124,7 @@
   </div>
   <script>
     var pageInit = function () {
+      var groupingInitData = {{ initial_grouping_dict | safe }}
 
       /**
        * Set up the handlers for adding a new bucket
@@ -140,7 +142,7 @@
             moveStudentToBucket(newBucket, ui.draggable);
           }
         });
-      }
+      };
 
       function setUpTools() {
         $('.tools-heading').on('click', function () {
@@ -182,13 +184,27 @@
           var data = getDataForSaving();
           if (!data.valid) {
             alert(data.reasons.join('\n'));
+          }else{
+            window.location = '/';
           }
+        }
+      }
+
+      function initializeGroups(){
+        for(var groupId in groupingInitData){
+          var groupData = groupingInitData[groupId];
+          var $groupElem = makeNewBucket(groupId);
+          $groupElem.find('input.bucket__title').val(groupData.name);
+          groupData.student_ids.forEach(function(id){
+            $('[data-student-id="'+id+'"]').appendTo($groupElem.find('.bucket .dropzone'));
+          });
         }
       }
 
       setUpTools();
       setUpSplitWarnings();
       setUpSaveFunction();
+      initializeGroups();
       initializeSplits();
       initializeNewColumnColumn();
       initializeBucketColumns();
@@ -363,13 +379,16 @@
     }
 
     /**
-     * Make a new bucket, and return the DOMElement
+     * Make a new group bucket, and return the DOMElement
      * @returns {jQuery|HTMLElement}
      */
-    function makeNewBucket() {
+    function makeNewBucket(groupId) {
       var $newElem = $(emptyBucketTemplate.outerHTML());
       $('.buckets .bucket-column--new').before($newElem);
       attachBucketHandlers($newElem);
+      if(groupId) {
+        $newElem.find('input.group_id').val(groupId)
+      }
       return $newElem;
     }
 
@@ -455,6 +474,7 @@
     function getDataForSaving() {
       var data = {
         course_id: $('#id_course').val(),
+        grouping_id: $('#id_grouping').val(),
         grouping_name: $('#id_grouping_name').val(),
         groupings: [],
         valid: true,
