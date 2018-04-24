@@ -34,7 +34,7 @@
                   {# pass, because we'll manually render that field later #}
                 {% elif field.field.widget.input_type == 'select' %}
                   <li>
-                    <a href="#" class="item-link smart-select smart-select-init"
+                    <a href="#" class="item-link smart-select smart-select-init " data-navbar-theme="red"
                        data-close-on-select="true">
                       {{ field }}
                       <div class="item-content">

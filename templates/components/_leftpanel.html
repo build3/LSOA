@@ -21,19 +21,22 @@
   <div class="block-title">Settings</div>
   <div class="list">
     <ul>
-      <li><a href="{% url 'admin:index' %}" class="item-link panel-close external">
-        <div class="item-content">
-          <div class="item-inner">
-            <div class="item-title">Set Up Students/Groups</div>
+      <li>
+        <a href="{% url 'admin:index' %}" class="item-link panel-close external">
+          <div class="item-content">
+            <div class="item-inner">
+              <div class="item-title">Set Up Students/Groups</div>
+            </div>
           </div>
-        </div>
-      </a></li>
+        </a>
+      </li>
 
     </ul>
   </div>
   <div class="list">
     <ul>
-      <li><a href="{% url 'account_logout' %}" class="external panel-close item-link list-button bg-color-red color-white">
+      <li><a href="{% url 'account_logout' %}"
+             class="external panel-close item-link list-button bg-color-red color-white">
         <div class="item-content">
           <div class="item-inner">
             <div class="item-title">Log Out</div>
