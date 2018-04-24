@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
-from lsoa.models import Course, LearningConstructSublevel, ContextTag
+from lsoa.models import Course, LearningConstructSublevel, ContextTag, StudentGrouping
 
 
 class TagWidget(SelectMultiple):
@@ -75,4 +75,7 @@ class SetupForm(forms.Form):
 
 
 class ObservationForm(forms.Form):
+    pass
+
+class GroupingForm(forms.Form):
     pass

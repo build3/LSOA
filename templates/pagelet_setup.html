@@ -59,6 +59,7 @@
                       </div>
                     </div>
                   </li>
+
                   {% if field.errors %}
                     {% for error in field.errors %}
                       <div class="item-content small text-danger">{{ error }}</div>
@@ -66,6 +67,7 @@
                   {% endif %}
                 {% endif %}
               {% endfor %}
+
               <li class="pb-2">
                 <div class="item-content">
                   <div class="item-title">Select Learning Constructs</div>
@@ -75,6 +77,7 @@
                     <div class="item-content small text-danger">{{ error }}</div>
                   {% endfor %}
                 {% endif %}
+
                 <div>TEST: {{ form.constructs.value }}</div>
                 <div id="accordion">
                   {% for construct in constructs %}

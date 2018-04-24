@@ -6,7 +6,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 from related_select.views import RelatedSelectView
 
-from lsoa.forms import ObservationForm, SetupForm
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm
 from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, LearningConstructLevel
 from utils.pagelets import PageletMixin
 
@@ -65,6 +65,20 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
                 construct['levels'].append(level)
             r['constructs'].append(construct)
         return r
+
+
+class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
+    pagelet_name = 'pagelet_grouping.html'
+    form_class = GroupingForm
+
+    def get(self, request, *args, **kwargs):
+        if not self.request.GET.get('course'):
+            return HttpResponseRedirect(reverse('observation_setup_view'))
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).prefetch_related('students').first()
+        return super().get_context_data(**kwargs)
 
 
 class ObservationView(LoginRequiredMixin, PageletMixin, FormView):

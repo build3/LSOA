@@ -1,0 +1,221 @@
+.ios .page {
+  /*background-color: #fff;*/
+}
+
+@-webkit-keyframes blinking {
+  0%, 49% {
+    background-color: white;
+  }
+  50%, 100% {
+    background-color: #fab1a0;
+  }
+}
+
+@keyframes blinking {
+    0%, 49% {
+    background-color: white;
+  }
+  50%, 100% {
+    background-color: #fab1a0;
+  }
+}
+
+.buckets {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  padding: 10px 0;
+}
+
+.bucket {
+  /*flex: 1;*/
+  border-radius: 10px;
+  background-color: #dfe6e9;
+  border: 1px solid #dfe6e9;
+  height: auto;
+  min-height: 131px;
+  width: 100%;
+  padding: 10px;
+  position: relative;
+}
+
+.bucket-column {
+  flex: 0;
+  width: 220px;
+  min-width: 220px;
+  margin: 0 10px;
+}
+
+.bucket .delete {
+  position: absolute;
+  top: 0;
+  right: 5px;
+  font-size: 24px;
+  color: #636e72;
+  cursor: pointer;
+}
+
+.bucket .bucket__title {
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #2d3436;
+  border: none;
+  background-color: transparent;
+  width: 95%;
+  padding: 2px;
+}
+
+.bucket .bucket__title:empty, .bucket .bucket__title.input-focused {
+  border: 1px solid #dfe6e9;
+  border-bottom: 1px solid #2d3436;
+  outline: none;
+}
+
+.bucket .bucket__title:focus {
+  outline: none;
+  background-color: #fff;
+  border-radius: 5px;
+  border: 1px solid #0a6ebd;
+  color: #2d3436;
+  box-shadow: 0 0 3px #0a6ebd;
+}
+
+.bucket .show-droppable-hover {
+  display: none;
+  font-size: 10px;
+  font-weight: bold;
+  color: #b2bec3;
+  order: 999999999;
+}
+
+.bucket.ui-droppable-hover{
+  border: 1px dashed #636e72;
+}
+
+.bucket-column--all .bucket.ui-droppable-hover{
+  border: 1px solid #dfe6e9;
+}
+
+.bucket-column--new.ui-droppable-hover .bucket{
+  border: 1px dashed #636e72;
+}
+
+.bucket.ui-droppable-hover .show-droppable-hover {
+  display: block;
+  padding: 10px 0;
+}
+
+.bucket .bucket__title::placeholder {
+  color: #b2bec3;
+}
+
+.bucket .dropzone {
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bucket-item{
+  min-width: 198px;
+  font-weight: normal;
+  margin: 5px 0;
+  border-radius: 5px;
+  background-color: #fff;
+  padding: 5px;
+  font-size: 13px;
+  color: #636e72;
+  cursor: pointer;
+}
+
+.student {
+  margin-top: 0;
+  z-index: 99999999;
+}
+
+.student.blink {
+  -webkit-animation: blinking 250ms infinite; /* Safari 4+ */
+  -moz-animation: blinking 250ms infinite; /* Fx 5+ */
+  -o-animation: blinking 250ms infinite; /* Opera 12+ */
+  animation: blinking 250ms infinite; /* IE 10+, Fx 29+ */
+}
+
+.student.ui-draggable-handle.ui-draggable-dragging {
+  transform: rotate(3deg);
+  -moz-transform: rotate(3deg);
+  -webkit-transform: rotate(3deg);
+}
+
+.bucket-column--new {
+  opacity: .3;
+  text-align: center;
+  cursor: pointer;
+}
+
+.bucket-column--new .bucket {
+  border: 1px solid #444;
+}
+
+.bucket-column--new .dropzone {
+  font-size: 50px;
+}
+
+.bucket-column--new.ui-droppable-hover {
+  opacity: .7;
+}
+
+.tools{
+  width: 100%;
+  margin: 10px 0 30px;
+  font-size: 12px;
+}
+
+.tools-heading{
+  font-size: 12px;
+  font-weight: bold;
+  color: #636e72;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.tools .tools__title{
+  font-weight: bold;
+  color: #636e72;
+}
+
+.splits .split-into{
+  background-color: #6c5ce7;
+  color: #dfe6e9;
+  width: 100%;
+}
+
+.splits .split-into.groups{
+  background-color: #0984e3;
+}
+
+.bucket-item#reset{
+  background-color: #d63031;
+  color: white;
+}
+
+.splits .split-into .warning{
+  display: inline-block;
+  float: right;
+  margin-right: 5px;
+  font-size: 14px;
+  opacity: .5;
+  color: white;
+}
+
+.splits .split-into input{
+  display: inline-block;
+  width: 25px;
+  background-color: rgba(255,255,255, .3);
+  color: white;
+  text-align: center;
+}
+
+.splits .split-into input:focus{
+  background-color: rgba(255,255,255, 0);
+}
