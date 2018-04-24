@@ -3,9 +3,9 @@ from collections import defaultdict
 from django import forms
 from django.forms.widgets import SelectMultiple
 from django.urls import reverse_lazy
-from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
+from lsoa.fields import RelatedChoiceFieldWithAfter
 from lsoa.models import Course, LearningConstructSublevel, ContextTag, StudentGrouping
 
 
@@ -59,8 +59,12 @@ class ConstructModelMultipleChoiceField(forms.ModelMultipleChoiceField):
 
 class SetupForm(forms.Form):
     course = forms.ModelChoiceField(queryset=Course.objects.all())
-    grouping = RelatedChoiceField(related_dependent='course', related_url=reverse_lazy('student-groupings-ajax'),
-                                  empty_label='Individuals', required=False)
+    grouping = RelatedChoiceFieldWithAfter(
+        related_dependent='course',
+        related_url=reverse_lazy('student-groupings-ajax'),
+        empty_label='Individuals',
+        after_label='Make New Grouping',
+        required=False)
     constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(),
                                                    widget=forms.CheckboxSelectMultiple)
     context_tags = TagField(queryset=ContextTag.objects.all(), required=False)
@@ -76,6 +80,7 @@ class SetupForm(forms.Form):
 
 class ObservationForm(forms.Form):
     pass
+
 
 class GroupingForm(forms.Form):
     pass
