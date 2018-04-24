@@ -87,11 +87,7 @@
                          data-mytarget="$(this).next()">
                         {{ construct.name }}
                       </a>
-                      <div class="{% if something %}
-                      show
-                      {% else %}
-                      collapse
-                      {% endif %}">
+                      <div class="{% if something %}show{% else %}collapse{% endif %}">
                         <div class="card-body">
                           {% for level in construct.levels %}
                             <div class="card">
