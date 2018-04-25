@@ -99,7 +99,7 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
 
     def get_context_data(self, **kwargs):
         if self.request.GET.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.filter(pk=self.request.GET.get('grouping')).first()
+            kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.GET.get('grouping'))).first()
         kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).first()
         kwargs['constructs'] = LearningConstructSublevel.objects.filter(pk__in=self.request.GET.getlist('constructs')) \
             .select_related('level', 'level__construct').prefetch_related('examples')
