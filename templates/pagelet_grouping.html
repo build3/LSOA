@@ -31,7 +31,7 @@
           <input required type="text" id="id_grouping_name" placeholder="Grouping Name" value="{{ grouping.name }}">
           <button class="save">Save</button>
           <input type="hidden" value="{{ course.id }}" id="id_course">
-          <input type="hidden" value="{{ grouping.id }}" id="id_grouping">
+          <input type="hidden" value="{{ grouping.id|default_if_none:"" }}" id="id_grouping">
         </div>
       </div>
     </div>
@@ -124,7 +124,7 @@
   </div>
   <script>
     var pageInit = function () {
-      var groupingInitData = {{ initial_grouping_dict | safe }}
+      var groupingInitData = {{ initial_grouping_dict | safe }};
 
       /**
        * Set up the handlers for adding a new bucket
@@ -185,7 +185,20 @@
           if (!data.valid) {
             alert(data.reasons.join('\n'));
           }else{
-            window.location = '/';
+            $.ajax({
+              url: '/grouping/save/',
+              type: 'POST',
+              contentType: 'application/json; charset=utf-8',
+              dataType: 'json',
+              data: JSON.stringify(data),
+              success: function(response){
+                if(response.error){
+                  alert(response.messages.join(' '));
+                }else{
+                  window.location = '/';
+                }
+              }
+            })
           }
         }
       }
@@ -478,13 +491,14 @@
         grouping_name: $('#id_grouping_name').val(),
         groupings: [],
         valid: true,
-        reasons: [],
+        reasons: []
       };
 
       $('.buckets .bucket-column--group').each(function (i, colElem) {
         var group = {
           name: $(colElem).find('.bucket__title').first().val(),
-          studentIds: []
+          studentIds: [],
+          id: $(colElem).find('input.group_id').val()
         };
 
         $(colElem).find('.student[data-student-id]').each(function (i, student) {
