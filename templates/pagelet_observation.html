@@ -44,6 +44,10 @@
                                                                    id="photoUpload"></label>
           <label class="button" for="videoUpload">Take video<input style="display:none;" type="file" accept="video/*"
                                                                    id="videoUpload"></label>
+          {% if most_recent_observation %}
+            <label class="button" for="useMostRecentMedia"><input type="checkbox"
+                                                                   id="useMostRecentMedia"> Use Last Photo/Video </label>
+          {% endif %}
         </div>
         <div id="row-capture-buttons" class="segmented" style="display:none; height:30px;">
           <a id="reset" class="button">Reset</a>
@@ -162,6 +166,7 @@
       var photoUpload = document.querySelector('input#photoUpload');
       var videoUpload = document.querySelector('input#videoUpload');
       var videoNoteUpload = document.querySelector('input#videoNoteUpload');
+      var useMostRecentMedia = document.querySelector('input#useMostRecentMedia');
       var image = document.querySelector('img#image');
       var reset = document.querySelector('a#reset');
       var enableDisableDraw = document.querySelector('a#enable-draw');
@@ -218,6 +223,7 @@
         stage.update();
         photoUpload.value = '';
         videoUpload.value = '';
+        useMostRecentMedia.checked = false;
       });
 
       var canvas = document.querySelector('#easel-canvas');

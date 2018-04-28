@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,7 +13,7 @@ from braces.views import JSONResponseMixin
 
 from lsoa.forms import ObservationForm, SetupForm, GroupingForm
 from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, LearningConstructLevel, \
-    StudentGroup, Student
+    StudentGroup, Student, Observation
 from utils.pagelets import PageletMixin
 
 
@@ -111,6 +112,13 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
         kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).first()
         kwargs['constructs'] = LearningConstructSublevel.objects.filter(pk__in=self.request.GET.getlist('constructs')) \
             .select_related('level', 'level__construct').prefetch_related('examples')
+
+        within_timeframe = datetime.now() - timedelta(hours=2)
+        # TODO: Update this query to be correct.
+        kwargs['most_recent_observation'] = Observation.objects\
+            .filter(owner=self.request.user, created__gte=within_timeframe)\
+            .order_by('-created').first()
+
         return super().get_context_data(**kwargs)
 
 
