@@ -2,18 +2,19 @@ import json
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
+from braces.views import JSONResponseMixin
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View
 from related_select.views import RelatedSelectView
-from braces.views import JSONResponseMixin
 
 from lsoa.forms import ObservationForm, SetupForm, GroupingForm
-from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, LearningConstructLevel, \
-    StudentGroup, Student, Observation
+from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
+    Observation
 from utils.pagelets import PageletMixin
 
 
@@ -91,8 +92,8 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
         kwargs['initial_grouping_dict'] = {}
         if kwargs['grouping'].id:
             kwargs['initial_grouping_dict'] = {
-            g.id: {'name': g.name, 'student_ids': [i for i in g.students.values_list('id', flat=True)]} for g in
-            kwargs['grouping'].groups.all()}
+                g.id: {'name': g.name, 'student_ids': [i for i in g.students.values_list('id', flat=True)]} for g in
+                kwargs['grouping'].groups.all()}
         kwargs['initial_grouping_dict'] = json.dumps(kwargs['initial_grouping_dict'])
         return super().get_context_data(**kwargs)
 
@@ -100,6 +101,7 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
 class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
     pagelet_name = 'pagelet_observation.html'
     form_class = ObservationForm
+    success_url = reverse_lazy('observation_view')
 
     def get(self, request, *args, **kwargs):
         if not self.request.GET.get('course'):
@@ -115,11 +117,16 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
 
         within_timeframe = datetime.now() - timedelta(hours=2)
         # TODO: Update this query to be correct.
-        kwargs['most_recent_observation'] = Observation.objects\
-            .filter(owner=self.request.user, created__gte=within_timeframe)\
+        kwargs['most_recent_observation'] = Observation.objects \
+            .filter(owner=self.request.user, created__gte=within_timeframe) \
             .order_by('-created').first()
 
         return super().get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, 'Observation added')
+        return super().form_valid(form)
 
 
 class GroupingRelatedSelectView(RelatedSelectView):

@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from threadlocals.threadlocals import get_current_request
 
 from lsoa.fields import RelatedChoiceFieldWithAfter
-from lsoa.models import Course, LearningConstructSublevel, ContextTag, StudentGrouping
+from lsoa.models import Course, LearningConstructSublevel, ContextTag, StudentGrouping, Observation
 
 
 class TagWidget(SelectMultiple):
@@ -78,8 +78,27 @@ class SetupForm(forms.Form):
         self.fields['context_tags'].queryset = ContextTag.objects.filter(owner=request.user)
 
 
-class ObservationForm(forms.Form):
-    pass
+class ObservationForm(forms.ModelForm):
+    """
+    An Observation is a "snapshot in time" of student(s) exhibiting mastery of
+    a certain (or multiple) learning constructs, paired with typed notes or
+    visual evidence (picture or video).
+    """
+    class Meta:
+        model = Observation
+        fields = ['students', 'constructs', 'tags', 'annotated_image', 'original_image', 'video',
+                  'notes', 'video_notes', 'parent']
+
+    def clean(self):
+        super().clean()
+        if self.cleaned_data['annotated_image'] or self.cleaned_data['original_image']:
+            if not (self.cleaned_data['annotated_image'] and self.cleaned_data['original_image']):
+                raise forms.ValidationError('Technical Error: Must upload both original and annotated image')
+            if self.cleaned_data['video']:
+                raise forms.ValidationError('Technical Error: Video was uploaded alongside an image. Something\'s wrong')
+        return self.cleaned_data
+
+
 
 
 class GroupingForm(forms.Form):
