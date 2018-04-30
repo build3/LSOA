@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 
 from braces.views import JSONResponseMixin
 from django.contrib import messages
+from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
@@ -247,7 +248,7 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
         all_constructs = LearningConstruct.objects.all()
         top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
 
-        constructs_to_cover = LearningConstruct.objects.all()
+        constructs_to_cover = LearningConstruct.objects.annotate(q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
 
         if construct_id:
             constructs_to_cover = constructs_to_cover.filter(id=construct_id)
