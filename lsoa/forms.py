@@ -3,6 +3,7 @@ from collections import defaultdict
 from django import forms
 from django.forms.widgets import SelectMultiple
 from django.urls import reverse_lazy
+from django.forms.utils import ErrorList
 from threadlocals.threadlocals import get_current_request
 
 from lsoa.fields import RelatedChoiceFieldWithAfter
@@ -84,16 +85,24 @@ class ObservationForm(forms.ModelForm):
     a certain (or multiple) learning constructs, paired with typed notes or
     visual evidence (picture or video).
     """
+
+    def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
+                 initial=None, error_class=ErrorList, label_suffix=None,
+                 empty_permitted=False, instance=None, use_required_attribute=None, request=None):
+        super(ObservationForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
+                 initial=initial, error_class=error_class, label_suffix=label_suffix,
+                 empty_permitted=empty_permitted, instance=instance, use_required_attribute=use_required_attribute)
+        self.request = request
+
     class Meta:
         model = Observation
-        fields = ['students', 'constructs', 'tags', 'annotated_image', 'original_image', 'video',
-                  'notes', 'video_notes', 'parent']
+        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
+                  'notes', 'video_notes', 'parent', 'owner']
 
     def clean(self):
         super().clean()
+        self.cleaned_data['owner_id'] = self.request.user.id
         if self.cleaned_data['annotated_image'] or self.cleaned_data['original_image']:
-            if not (self.cleaned_data['annotated_image'] and self.cleaned_data['original_image']):
-                raise forms.ValidationError('Technical Error: Must upload both original and annotated image')
             if self.cleaned_data['video']:
                 raise forms.ValidationError('Technical Error: Video was uploaded alongside an image. Something\'s wrong')
         return self.cleaned_data

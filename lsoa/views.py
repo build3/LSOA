@@ -123,6 +123,13 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
 
         return super().get_context_data(**kwargs)
 
+    def get_form_kwargs(self, *args, **kwargs):
+        data = super().get_form_kwargs(*args, **kwargs)
+        data.update({
+            'request': self.request
+        })
+        return data
+
     def form_valid(self, form):
         form.save()
         messages.success(self.request, 'Observation added')

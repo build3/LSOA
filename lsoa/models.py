@@ -90,7 +90,7 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     # save the original and annotated image. If we save the annotated image, we can use it again
     # in the next observation.
-    annotated_image = models.FileField(upload_to=UploadToPathAndRename('annotated_images/'), blank=True, null=True)
+    annotation_data = models.TextField(default='', null=True)
     original_image = models.FileField(upload_to=UploadToPathAndRename('original_images/'), blank=True, null=True)
     video = models.FileField(upload_to=UploadToPathAndRename('videos/'), blank=True, null=True)
 
