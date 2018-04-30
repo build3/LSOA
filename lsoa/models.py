@@ -90,13 +90,13 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     # save the original and annotated image. If we save the annotated image, we can use it again
     # in the next observation.
-    annotated_image = models.FileField(blank=True, null=True)
-    original_image = models.FileField(blank=True, null=True)
-    video = models.FileField(blank=True, null=True)
+    annotated_image = models.FileField(upload_to=UploadToPathAndRename('annotated_images/'), blank=True, null=True)
+    original_image = models.FileField(upload_to=UploadToPathAndRename('original_images/'), blank=True, null=True)
+    video = models.FileField(upload_to=UploadToPathAndRename('videos/'), blank=True, null=True)
 
     # the end user can type notes or take an AV sample and just talk into the mic
     notes = models.TextField(blank=True)
-    video_notes = models.FileField(blank=True, null=True)
+    video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
 
     def __str__(self):
         return 'Observation at {}'.format(self.created)
