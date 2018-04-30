@@ -5,13 +5,13 @@
   <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
 {% endblock %}
 {% block extrascripts %}
-  <script src="{% static 'vendor/easeljs/easeljs.min.js' %}"></script>
+  <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
   <script src="{% static 'vendor/lightbox2/js/lightbox-plus-jquery.min.js' %}"></script>
   <script>
     lightbox.option({
       'albumLabel': ''
     })
-</script>
+  </script>
 {% endblock %}
 
 <div class="page">
@@ -27,17 +27,16 @@
   </div>
   <div class="page-content" style="padding-left: 1em;">
     <div class="row full-height">
-      <div class="col-50 full-height" style="position: relative;">
-        <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
-             style="width: 100%; height: calc(50vw * .75)">
-        <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" muted autoplay controls
-               playsinline></video>
-        <canvas id="canvas" style="display: none;"></canvas>
+      <div class="col-50" style="position: relative;">
+        <div class="art" style="height: 480px;">
+          <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
+               style="width: 100%; height: 100%">
+          <video id="recorded" style="display:none;width: 100%; height: 100%;" muted autoplay controls
+                 playsinline></video>
 
-        {#        easeljs   #}
-        <canvas id="easel-canvas" width="500" height="300"
-                style="display: none;height: calc(50vw * .75); width: 100%;position: absolute;top: 0;left: 0;"></canvas>
-
+          {#        easeljs   #}
+          <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
+        </div>
 
         <div id="row-media-buttons" class="segmented" style="height:30px;">
           <label class="button" for="photoUpload">Take photo<input style="display:none;" type="file" accept="image/*"
@@ -46,7 +45,7 @@
                                                                    id="videoUpload"></label>
           {% if most_recent_observation %}
             <label class="button" for="useMostRecentMedia"><input type="checkbox"
-                                                                   id="useMostRecentMedia"> Use Last Photo/Video </label>
+                                                                  id="useMostRecentMedia"> Use Last Photo/Video </label>
           {% endif %}
         </div>
         <div id="row-capture-buttons" class="segmented" style="display:none; height:30px;">
@@ -156,13 +155,23 @@
       </div>
     </div>
     <div class="fab fab-right-bottom color-green">
-      <a href="#" onclick="location.reload();">
+      <a href="#" id="submit">
         <i class="fa fa-2x fa-plus"></i>
       </a>
     </div>
   </div>
   <script>
     var pageInit = function () {
+      var color, stage;
+      var index = parseInt(Math.random() * 100);
+      var colors = [
+        "#1abc9c", "#2ecc71",
+        "#3498db", "#9b59b6",
+        "#34495e", "#ecf0f1",
+        "#e74c3c", "#95a5a6",
+        "#e67e22", "#f1c40f"
+      ];
+
       var photoUpload = document.querySelector('input#photoUpload');
       var videoUpload = document.querySelector('input#videoUpload');
       var videoNoteUpload = document.querySelector('input#videoNoteUpload');
@@ -177,6 +186,7 @@
       var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
       var recordedVideo = document.querySelector('video#recorded');
       var recordedVideoNote = document.querySelector('video#recordedNote');
+      var submitButton = document.querySelector('#submit');
 
       $$("#videoUpload").on("change", function (e) {
         recordedVideo.src = URL.createObjectURL(this.files[0]);
@@ -218,102 +228,39 @@
         recordedVideo.style.display = 'none';
         recordedVideo.src = '';
         enableDisableDraw.classList.add('disabled');
-        stage = new createjs.Stage(canvas);
-        stage.removeAllChildren();
-        stage.update();
+        stage = new fabric.Canvas('easel-canvas', {isDrawingMode: true});
         photoUpload.value = '';
         videoUpload.value = '';
         useMostRecentMedia.checked = false;
       });
 
-      var canvas = document.querySelector('#easel-canvas');
-      var color, oldMidPt, oldPt, stage, drawingCanvas;
-      var index = parseInt(Math.random() * 100);
-      title = new createjs.Text("Click and Drag to draw", "28px Arial", "#FFF");
-      title.x = 100;
-      title.y = 100;
-      var colors = [
-        "#1abc9c", "#2ecc71",
-        "#3498db", "#9b59b6",
-        "#34495e", "#ecf0f1",
-        "#e74c3c", "#95a5a6",
-        "#e67e22", "#f1c40f"
-      ];
-
       setUpEasel();
-
-      function disableStage() {
-      }
 
       function setUpEasel() {
 
         color = colors[(index++) % colors.length];
 
-
-        initStage(title);
+        initStage();
         initEnableDisable();
         initChangeColorButton();
         updateDrawingColorDisplay();
 
-        function initStage(title) {
-          stage = new createjs.Stage(canvas);
+        function initStage() {
+          stage = new fabric.Canvas('easel-canvas', {
+            isDrawingMode: false,
+            selection: false
+          });
 
-          stage.autoClear = false;
-          stage.enableDOMEvents(true);
-          createjs.Touch.enable(stage);
-          createjs.Ticker.framerate = 24;
+          stage.setHeight(image.height);
+          stage.setWidth(image.width);
 
-          drawingCanvas = new createjs.Shape();
-
-          stage.addEventListener("stagemousedown", handleMouseDown);
-          stage.addEventListener("stagemouseup", handleMouseUp);
-          if (title) {
-            stage.addChild(title);
-          }
-
-          stage.addChild(drawingCanvas);
-          stage.update();
-        }
-
-        function handleMouseDown(event) {
-          if (!event.primary) {
-            return;
-          }
-          if (stage.contains(title)) {
-            stage.clear();
-            stage.removeChild(title);
-          }
-          stroke = .05 * 10 + (10 | 0);
-          oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
-          oldMidPt = oldPt.clone();
-          stage.addEventListener("stagemousemove", handleMouseMove);
-        }
-
-        function handleMouseUp(event) {
-          if (!event.primary) {
-            return;
-          }
-          stage.removeEventListener("stagemousemove", handleMouseMove);
-        }
-
-        function handleMouseMove(event) {
-          if (!event.primary) {
-            return;
-          }
-          var midPt = new createjs.Point(oldPt.x + stage.mouseX >> 1, oldPt.y + stage.mouseY >> 1);
-
-          drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(color).moveTo(midPt.x, midPt.y).curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
-
-          oldPt.x = stage.mouseX;
-          oldPt.y = stage.mouseY;
-
-          oldMidPt.x = midPt.x;
-          oldMidPt.y = midPt.y;
-
-          stage.update();
+          updateDrawingColorDisplay();
+          stage.freeDrawingBrush = new fabric['PencilBrush'](stage);
+          stage.freeDrawingBrush.width = 10;
         }
 
         function updateDrawingColorDisplay() {
+          stage.freeDrawingBrush.color = color;
           drawingColorDisplay.style.backgroundColor = color;
         }
 
@@ -331,18 +278,33 @@
               enableDisableDraw.classList.remove('enab');
               enableDisableDraw.classList.add('disa');
               drawingColorButton.classList.remove('disabled');
-              canvas.style.display = 'Block';
             }
             else if (enableDisableDraw.classList.contains('disa')) {
               // Disable drawing
-              stage = new createjs.Stage(canvas);
-              stage.removeAllChildren();
-              stage.update();
-              initStage();
+              enableDisableDraw.classList.add('enab');
+              enableDisableDraw.classList.remove('disa');
+              drawingColorButton.classList.add('disabled');
+              stage.clear();
             }
+            stage.isDrawingMode = !stage.isDrawingMode;
           }
         }
       }
+
+      function getEaselData() {
+        console.log(stage);
+        if (stage) {
+          return stage.toJSON();
+        }
+        return null;
+      }
+
+      function submit(){
+        var easelData = getEaselData();
+        console.log(easelData);
+      }
+
+      $(submitButton).on('click', submit);
 
       $$('.chip').on('touchstart', function (e) {
         var chip = $$(this);
@@ -362,7 +324,6 @@
           $$(this).closest('.accordion-item').find('.student').removeClass('bg-color-blue');
         }
       });
-
     };
 
     {% for message in messages %}

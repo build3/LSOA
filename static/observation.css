@@ -1,8 +1,20 @@
-#enable-draw span{  display: none;  }
-#enable-draw.enab span.enab{  display: inline;  }
-#enable-draw.disa span.disa{  display: inline;  }
-#drawing-color-button.disabled span#drawing-color{  display: none; }
-#drawing-color-button span#drawing-color{
+#enable-draw span {
+  display: none;
+}
+
+#enable-draw.enab span.enab {
+  display: inline;
+}
+
+#enable-draw.disa span.disa {
+  display: inline;
+}
+
+#drawing-color-button.disabled span#drawing-color {
+  display: none;
+}
+
+#drawing-color-button span#drawing-color {
   display: inline-block;
   width: 10px;
   height: 10px;
@@ -12,11 +24,19 @@
 }
 
 .swiper-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #fff;
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      height: 100%;
-    }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  height: 100%;
+}
+
+.canvas-container {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
