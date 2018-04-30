@@ -1,4 +1,5 @@
 import json
+import collections
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
@@ -204,3 +205,58 @@ class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping.id
         return self.render_json_response(return_data)
+
+
+class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
+    """
+    View the matrix of stars for users
+    """
+    pagelet_name = 'pagelet_view_observations.html'
+
+    def get_data_for_construct_id(self, construct_id):
+        all_students = Student.objects.all()
+        all_observations = Observation.objects.prefetch_related('students').filter(constructs__level__construct_id=construct_id)
+        all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
+
+        c_name = LearningConstruct.objects.get(id=construct_id).abbreviation + ' '
+
+        # Create data dicts
+        student_map = {s.id: str(s) for s in all_students}
+        construct_map = collections.OrderedDict(
+            {csl.id: {'description': csl.description, 'name': csl.name.replace(c_name, '')} for csl in
+             all_constructs_sublevels})
+        observations_map = {}
+        matrix = {s.id: {} for s in all_students}
+
+        for observation in all_observations:
+            for obs_construct in observation.constructs.all():
+                for obs_student in observation.students.all():
+                    matrix[obs_student.id][obs_construct.id] = observation.id
+
+        return {
+            'student_map': student_map,
+            'observations_map': observations_map,
+            'construct_map': construct_map,
+            'matrix': matrix,
+            'c_name': c_name,
+            'all_observations': all_observations
+        }
+
+    def get_context_data(self, **kwargs):
+        construct_id = kwargs.get('construct_id')
+        all_constructs = LearningConstruct.objects.all()
+        top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
+
+        constructs_to_cover = LearningConstruct.objects.all()
+
+        if construct_id:
+            constructs_to_cover = constructs_to_cover.filter(id=construct_id)
+
+        tables = [self.get_data_for_construct_id(cid) for cid in constructs_to_cover.values_list('id', flat=True)]
+
+        data = super().get_context_data(**kwargs)
+        data.update({
+            'tables': tables,
+            'top_level_construct_map': top_level_construct_map,
+        })
+        return data
