@@ -92,7 +92,6 @@ class ObservationForm(forms.ModelForm):
         if data:
             data = data.copy()
             data['owner'] = request.user.id
-            print(request.user)
 
         self.request = request
         super(ObservationForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
@@ -104,12 +103,18 @@ class ObservationForm(forms.ModelForm):
         if self.cleaned_data.get('annotation_data') or self.cleaned_data['original_image']:
             if self.cleaned_data['video']:
                 raise forms.ValidationError('Technical Error: Video was uploaded alongside an image. Something\'s wrong')
+
+        get_args = self.request.GET
+        if get_args.get('constructs'):
+            construct_ids = get_args.getlist('constructs', [])
+            self.cleaned_data['constructs'] = construct_ids
+
         return self.cleaned_data
 
     class Meta:
         model = Observation
         fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
-                  'notes', 'video_notes', 'parent', 'owner']
+                  'notes', 'video_notes', 'parent', 'owner', 'constructs', 'students']
 
 
 

@@ -7,7 +7,7 @@
       z-index: 9999999;
     }
 
-    table, .ios .page{
+    table, .ios .page {
       background-color: #fff !important;
     }
 
@@ -119,9 +119,11 @@
     };
 
     {% for message in messages %}
-      window.myApp.toast.create({
-        text: '{{ message }}'
-      }).open();
+      if (window.myApp && window.myApp.toast) {
+        window.myApp.toast.create({
+          text: '{{ message }}'
+        }).open();
+      }
     {% endfor %}
 
     if (typeof $$ !== 'undefined') {

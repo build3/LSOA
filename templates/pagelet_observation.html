@@ -42,11 +42,14 @@
           </div>
 
           <div id="row-media-buttons" class="segmented" style="height:30px;margin-bottom:100px;">
-            <label class="button" for="photoUpload">Take photo<input style="display:none;" type="file" accept="image/*"
+            <label class="button" for="photoUpload">Take photo<input name="original_image" style="display:none;"
+                                                                     type="file" accept="image/*"
                                                                      id="photoUpload"></label>
-            <label class="button" for="videoUpload">Take video<input style="display:none;" type="file" accept="video/*"
+            <label class="button" for="videoUpload">Take video<input name="video" style="display:none;" type="file"
+                                                                     accept="video/*"
                                                                      id="videoUpload"></label>
             {% if most_recent_observation %}
+              <input type="hidden" value="{{ most_recent_observation.id }}" name="parent"/>
               <label class="button" for="useMostRecentMedia"><input type="checkbox"
                                                                     id="useMostRecentMedia"> Use Last Photo/Video
               </label>
@@ -108,7 +111,8 @@
                  playsinline></video>
           <input style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
           <label class="button" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio note</label>
-          <textarea name="notes" style="width: calc(100% - 6px); height: 150px; font-size: 2em; background-color: white;"></textarea>
+          <textarea name="notes"
+                    style="width: calc(100% - 6px); height: 150px; font-size: 2em; background-color: white;"></textarea>
           <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
           <div id="sublevel-examples" style="height: 300px;">
             <p>Once you select a learning construct using the toggle buttons to the left, different
@@ -132,7 +136,8 @@
                         <ul>
                           {% for student in group.students.all %}
                             <li>
-                              <div class="item-content student" onclick="">
+                              <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
+                              <div class="item-content student" data-student-id="{{ student.id }}">
                                 <div class="item-inner">
                                   <div class="item-title">&nbsp;&nbsp;{{ student }}</div>
                                 </div>
@@ -146,7 +151,8 @@
                 {% endfor %}
               {% else %}
                 {% for student in course.students.all %}
-                  <li class="item-content student">
+                  <li class="item-content student" data-student-id="{{ student.id }}">
+                    <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
                     <div class="item-inner">
                       <div class="item-title">{{ student }}</div>
                     </div>
@@ -167,6 +173,7 @@
 
   <script>
     var pageInit = function () {
+      var checkedStudents = {};
       var color, stage;
       var index = parseInt(Math.random() * 100);
       var colors = [
@@ -323,7 +330,16 @@
         new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
       });
       $$('.student').on('click', function (e) {
-        $$(this).toggleClass('bg-color-blue')
+        var studentId = $$(this).data('student-id');
+        $$('[data-student-id="' + studentId + '"]').toggleClass('bg-color-blue');
+        if (checkedStudents.hasOwnProperty(studentId)) {
+          // Remove
+          delete checkedStudents[studentId];
+          $('[data-student-id-value="' + studentId + '"]').removeAttr('name');
+        } else {
+          checkedStudents[studentId] = true;
+          $('[data-student-id-value="' + studentId + '"]').attr('name', 'students');
+        }
       });
       $$('.group').on('touchstart', function (e) {
         $$(this).toggleClass('selected-group');
@@ -334,9 +350,11 @@
     };
 
     {% for message in messages %}
-      window.myApp.toast.create({
-        text: '{{ message }}'
-      }).open();
+      if (window.myApp && window.myApp.toast) {
+        window.myApp.toast.create({
+          text: '{{ message }}'
+        }).open();
+      }
     {% endfor %}
 
     if (typeof $$ !== 'undefined') {

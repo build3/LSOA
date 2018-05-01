@@ -105,8 +105,10 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
     form_class = ObservationForm
 
     def get_success_url(self):
-        get_args = self.request.GET
-        get_args = '&'.join([str(k) + '=' + str(v) for k, v in get_args.items()])
+        get_args = self.request.GET.copy()
+        constructs = get_args.pop('constructs', [])
+        constructs = 'constructs=' + '&constructs='.join(constructs)
+        get_args = '&'.join([str(k) + '=' + str(v) for k, v in get_args.items()] + [constructs])
         return reverse('observation_view') + '?' + get_args
 
     def get(self, request, *args, **kwargs):
