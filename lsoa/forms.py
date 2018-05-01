@@ -89,23 +89,27 @@ class ObservationForm(forms.ModelForm):
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=None,
                  empty_permitted=False, instance=None, use_required_attribute=None, request=None):
+        if data:
+            data = data.copy()
+            data['owner'] = request.user.id
+            print(request.user)
+
+        self.request = request
         super(ObservationForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
                  initial=initial, error_class=error_class, label_suffix=label_suffix,
                  empty_permitted=empty_permitted, instance=instance, use_required_attribute=use_required_attribute)
-        self.request = request
+
+    def clean(self):
+        super().clean()
+        if self.cleaned_data.get('annotation_data') or self.cleaned_data['original_image']:
+            if self.cleaned_data['video']:
+                raise forms.ValidationError('Technical Error: Video was uploaded alongside an image. Something\'s wrong')
+        return self.cleaned_data
 
     class Meta:
         model = Observation
         fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
                   'notes', 'video_notes', 'parent', 'owner']
-
-    def clean(self):
-        super().clean()
-        self.cleaned_data['owner_id'] = self.request.user.id
-        if self.cleaned_data['annotated_image'] or self.cleaned_data['original_image']:
-            if self.cleaned_data['video']:
-                raise forms.ValidationError('Technical Error: Video was uploaded alongside an image. Something\'s wrong')
-        return self.cleaned_data
 
 
 

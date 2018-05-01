@@ -103,7 +103,11 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
 class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
     pagelet_name = 'pagelet_observation.html'
     form_class = ObservationForm
-    success_url = reverse_lazy('observation_view')
+
+    def get_success_url(self):
+        get_args = self.request.GET
+        get_args = '&'.join([str(k) + '=' + str(v) for k, v in get_args.items()])
+        return reverse('observation_view') + '?' + get_args
 
     def get(self, request, *args, **kwargs):
         if not self.request.GET.get('course'):

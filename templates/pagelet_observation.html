@@ -17,7 +17,7 @@
 <div class="page">
   <div class="navbar">
     <div class="navbar-inner">
-      <div class="title">{% block title %}LSOA: Observation{% endblock %}</div>
+      <div class="title">{% block title %}LSOA: Observation{% endblock %}{{ form.errors }}</div>
       <div class="right">
         <a href="#" data-panel="left" class="link panel-open icon-only">
           <i class="fa fa-bars"></i>
@@ -108,7 +108,7 @@
                  playsinline></video>
           <input style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
           <label class="button" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio note</label>
-          <textarea style="width: calc(100% - 6px); height: 150px; font-size: 2em; background-color: white;"></textarea>
+          <textarea name="notes" style="width: calc(100% - 6px); height: 150px; font-size: 2em; background-color: white;"></textarea>
           <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
           <div id="sublevel-examples" style="height: 300px;">
             <p>Once you select a learning construct using the toggle buttons to the left, different
