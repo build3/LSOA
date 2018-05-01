@@ -109,12 +109,16 @@ class ObservationForm(forms.ModelForm):
             construct_ids = get_args.getlist('constructs', [])
             self.cleaned_data['constructs'] = construct_ids
 
+        if get_args.get('context_tags'):
+            context_tags_ids = get_args.getlist('context_tags', [])
+            self.cleaned_data['tags'] = context_tags_ids
+
         return self.cleaned_data
 
     class Meta:
         model = Observation
         fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
-                  'notes', 'video_notes', 'parent', 'owner', 'constructs', 'students']
+                  'notes', 'video_notes', 'parent', 'owner']
 
 
 
