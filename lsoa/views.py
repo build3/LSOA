@@ -154,7 +154,6 @@ class GroupingRelatedSelectView(RelatedSelectView):
         v = request.GET.get('value', None)
         ajax_list = []
         for model_instance in self.filter(v, user=request.user):
-            print(model_instance)
             ajax_list.append({'key': self.to_text(model_instance),
                               'value': self.to_value(model_instance)})
         return JsonResponse(ajax_list, safe=False)

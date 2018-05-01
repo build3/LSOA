@@ -15,5 +15,4 @@ class RelatedChoiceFieldWithAfter(RelatedChoiceField):
 
     def init_bound_field(self, obj, request_user=None):
         super(RelatedChoiceFieldWithAfter, self).init_bound_field(obj=obj, request_user=request_user)
-        print(self.choices)
         self.choices.append((self.after_label.replace(' ', '-').lower(), self.after_label))
