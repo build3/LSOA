@@ -92,6 +92,8 @@ class ObservationForm(forms.ModelForm):
         if data:
             data = data.copy()
             data['owner'] = request.user.id
+            if not data.get('useMostRecentMedia'):
+                del data['parent']
 
         self.request = request
         super(ObservationForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
@@ -112,6 +114,7 @@ class ObservationForm(forms.ModelForm):
         if get_args.get('context_tags'):
             context_tags_ids = get_args.getlist('context_tags', [])
             self.cleaned_data['tags'] = context_tags_ids
+
 
         return self.cleaned_data
 

@@ -50,7 +50,7 @@
                                                                      id="videoUpload"></label>
             {% if most_recent_observation %}
               <input type="hidden" value="{{ most_recent_observation.id }}" name="parent"/>
-              <label class="button" for="useMostRecentMedia"><input type="checkbox"
+              <label class="button" for="useMostRecentMedia"><input type="checkbox" name="useMostRecentMedia"
                                                                     id="useMostRecentMedia"> Use Last Photo/Video
               </label>
             {% endif %}
@@ -164,8 +164,8 @@
         </div>
       </div>
       <div class="fab fab-right-bottom color-green">
-        <button type="submit" href="#" id="submit">
-          <i class="fa fa-2x fa-plus"></i>
+        <button type="submit" href="#" id="submit" class="fa fa-2x fa-plus">
+{#          <i class=""></i>#}
         </button>
       </div>
     </form>
