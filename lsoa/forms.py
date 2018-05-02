@@ -109,10 +109,6 @@ class ObservationForm(forms.ModelForm):
                     'Technical Error: Video was uploaded alongside an image. Something\'s wrong')
 
         get_args = self.request.GET
-        if get_args.get('constructs'):
-            construct_ids = get_args.getlist('constructs', [])
-            self.cleaned_data['constructs'] = construct_ids
-
         if get_args.get('context_tags'):
             context_tags_ids = get_args.getlist('context_tags', [])
             self.cleaned_data['tags'] = context_tags_ids

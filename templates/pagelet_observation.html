@@ -68,7 +68,8 @@
             {#    Constructs    #}
             <div style="">
               {% for sublevel in constructs %}
-                <div class="chip" data-value="{{ sublevel.id }}" style="padding: 15px 15px;">
+                <input type="hidden" value="{{ sublevel.id }}" data-construct-id-value="{{ sublevel.id }}">
+                <div class="chip" data-construct-id="{{ sublevel.id }}" style="padding: 15px 15px;">
                   <div class="chip-label sublevel">
                     {{ sublevel.name }}
                     <div class="sublevel-desc" style="display: none;">
@@ -177,6 +178,7 @@
   <script>
     var pageInit = function () {
       var checkedStudents = {};
+      var checkedConstructs = {};
       var color, stage;
       var index = parseInt(Math.random() * 100);
       var colors = [
@@ -329,13 +331,24 @@
 
       $$('.chip').on('touchstart', function (e) {
         var chip = $$(this);
+        var constructId = $$(this).data('construct-id');
         chip.toggleClass('bg-color-blue');
         var text = chip.find('.sublevel-desc').html();
         $$('#sublevel-description').html(text);
         var example = chip.find('.sublevel-example').html();
         $$('#sublevel-examples').html(example);
         new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
+
+        if (checkedConstructs.hasOwnProperty(constructId)) {
+          // Remove
+          delete checkedConstructs[constructId];
+          $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
+        } else {
+          checkedConstructs[constructId] = true;
+          $('[data-construct-id-value="' + constructId + '"]').attr('name', 'constructs');
+        }
       });
+
       $$('.student').on('click', function (e) {
         var studentId = $$(this).data('student-id');
         $$('[data-student-id="' + studentId + '"]').toggleClass('bg-color-blue');
