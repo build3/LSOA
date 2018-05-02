@@ -3,10 +3,11 @@ from collections import defaultdict
 from django import forms
 from django.forms.widgets import SelectMultiple
 from django.urls import reverse_lazy
+from django.forms.utils import ErrorList
 from threadlocals.threadlocals import get_current_request
 
 from lsoa.fields import RelatedChoiceFieldWithAfter
-from lsoa.models import Course, LearningConstructSublevel, ContextTag, StudentGrouping
+from lsoa.models import Course, LearningConstructSublevel, ContextTag, StudentGrouping, Observation
 
 
 class TagWidget(SelectMultiple):
@@ -78,8 +79,51 @@ class SetupForm(forms.Form):
         self.fields['context_tags'].queryset = ContextTag.objects.filter(owner=request.user)
 
 
-class ObservationForm(forms.Form):
-    pass
+class ObservationForm(forms.ModelForm):
+    """
+    An Observation is a "snapshot in time" of student(s) exhibiting mastery of
+    a certain (or multiple) learning constructs, paired with typed notes or
+    visual evidence (picture or video).
+    """
+
+    def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
+                 initial=None, error_class=ErrorList, label_suffix=None,
+                 empty_permitted=False, instance=None, use_required_attribute=None, request=None):
+        if data:
+            data = data.copy()
+            data['owner'] = request.user.id
+            if not data.get('useMostRecentMedia'):
+                del data['parent']
+
+        self.request = request
+        super(ObservationForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
+                 initial=initial, error_class=error_class, label_suffix=label_suffix,
+                 empty_permitted=empty_permitted, instance=instance, use_required_attribute=use_required_attribute)
+
+    def clean(self):
+        super().clean()
+        if self.cleaned_data.get('annotation_data') or self.cleaned_data['original_image']:
+            if self.cleaned_data['video']:
+                raise forms.ValidationError('Technical Error: Video was uploaded alongside an image. Something\'s wrong')
+
+        get_args = self.request.GET
+        if get_args.get('constructs'):
+            construct_ids = get_args.getlist('constructs', [])
+            self.cleaned_data['constructs'] = construct_ids
+
+        if get_args.get('context_tags'):
+            context_tags_ids = get_args.getlist('context_tags', [])
+            self.cleaned_data['tags'] = context_tags_ids
+
+
+        return self.cleaned_data
+
+    class Meta:
+        model = Observation
+        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
+                  'notes', 'video_notes', 'parent', 'owner']
+
+
 
 
 class GroupingForm(forms.Form):

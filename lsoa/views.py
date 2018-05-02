@@ -1,19 +1,22 @@
 import json
+import collections
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
+from braces.views import JSONResponseMixin
+from django.contrib import messages
+from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View
 from related_select.views import RelatedSelectView
-from braces.views import JSONResponseMixin
 
 from lsoa.forms import ObservationForm, SetupForm, GroupingForm
-from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, LearningConstructLevel, \
-    StudentGroup, Student, Observation
+from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
+    Observation
 from utils.pagelets import PageletMixin
 
 
@@ -91,8 +94,8 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
         kwargs['initial_grouping_dict'] = {}
         if kwargs['grouping'].id:
             kwargs['initial_grouping_dict'] = {
-            g.id: {'name': g.name, 'student_ids': [i for i in g.students.values_list('id', flat=True)]} for g in
-            kwargs['grouping'].groups.all()}
+                g.id: {'name': g.name, 'student_ids': [i for i in g.students.values_list('id', flat=True)]} for g in
+                kwargs['grouping'].groups.all()}
         kwargs['initial_grouping_dict'] = json.dumps(kwargs['initial_grouping_dict'])
         return super().get_context_data(**kwargs)
 
@@ -100,6 +103,13 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
 class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
     pagelet_name = 'pagelet_observation.html'
     form_class = ObservationForm
+
+    def get_success_url(self):
+        get_args = self.request.GET.copy()
+        constructs = get_args.pop('constructs', [])
+        constructs = 'constructs=' + '&constructs='.join(constructs)
+        get_args = '&'.join([str(k) + '=' + str(v) for k, v in get_args.items()] + [constructs])
+        return reverse('observation_view') + '?' + get_args
 
     def get(self, request, *args, **kwargs):
         if not self.request.GET.get('course'):
@@ -115,11 +125,23 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
 
         within_timeframe = datetime.now() - timedelta(hours=2)
         # TODO: Update this query to be correct.
-        kwargs['most_recent_observation'] = Observation.objects\
-            .filter(owner=self.request.user, created__gte=within_timeframe)\
+        kwargs['most_recent_observation'] = Observation.objects \
+            .filter(owner=self.request.user, created__gte=within_timeframe) \
             .order_by('-created').first()
 
         return super().get_context_data(**kwargs)
+
+    def get_form_kwargs(self, *args, **kwargs):
+        data = super().get_form_kwargs(*args, **kwargs)
+        data.update({
+            'request': self.request
+        })
+        return data
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, 'Observation added')
+        return super().form_valid(form)
 
 
 class GroupingRelatedSelectView(RelatedSelectView):
@@ -189,3 +211,58 @@ class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping.id
         return self.render_json_response(return_data)
+
+
+class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
+    """
+    View the matrix of stars for users
+    """
+    pagelet_name = 'pagelet_view_observations.html'
+
+    def get_data_for_construct_id(self, construct_id):
+        all_students = Student.objects.all()
+        all_observations = Observation.objects.prefetch_related('students').filter(constructs__level__construct_id=construct_id)
+        all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
+
+        c_name = LearningConstruct.objects.get(id=construct_id).abbreviation + ' '
+
+        # Create data dicts
+        student_map = {s.id: str(s) for s in all_students}
+        construct_map = collections.OrderedDict(
+            {csl.id: {'description': csl.description, 'name': csl.name.replace(c_name, '')} for csl in
+             all_constructs_sublevels})
+        observations_map = {}
+        matrix = {s.id: {} for s in all_students}
+
+        for observation in all_observations:
+            for obs_construct in observation.constructs.all():
+                for obs_student in observation.students.all():
+                    matrix[obs_student.id][obs_construct.id] = observation.id
+
+        return {
+            'student_map': student_map,
+            'observations_map': observations_map,
+            'construct_map': construct_map,
+            'matrix': matrix,
+            'c_name': c_name,
+            'all_observations': all_observations
+        }
+
+    def get_context_data(self, **kwargs):
+        construct_id = kwargs.get('construct_id')
+        all_constructs = LearningConstruct.objects.all()
+        top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
+
+        constructs_to_cover = LearningConstruct.objects.annotate(q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
+
+        if construct_id:
+            constructs_to_cover = constructs_to_cover.filter(id=construct_id)
+
+        tables = [self.get_data_for_construct_id(cid) for cid in constructs_to_cover.values_list('id', flat=True)]
+
+        data = super().get_context_data(**kwargs)
+        data.update({
+            'tables': tables,
+            'top_level_construct_map': top_level_construct_map,
+        })
+        return data

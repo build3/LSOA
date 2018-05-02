@@ -1,0 +1,184 @@
+{% load staticfiles %}
+{% load keyvalue %}
+
+{% block extrastyles %}
+  <style>
+    [role="tooltip"] {
+      z-index: 9999999;
+    }
+
+    table, .ios .page {
+      background-color: #fff !important;
+    }
+
+    .modal.show {
+      z-index: 5010;
+    }
+
+    [data-modal-launch-observation] {
+      cursor: pointer;
+    }
+
+    [data-modal-launch-observation] i {
+      color: goldenrod;
+    }
+
+    [data-modal-launch-observation]:hover i {
+      color: darkgoldenrod;
+    }
+  </style>
+{% endblock %}
+
+{% block extrascripts %}
+  <script>
+    $(function () {
+
+      // Init tooltips
+      $('[data-toggle="tooltip"]').tooltip();
+
+      // Remove duplicate modals
+      var seen = {};
+      $('.modal[data-observation-id]').each(function () {
+        var id = $(this).data('observation-id');
+        if (seen[id])
+          $(this).remove();
+        else
+          seen[id] = true;
+      });
+
+      // Launch modals
+      $('[data-modal-launch-observation]').on('click', function (e) {
+        var observationId = $(this).data('modal-launch-observation');
+        var modal = $('[data-observation-id="' + observationId + '"]');
+        modal.modal({
+          size: 'lg',
+          fade: true
+        })
+      })
+
+    });
+  </script>
+{% endblock %}
+
+<div class="page">
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="title">{% block title %}LSOA: Star Chart{% endblock %}</div>
+      <div class="right">
+        <a href="#" data-panel="left" class="link panel-open icon-only">
+          <i class="fa fa-bars"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="page-content" style="padding-left: 1em;">
+    <form action="" method="POST">
+      {% csrf_token %}
+      <div class="row full-height">
+        <div class="col-100" style="margin-top: 50px;overflow: hidden;">
+
+          {% for table in tables %}
+            <h4 class="text-align-center" style="margin-bottom: 25px;">{{ table.c_name }}</h4>
+            <table class="table table-bordered" style="width: 100%;overflow-x: scroll;">
+              <thead>
+              <tr>
+                <th scope="col" class="text-align-center">&nbsp;</th>
+                {% for csl_id, csl_data in table.construct_map.items %}
+                  <th scope="col" class="text-align-center" title="{{ csl_data.description }}"
+                      data-toggle="tooltip">{{ csl_data.name }}</th>
+                {% endfor %}
+              </tr>
+              </thead>
+              <tbody>
+
+              {% for student_id, construct_data in table.matrix.items %}
+                <tr>
+                  <th scope="row">{{ table.student_map | keyvalue:student_id }}</th>
+                  {% for csl_id, csl_data in table.construct_map.items %}
+                    {% with exists=table.matrix|keyvalue:student_id|keyvalue:csl_id %}
+                      <td data-csl-id="{{ csl_id }}" class="text-align-center"
+                          {% if exists %}data-modal-launch-observation="{{ exists }}">
+                            <i data-toggle="tooltip" title=""
+                               class="fa fa-star"></i>{% else %}>&nbsp;{% endif %}</td>
+                    {% endwith %}
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+
+              </tbody>
+            </table>
+
+          {% endfor %}
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    var pageInit = function () {
+    };
+
+    {% for message in messages %}
+      if (window.myApp && window.myApp.toast) {
+        window.myApp.toast.create({
+          text: '{{ message }}'
+        }).open();
+      }
+    {% endfor %}
+
+    if (typeof $$ !== 'undefined') {
+      pageInit();
+    } else {
+      document.addEventListener("DOMContentLoaded", pageInit);
+    }
+
+  </script>
+</div>
+
+
+{# MODALS #}
+{% for table in tables %}
+  {% for observation in table.all_observations %}
+    <!-- Modal -->
+    <div class="modal fade" data-observation-id="{{ observation.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Observation #{{ observation.id }}</h5>
+          </div>
+          <div class="modal-body">
+            {% if observation.tags.count %}
+              <h3>Tags:</h3>
+              {% for tag in observation.tags.all %}
+                <span class="tag">{{ tag.text }}</span>
+              {% endfor %}
+              <hr>
+            {% endif %}
+
+            {% if observation.original_image %}
+              <img src="{{ observation.original_image }}" alt="">
+              <hr>
+            {% endif %}
+
+            {% if observation.video %}
+              <img src="{{ observation.original_image }}" alt="">
+              <hr>
+            {% endif %}
+
+            {% if observation.notes %}
+              <h3>Note:</h3>
+              <p>{{ observation.notes }}</p>
+              <hr>
+            {% endif %}
+
+            {% if observation.video_notes %}
+              <h3>Video Note:</h3>
+              <p>{{ observation.video_notes }}</p>
+              <hr>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endfor %}

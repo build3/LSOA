@@ -5,19 +5,19 @@
   <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
 {% endblock %}
 {% block extrascripts %}
-  <script src="{% static 'vendor/easeljs/easeljs.min.js' %}"></script>
+  <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
   <script src="{% static 'vendor/lightbox2/js/lightbox-plus-jquery.min.js' %}"></script>
   <script>
     lightbox.option({
       'albumLabel': ''
     })
-</script>
+  </script>
 {% endblock %}
 
 <div class="page">
   <div class="navbar">
     <div class="navbar-inner">
-      <div class="title">{% block title %}LSOA: Observation{% endblock %}</div>
+      <div class="title">{% block title %}LSOA: Observation{% endblock %}{{ form.errors }}</div>
       <div class="right">
         <a href="#" data-panel="left" class="link panel-open icon-only">
           <i class="fa fa-bars"></i>
@@ -26,148 +26,170 @@
     </div>
   </div>
   <div class="page-content" style="padding-left: 1em;">
-    <div class="row full-height">
-      <div class="col-50 full-height" style="position: relative;">
-        <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
-             style="width: 100%; height: calc(50vw * .75)">
-        <video id="recorded" style="display:none;width: 100%; height: calc(50vw * .75)" muted autoplay controls
-               playsinline></video>
-        <canvas id="canvas" style="display: none;"></canvas>
+    <form action="" method="POST">
+      {% csrf_token %}
+      <div class="row full-height">
+        <div class="col-50" style="position: relative;">
+          <div class="art" style="height: 480px;">
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}"
+                 style="width: 100%; height: 100%">
+            <video id="recorded" style="display:none;width: 100%; height: 100%;" muted autoplay controls
+                   playsinline></video>
 
-        {#        easeljs   #}
-        <canvas id="easel-canvas" width="500" height="300"
-                style="display: none;height: calc(50vw * .75); width: 100%;position: absolute;top: 0;left: 0;"></canvas>
+            {#        easeljs   #}
+            <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
+            <input type="hidden" id="annotated-image" name="annotation_data" value="">
+          </div>
 
+          <div id="row-media-buttons" class="segmented" style="height:30px;margin-bottom:100px;">
+            <label class="button" for="photoUpload">Take photo<input name="original_image" style="display:none;"
+                                                                     type="file" accept="image/*"
+                                                                     id="photoUpload"></label>
+            <label class="button" for="videoUpload">Take video<input name="video" style="display:none;" type="file"
+                                                                     accept="video/*"
+                                                                     id="videoUpload"></label>
+            {% if most_recent_observation %}
+              <input type="hidden" value="{{ most_recent_observation.id }}" name="parent"/>
+              <label class="button" for="useMostRecentMedia"><input type="checkbox" name="useMostRecentMedia"
+                                                                    id="useMostRecentMedia"> Use Last Photo/Video
+              </label>
+            {% endif %}
+          </div>
+          <div id="row-capture-buttons" class="segmented" style="display:none; height:30px;">
+            <a id="reset" class="button">Reset</a>
+            <a id="enable-draw" class="button enab disabled">
+              <span class="enab">Enable</span>
+              <span class="disa">Clear</span> Drawing</a>
+            <a id="drawing-color-button" class="disabled button">Change Color <span
+              id="drawing-color"></span></a>
+          </div>
 
-        <div id="row-media-buttons" class="segmented" style="height:30px;">
-          <label class="button" for="photoUpload">Take photo<input style="display:none;" type="file" accept="image/*"
-                                                                   id="photoUpload"></label>
-          <label class="button" for="videoUpload">Take video<input style="display:none;" type="file" accept="video/*"
-                                                                   id="videoUpload"></label>
-          {% if most_recent_observation %}
-            <label class="button" for="useMostRecentMedia"><input type="checkbox"
-                                                                   id="useMostRecentMedia"> Use Last Photo/Video </label>
-          {% endif %}
-        </div>
-        <div id="row-capture-buttons" class="segmented" style="display:none; height:30px;">
-          <a id="reset" class="button">Reset</a>
-          <a id="enable-draw" class="button enab disabled">
-            <span class="enab">Enable</span>
-            <span class="disa">Clear</span> Drawing</a>
-          <a id="drawing-color-button" class="disabled button">Change Color <span
-            id="drawing-color"></span></a>
-        </div>
+          {#    Constructs    #}
+          <div style="">
+            {% for sublevel in constructs %}
+              <div class="chip" data-value="{{ sublevel.id }}" style="padding: 15px 15px;">
+                <div class="chip-label sublevel">
+                  {{ sublevel.name }}
+                  <div class="sublevel-desc" style="display: none;">
+                    <h4>{{ sublevel.name }}</h4>
+                    <p>{{ sublevel.description }}</p>
+                  </div>
+                  <div class="sublevel-example" style="display: none;">
+                    <div class="swiper-container swiper-init">
+                      <div class="swiper-wrapper">
+                        {% for example in sublevel.examples.all %}
+                          <div class="swiper-slide" style="text-align: center;">
+                            <h4>{{ sublevel.name }}</h4>
+                            <p>{{ example.text }}</p>
+                            {% if example.image %}
+                              <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
+                                <img src="{{ example.image.url }}" style="max-height: 280px; max-width: 20vw;"/>
+                              </a>
+                            {% endif %}
+                          </div>
+                        {% endfor %}
+                      </div>
 
-        {#    Constructs    #}
-        <div style="">
-          {% for sublevel in constructs %}
-            <div class="chip" data-value="{{ sublevel.id }}" style="padding: 15px 15px;">
-              <div class="chip-label sublevel">
-                {{ sublevel.name }}
-                <div class="sublevel-desc" style="display: none;">
-                  <h4>{{ sublevel.name }}</h4>
-                  <p>{{ sublevel.description }}</p>
-                </div>
-                <div class="sublevel-example" style="display: none;">
-                  <div class="swiper-container swiper-init">
-                    <div class="swiper-wrapper">
-                      {% for example in sublevel.examples.all %}
-                        <div class="swiper-slide" style="text-align: center;">
-                          <h4>{{ sublevel.name }}</h4>
-                          <p>{{ example.text }}</p>
-                          {% if example.image %}
-                            <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
-                              <img src="{{ example.image.url }}" style="max-height: 280px; max-width: 20vw;"/>
-                            </a>
-                          {% endif %}
-                        </div>
-                      {% endfor %}
                     </div>
-
                   </div>
                 </div>
               </div>
-            </div>
-          {% endfor %}
-        </div>
-        {#    End Constructs    #}
-        <hr/>
+            {% endfor %}
+          </div>
+          {#    End Constructs    #}
+          <hr/>
 
-        <div id="sublevel-description" style="width: 100%; height:200px; overflow-y: scroll;">
-          <h4>Learning Construct Details</h4>
-          <p>Once you select a learning construct using the toggle buttons above, the description will
-            be displayed here.</p>
+          <div id="sublevel-description" style="width: 100%; height:200px; overflow-y: scroll;">
+            <h4>Learning Construct Details</h4>
+            <p>Once you select a learning construct using the toggle buttons above, the description will
+              be displayed here.</p>
+          </div>
         </div>
-      </div>
-      <div class="col-25 full-height">
-        <h4 style="text-align: center; margin: 0;">Notes</h4>
-        <video id="recordedNote" style="display:none;width: 100%; height: 150px" muted autoplay controls
-               playsinline></video>
-        <input style="display:none;" type="file" accept="video/*" id="videoNoteUpload"><label class="button"
-                                                                                              for="videoNoteUpload"><span
-        id="videoNoteUploadVerb">Add</span> Video/Audio note</label>
-        <textarea style="width: calc(100% - 6px); height: 359px; font-size: 2em; background-color: white;"></textarea>
-        <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
-        <div id="sublevel-examples" style="height: 300px;">
-          <p>Once you select a learning construct using the toggle buttons to the left, different
-            examples of the learning constructs will be shown here.</p>
+        <div class="col-25 full-height">
+          <h4 style="text-align: center; margin: 0;">Notes</h4>
+          <video id="recordedNote" style="display:none;width: 100%; height: 150px" muted autoplay controls
+                 playsinline></video>
+          <input style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
+          <label class="button" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio note</label>
+          <textarea name="notes"
+                    style="width: calc(100% - 6px); height: 150px; font-size: 2em; background-color: white;"></textarea>
+          <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
+          <div id="sublevel-examples" style="height: 300px;">
+            <p>Once you select a learning construct using the toggle buttons to the left, different
+              examples of the learning constructs will be shown here.</p>
+          </div>
         </div>
-      </div>
-      <div class="col-25 full-height">
-        <h4 style="text-align: center; margin: 0;">Students</h4>
-        <div class="list" style="margin: 0;">
-          <ul>
-            {% if grouping %}
-              {% for group in grouping.groups.all %}
-                <li class="accordion-item">
-                  <a href="#" class="item-link item-content group">
-                    <div class="item-inner">
-                      <div class="item-title">{{ group }}</div>
-                    </div>
-                  </a>
-                  <div class="accordion-item-content">
-                    <div class="list">
-                      <ul>
-                        {% for student in group.students.all %}
-                          <li>
-                            <div class="item-content student" onclick="">
-                              <div class="item-inner">
-                                <div class="item-title">&nbsp;&nbsp;{{ student }}</div>
+        <div class="col-25 full-height">
+          <h4 style="text-align: center; margin: 0;">Students</h4>
+          <div class="list" style="margin: 0;">
+            <ul>
+              {% if grouping %}
+                {% for group in grouping.groups.all %}
+                  <li class="accordion-item">
+                    <a href="#" class="item-link item-content group">
+                      <div class="item-inner">
+                        <div class="item-title">{{ group }}</div>
+                      </div>
+                    </a>
+                    <div class="accordion-item-content">
+                      <div class="list">
+                        <ul>
+                          {% for student in group.students.all %}
+                            <li>
+                              <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
+                              <div class="item-content student" data-student-id="{{ student.id }}">
+                                <div class="item-inner">
+                                  <div class="item-title">&nbsp;&nbsp;{{ student }}</div>
+                                </div>
                               </div>
-                            </div>
-                          </li>
-                        {% endfor %}
-                      </ul>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              {% endfor %}
-            {% else %}
-              {% for student in course.students.all %}
-                <li class="item-content student">
-                  <div class="item-inner">
-                    <div class="item-title">{{ student }}</div>
-                  </div>
-                </li>
-              {% endfor %}
-            {% endif %}
-          </ul>
+                  </li>
+                {% endfor %}
+              {% else %}
+                {% for student in course.students.all %}
+                  <li class="item-content student" data-student-id="{{ student.id }}">
+                    <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
+                    <div class="item-inner">
+                      <div class="item-title">{{ student }}</div>
+                    </div>
+                  </li>
+                {% endfor %}
+              {% endif %}
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="fab fab-right-bottom color-green">
-      <a href="#" onclick="location.reload();">
-        <i class="fa fa-2x fa-plus"></i>
-      </a>
-    </div>
+      <div class="fab fab-right-bottom color-green">
+        <button type="submit" href="#" id="submit" class="fa fa-2x fa-plus">
+{#          <i class=""></i>#}
+        </button>
+      </div>
+    </form>
   </div>
+
   <script>
     var pageInit = function () {
+      var checkedStudents = {};
+      var color, stage;
+      var index = parseInt(Math.random() * 100);
+      var colors = [
+        "#1abc9c", "#2ecc71",
+        "#3498db", "#9b59b6",
+        "#34495e", "#ecf0f1",
+        "#e74c3c", "#95a5a6",
+        "#e67e22", "#f1c40f"
+      ];
+
       var photoUpload = document.querySelector('input#photoUpload');
       var videoUpload = document.querySelector('input#videoUpload');
       var videoNoteUpload = document.querySelector('input#videoNoteUpload');
       var useMostRecentMedia = document.querySelector('input#useMostRecentMedia');
       var image = document.querySelector('img#image');
+      var annotationInput = document.querySelector('#annotated-image');
       var reset = document.querySelector('a#reset');
       var enableDisableDraw = document.querySelector('a#enable-draw');
       var drawingColorButton = document.querySelector('a#drawing-color-button');
@@ -177,6 +199,7 @@
       var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
       var recordedVideo = document.querySelector('video#recorded');
       var recordedVideoNote = document.querySelector('video#recordedNote');
+      var submitButton = document.querySelector('#submit');
 
       $$("#videoUpload").on("change", function (e) {
         recordedVideo.src = URL.createObjectURL(this.files[0]);
@@ -218,102 +241,47 @@
         recordedVideo.style.display = 'none';
         recordedVideo.src = '';
         enableDisableDraw.classList.add('disabled');
-        stage = new createjs.Stage(canvas);
-        stage.removeAllChildren();
-        stage.update();
+        stage = new fabric.Canvas('easel-canvas', {isDrawingMode: true});
         photoUpload.value = '';
         videoUpload.value = '';
         useMostRecentMedia.checked = false;
       });
 
-      var canvas = document.querySelector('#easel-canvas');
-      var color, oldMidPt, oldPt, stage, drawingCanvas;
-      var index = parseInt(Math.random() * 100);
-      title = new createjs.Text("Click and Drag to draw", "28px Arial", "#FFF");
-      title.x = 100;
-      title.y = 100;
-      var colors = [
-        "#1abc9c", "#2ecc71",
-        "#3498db", "#9b59b6",
-        "#34495e", "#ecf0f1",
-        "#e74c3c", "#95a5a6",
-        "#e67e22", "#f1c40f"
-      ];
-
       setUpEasel();
-
-      function disableStage() {
-      }
 
       function setUpEasel() {
 
         color = colors[(index++) % colors.length];
 
-
-        initStage(title);
+        initStage();
         initEnableDisable();
         initChangeColorButton();
         updateDrawingColorDisplay();
 
-        function initStage(title) {
-          stage = new createjs.Stage(canvas);
-
-          stage.autoClear = false;
-          stage.enableDOMEvents(true);
-          createjs.Touch.enable(stage);
-          createjs.Ticker.framerate = 24;
-
-          drawingCanvas = new createjs.Shape();
-
-          stage.addEventListener("stagemousedown", handleMouseDown);
-          stage.addEventListener("stagemouseup", handleMouseUp);
-          if (title) {
-            stage.addChild(title);
-          }
-
-          stage.addChild(drawingCanvas);
-          stage.update();
+        function updateAnnotationJson() {
+          annotationInput.value = getEaselData();
         }
 
-        function handleMouseDown(event) {
-          if (!event.primary) {
-            return;
-          }
-          if (stage.contains(title)) {
-            stage.clear();
-            stage.removeChild(title);
-          }
-          stroke = .05 * 10 + (10 | 0);
-          oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
-          oldMidPt = oldPt.clone();
-          stage.addEventListener("stagemousemove", handleMouseMove);
-        }
+        function initStage() {
+          stage = new fabric.Canvas('easel-canvas', {
+            isDrawingMode: false,
+            selection: false
+          });
 
-        function handleMouseUp(event) {
-          if (!event.primary) {
-            return;
-          }
-          stage.removeEventListener("stagemousemove", handleMouseMove);
-        }
+          stage.on('object:added', updateAnnotationJson);
+          stage.on('object:removed', updateAnnotationJson);
+          stage.on('object:modified', updateAnnotationJson);
 
-        function handleMouseMove(event) {
-          if (!event.primary) {
-            return;
-          }
-          var midPt = new createjs.Point(oldPt.x + stage.mouseX >> 1, oldPt.y + stage.mouseY >> 1);
+          stage.setHeight(image.height);
+          stage.setWidth(image.width);
 
-          drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(color).moveTo(midPt.x, midPt.y).curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
-
-          oldPt.x = stage.mouseX;
-          oldPt.y = stage.mouseY;
-
-          oldMidPt.x = midPt.x;
-          oldMidPt.y = midPt.y;
-
-          stage.update();
+          updateDrawingColorDisplay();
+          stage.freeDrawingBrush = new fabric['PencilBrush'](stage);
+          stage.freeDrawingBrush.width = 10;
         }
 
         function updateDrawingColorDisplay() {
+          stage.freeDrawingBrush.color = color;
           drawingColorDisplay.style.backgroundColor = color;
         }
 
@@ -331,17 +299,25 @@
               enableDisableDraw.classList.remove('enab');
               enableDisableDraw.classList.add('disa');
               drawingColorButton.classList.remove('disabled');
-              canvas.style.display = 'Block';
             }
             else if (enableDisableDraw.classList.contains('disa')) {
               // Disable drawing
-              stage = new createjs.Stage(canvas);
-              stage.removeAllChildren();
-              stage.update();
-              initStage();
+              enableDisableDraw.classList.add('enab');
+              enableDisableDraw.classList.remove('disa');
+              drawingColorButton.classList.add('disabled');
+              stage.clear();
             }
+            updateAnnotationJson();
+            stage.isDrawingMode = !stage.isDrawingMode;
           }
         }
+      }
+
+      function getEaselData() {
+        if (stage) {
+          return JSON.stringify(stage.toJSON());
+        }
+        return null;
       }
 
       $$('.chip').on('touchstart', function (e) {
@@ -354,7 +330,16 @@
         new Swiper('.swiper-container', {pagination: '.swiper-pagination'})
       });
       $$('.student').on('click', function (e) {
-        $$(this).toggleClass('bg-color-blue')
+        var studentId = $$(this).data('student-id');
+        $$('[data-student-id="' + studentId + '"]').toggleClass('bg-color-blue');
+        if (checkedStudents.hasOwnProperty(studentId)) {
+          // Remove
+          delete checkedStudents[studentId];
+          $('[data-student-id-value="' + studentId + '"]').removeAttr('name');
+        } else {
+          checkedStudents[studentId] = true;
+          $('[data-student-id-value="' + studentId + '"]').attr('name', 'students');
+        }
       });
       $$('.group').on('touchstart', function (e) {
         $$(this).toggleClass('selected-group');
@@ -362,13 +347,14 @@
           $$(this).closest('.accordion-item').find('.student').removeClass('bg-color-blue');
         }
       });
-
     };
 
     {% for message in messages %}
-      window.myApp.toast.create({
-        text: '{{ message }}'
-      }).open();
+      if (window.myApp && window.myApp.toast) {
+        window.myApp.toast.create({
+          text: '{{ message }}'
+        }).open();
+      }
     {% endfor %}
 
     if (typeof $$ !== 'undefined') {

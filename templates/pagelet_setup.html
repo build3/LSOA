@@ -139,15 +139,18 @@
     .select2-container.select2-container--default.select2-container--open {
       z-index: 99999999;
     }
+
     [value="make-new-grouping"] ~ .item-inner .item-title {
       position: relative;
       top: -2px;
       color: #1b9a59;
     }
+
     [value="make-new-grouping"] ~ .icon.icon-radio {
       display: none;
     }
-    [value="make-new-grouping"] ~ .item-inner .item-title:before{
+
+    [value="make-new-grouping"] ~ .item-inner .item-title:before {
       content: '+';
       position: relative;
       top: -2px;
@@ -160,10 +163,12 @@
 
   <script>
     var pageInit = function () {
-      {% for message in messages %}
-        myApp.alert('{{ message }}',
-          {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
-      {% endfor %}
+      if (myApp.alert) {
+        {% for message in messages %}
+          myApp.alert('{{ message }}',
+            {% if message.tags %}'{{ message.tags.upper }}'{% else %}, 'LSOA'{% endif %});
+        {% endfor %}
+      }
 
       $("#id_context_tags").select2({
         tags: true,
@@ -194,8 +199,7 @@
         eval($(this).data('mytarget')).collapse('toggle');
       });
 
-      $('body').on('click', '[value="make-new-grouping"] ~ .item-inner', function(){
-        console.log('clickedceclciekd')
+      $('body').on('click', '[value="make-new-grouping"] ~ .item-inner', function () {
         var courseId = $('#id_course').val();
         window.location = '/grouping/?course=' + courseId;
       });
