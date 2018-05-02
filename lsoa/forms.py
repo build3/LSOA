@@ -1,13 +1,13 @@
 from collections import defaultdict
 
 from django import forms
+from django.forms.utils import ErrorList
 from django.forms.widgets import SelectMultiple
 from django.urls import reverse_lazy
-from django.forms.utils import ErrorList
 from threadlocals.threadlocals import get_current_request
 
 from lsoa.fields import RelatedChoiceFieldWithAfter
-from lsoa.models import Course, LearningConstructSublevel, ContextTag, StudentGrouping, Observation
+from lsoa.models import Course, LearningConstructSublevel, ContextTag, Observation
 
 
 class TagWidget(SelectMultiple):
@@ -93,18 +93,20 @@ class ObservationForm(forms.ModelForm):
             data = data.copy()
             data['owner'] = request.user.id
             if not data.get('useMostRecentMedia'):
-                del data['parent']
+                data['parent'] = None
 
         self.request = request
         super(ObservationForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
-                 initial=initial, error_class=error_class, label_suffix=label_suffix,
-                 empty_permitted=empty_permitted, instance=instance, use_required_attribute=use_required_attribute)
+                                              initial=initial, error_class=error_class, label_suffix=label_suffix,
+                                              empty_permitted=empty_permitted, instance=instance,
+                                              use_required_attribute=use_required_attribute)
 
     def clean(self):
         super().clean()
         if self.cleaned_data.get('annotation_data') or self.cleaned_data['original_image']:
             if self.cleaned_data['video']:
-                raise forms.ValidationError('Technical Error: Video was uploaded alongside an image. Something\'s wrong')
+                raise forms.ValidationError(
+                    'Technical Error: Video was uploaded alongside an image. Something\'s wrong')
 
         get_args = self.request.GET
         if get_args.get('constructs'):
@@ -115,15 +117,12 @@ class ObservationForm(forms.ModelForm):
             context_tags_ids = get_args.getlist('context_tags', [])
             self.cleaned_data['tags'] = context_tags_ids
 
-
         return self.cleaned_data
 
     class Meta:
         model = Observation
         fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
                   'notes', 'video_notes', 'parent', 'owner']
-
-
 
 
 class GroupingForm(forms.Form):
