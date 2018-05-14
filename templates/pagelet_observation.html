@@ -27,7 +27,7 @@
   </div>
 
   <div class="page-content" style="">
-    <form action="" method="POST">
+    <form action="" method="POST" enctype='multipart/form-data'>
       <div class="container">
         {% csrf_token %}
         <div class="row full-height">
@@ -64,7 +64,6 @@
               <a id="drawing-color-button" class="disabled button">Change Color <span
                 id="drawing-color"></span></a>
             </div>
-
             {#    Constructs    #}
             <div style="">
               {% for sublevel in constructs %}

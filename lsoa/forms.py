@@ -96,10 +96,10 @@ class ObservationForm(forms.ModelForm):
                 data['parent'] = None
 
         self.request = request
-        super(ObservationForm, self).__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
-                                              initial=initial, error_class=error_class, label_suffix=label_suffix,
-                                              empty_permitted=empty_permitted, instance=instance,
-                                              use_required_attribute=use_required_attribute)
+        super().__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
+                         initial=initial, error_class=error_class, label_suffix=label_suffix,
+                         empty_permitted=empty_permitted, instance=instance,
+                         use_required_attribute=use_required_attribute)
 
     def clean(self):
         super().clean()
@@ -112,6 +112,7 @@ class ObservationForm(forms.ModelForm):
         if get_args.get('context_tags'):
             context_tags_ids = get_args.getlist('context_tags', [])
             self.cleaned_data['tags'] = context_tags_ids
+        print(self.request.FILES)
 
         return self.cleaned_data
 

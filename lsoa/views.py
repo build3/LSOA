@@ -1,6 +1,6 @@
 import json
 import collections
-from datetime import datetime, timedelta
+from datetime import timedelta
 from urllib.parse import urlencode
 
 from braces.views import JSONResponseMixin
@@ -9,6 +9,7 @@ from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View
@@ -105,11 +106,7 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
     form_class = ObservationForm
 
     def get_success_url(self):
-        get_args = self.request.GET.copy()
-        constructs = get_args.pop('constructs', [])
-        constructs = 'constructs=' + '&constructs='.join(constructs)
-        get_args = '&'.join([str(k) + '=' + str(v) for k, v in get_args.items()] + [constructs])
-        return reverse('observation_view') + '?' + get_args
+        return self.request.build_absolute_uri()
 
     def get(self, request, *args, **kwargs):
         if not self.request.GET.get('course'):
@@ -123,7 +120,7 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
         kwargs['constructs'] = LearningConstructSublevel.objects.filter(pk__in=self.request.GET.getlist('constructs')) \
             .select_related('level', 'level__construct').prefetch_related('examples')
 
-        within_timeframe = datetime.now() - timedelta(hours=2)
+        within_timeframe = timezone.now() - timedelta(hours=2)
         # TODO: Update this query to be correct.
         kwargs['most_recent_observation'] = Observation.objects \
             .filter(owner=self.request.user, created__gte=within_timeframe) \
@@ -131,11 +128,9 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
 
         return super().get_context_data(**kwargs)
 
-    def get_form_kwargs(self, *args, **kwargs):
-        data = super().get_form_kwargs(*args, **kwargs)
-        data.update({
-            'request': self.request
-        })
+    def get_form_kwargs(self):
+        data = super().get_form_kwargs()
+        data['request'] = self.request
         return data
 
     def form_valid(self, form):
