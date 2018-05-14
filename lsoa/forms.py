@@ -112,8 +112,6 @@ class ObservationForm(forms.ModelForm):
         if get_args.get('context_tags'):
             context_tags_ids = get_args.getlist('context_tags', [])
             self.cleaned_data['tags'] = context_tags_ids
-        print(self.request.FILES)
-
         return self.cleaned_data
 
     class Meta:

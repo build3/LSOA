@@ -12,6 +12,7 @@
     <link href="{% static 'vendor/framework7/css/framework7.min.css' %}" rel="stylesheet">
     <link href="{% static 'vendor/fontawesome4/css/font-awesome.min.css' %}" rel="stylesheet">
     <link href="{% static 'vendor/bootstrap4/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'vendor/toastr/toastr.min.css' %}" rel="stylesheet">
   {% endcompress %}
   {% block extrastyles %}
   {% endblock %}
@@ -19,6 +20,7 @@
   <script type="text/javascript" src="{% static 'vendor/bootstrap4/js/bootstrap.bundle.min.js' %}"></script>
 </head>
 <body>
+
 <div id="app">
   {% block base-content %}
   {% endblock %}
@@ -53,6 +55,8 @@
     });
     {# mainView.router.loadPage('{% url 'home' %}');  #}
 </script>
+<script type="text/javascript" src="{% static 'vendor/toastr/toastr.min.js' %}"></script>
+{% include '_toastr.html' %}
 {% block extrascripts %}
 {% endblock %}
 </body>

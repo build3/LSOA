@@ -1,12 +1,12 @@
-import json
 import collections
+import json
 from datetime import timedelta
 from urllib.parse import urlencode
 
 from braces.views import JSONResponseMixin
 from django.contrib import messages
-from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -113,6 +113,13 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
             return HttpResponseRedirect(reverse('observation_setup_view'))
         return super().get(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        if self.request.POST.get('use_recent_observation'):
+            kwargs['use_recent_observation'] = True
+            return self.get(request, *args, **kwargs)
+        else:
+            return super().post(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         if self.request.GET.get('grouping'):
             kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.GET.get('grouping'))).first()
@@ -121,10 +128,14 @@ class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
             .select_related('level', 'level__construct').prefetch_related('examples')
 
         within_timeframe = timezone.now() - timedelta(hours=2)
-        # TODO: Update this query to be correct.
-        kwargs['most_recent_observation'] = Observation.objects \
+        kwargs['recent_observation_exists'] = Observation.objects \
             .filter(owner=self.request.user, created__gte=within_timeframe) \
-            .order_by('-created').first()
+            .order_by('-created').exists()
+
+        if kwargs.get('use_recent_observation'):
+            kwargs['recent_observation'] = Observation.objects \
+                .filter(owner=self.request.user, created__gte=within_timeframe) \
+                .order_by('-created').first()
 
         return super().get_context_data(**kwargs)
 
@@ -216,7 +227,8 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
 
     def get_data_for_construct_id(self, construct_id):
         all_students = Student.objects.all()
-        all_observations = Observation.objects.prefetch_related('students').filter(constructs__level__construct_id=construct_id)
+        all_observations = Observation.objects.prefetch_related('students').filter(
+            constructs__level__construct_id=construct_id)
         all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
 
         c_name = LearningConstruct.objects.get(id=construct_id).abbreviation + ' '
@@ -248,7 +260,8 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
         all_constructs = LearningConstruct.objects.all()
         top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
 
-        constructs_to_cover = LearningConstruct.objects.annotate(q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
+        constructs_to_cover = LearningConstruct.objects.annotate(
+            q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
 
         if construct_id:
             constructs_to_cover = constructs_to_cover.filter(id=construct_id)

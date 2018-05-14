@@ -33,7 +33,16 @@
         <div class="row full-height">
           <div class="col-6" style="">
             <div class="art" style="">
-              <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;">
+              <img id="image" src="
+              {% if recent_observation.original_image %}
+              {{ recent_observation.original_image.url }}
+              {% elif recent_observation.video %}
+              <!-- TODO FIX VIDEO -->
+              {% static 'images/photo-placeholder.svg' %}
+              {% else %}
+              {% static 'images/photo-placeholder.svg' %}
+              {% endif %}
+              " style="width: 100%;">
               <video id="recorded" style="display:none;width: 100%;" muted autoplay controls
                      playsinline></video>
 
@@ -43,17 +52,19 @@
             </div>
 
             <div id="row-media-buttons" class="segmented" style="height:30px;">
-              <label class="button" for="photoUpload">Take photo<input name="original_image" style="display:none;"
-                                                                       type="file" accept="image/*"
-                                                                       id="photoUpload"></label>
-              <label class="button" for="videoUpload">Take video<input name="video" style="display:none;" type="file"
-                                                                       accept="video/*"
-                                                                       id="videoUpload"></label>
-              {% if most_recent_observation %}
-                <input type="hidden" value="{{ most_recent_observation.id }}" name="parent"/>
-                <label class="button" for="useMostRecentMedia"><input type="checkbox" name="useMostRecentMedia"
-                                                                      id="useMostRecentMedia"> Use Last Photo/Video
-                </label>
+              <label class="button" for="photoUpload">Take photo
+                <input name="original_image" style="display:none;"
+                       type="file" accept="image/*"
+                       id="photoUpload"></label>
+              <label class="button" for="videoUpload">Take video
+                <input name="video" style="display:none;" type="file"
+                       accept="video/*"
+                       id="videoUpload"></label>
+              {% if recent_observation_exists %}
+                <button class="button"
+                        type="submit"
+                        name="use_recent_observation" value="True">Use Last Sample
+                </button>
               {% endif %}
             </div>
             <div id="row-capture-buttons" class="segmented" style="display:none; height:30px;">
