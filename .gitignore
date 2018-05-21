@@ -50,3 +50,5 @@ staticfiles/
 
 # DB dumps
 dumpfile.gz
+
+celerybeat-schedule

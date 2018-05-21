@@ -165,7 +165,7 @@ LOGIN_REDIRECT_URL = '/'  # TODO
 # CELERY SETTINGS
 
 CELERY_BROKER_URL = REDIS_LOCATION
-CELERY_RESULT_BACKEND = 'django-cache'  # could also use django-db but cache will be generally faster
+CELERY_RESULT_BACKEND = REDIS_LOCATION
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
