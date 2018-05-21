@@ -66,8 +66,8 @@ class SetupForm(forms.Form):
         empty_label='Individuals',
         after_label='Make New Grouping',
         required=False)
-    constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(),
-                                                   widget=forms.CheckboxSelectMultiple)
+    # constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(),
+    #                                                widget=forms.CheckboxSelectMultiple)
     context_tags = TagField(queryset=ContextTag.objects.all(), required=False)
 
     def __init__(self, **kwargs):
