@@ -153,7 +153,7 @@ STATICFILES_DIRS = [
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'  # require email instead of username
 ACCOUNT_EMAIL_REQUIRED = True  # require email instead of username
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # so that users must confirm their e-mail address first
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # so that users must confirm their e-mail address first
 ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy('account_login')
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # we no longer have a username field (email instead)
 ACCOUNT_USERNAME_REQUIRED = False  # require email instead of username
