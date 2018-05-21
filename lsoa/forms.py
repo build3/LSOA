@@ -78,6 +78,9 @@ class SetupForm(forms.Form):
         request = get_current_request()
         self.fields['context_tags'].queryset = ContextTag.objects.filter(owner=request.user)
 
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
+
 
 class ObservationForm(forms.ModelForm):
     """

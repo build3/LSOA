@@ -27,11 +27,13 @@
 
             <a href="#" class="item-link smart-select smart-select-init " data-navbar-theme="red"
                data-close-on-select="true">
-              {{ field }}
               <div class="item-content">
                 <div class="item-inner">
                   <div class="item-title">{{ field.label }}</div>
                 </div>
+              </div>
+              <div class="form-group has-errors text-danger small">
+                {{ field }}
               </div>
               {% if field.errors %}
                 {% for error in field.errors %}
@@ -49,7 +51,6 @@
                 {{ field }}
               </div>
             </div>
-
 
             {% if field.errors %}
               {% for error in field.errors %}
