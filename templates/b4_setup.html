@@ -1,0 +1,178 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-6 offset-3">
+      <h1>{% block title %}LSOA: Setup{% endblock %}</h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6 offset-3">
+      <form action="{% url 'observation_setup_view' %}" method="post" novalidate>
+        {% csrf_token %}
+        {{ form.media }}
+
+        {% if form.non_field_errors %}
+          {% for error in form.non_field_errors %}
+            <div class="item-content small color-red">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {% for field in form %}
+          {% if field.name == 'constructs' %}
+            {# pass, because we'll manually render that field later #}
+          {% elif field.field.widget.input_type == 'select' %}
+
+            <a href="#" class="item-link smart-select smart-select-init " data-navbar-theme="red"
+               data-close-on-select="true">
+              {{ field }}
+              <div class="item-content">
+                <div class="item-inner">
+                  <div class="item-title">{{ field.label }}</div>
+                </div>
+              </div>
+              {% if field.errors %}
+                {% for error in field.errors %}
+                  <div class="item-content small" style="color: red;">{{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </a>
+
+
+          {% else %}
+
+            <div class="item-inner">
+              <div class="item-title item-label">{{ field.label }}</div>
+              <div class="item-input-wrap">
+                {{ field }}
+              </div>
+            </div>
+
+
+            {% if field.errors %}
+              {% for error in field.errors %}
+                <div class="item-content small text-danger">{{ error }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+
+
+        <div class="item-content">
+          <div class="item-title">Select Learning Constructs</div>
+        </div>
+        {% if form.constructs.errors %}
+          {% for error in form.constructs.errors %}
+            <div class="item-content small text-danger">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <div id="accordion">
+          {% for construct in constructs %}
+            <div class="card">
+              <a class="card-header mb-0 d-inline"
+                 data-toggle="collapse"
+                 data-mytarget="$(this).next()">
+                {{ construct.name }}
+              </a>
+              <div class="{% if something %}show{% else %}collapse{% endif %}">
+                <div class="card-body">
+                  {% for level in construct.levels %}
+                    <div class="card">
+                      <a class="card-header mb-0 d-inline"
+                         data-toggle="collapse"
+                         data-mytarget="$(this).next()">
+                        {{ level.name }}
+                      </a>
+                      <div class="card-body collapse">
+                        {% for sublevel in level.sublevels %}
+                          <div class="form-check">
+                            <input name="constructs" class="form-check-input" type="checkbox"
+                                   value="{{ sublevel.id }}" id="checkbox-{{ sublevel.id }}"
+                                   {% if sublevel.id|stringformat:"i" in form.constructs.value %}checked{% endif %}>
+                            <label class="form-check-label" for="checkbox-{{ sublevel.id }}">
+                              {{ sublevel.name }}) {{ sublevel.description }}
+                            </label>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-6 offset-3">
+      <input class="button button-big" type="submit" value="Submit"/>
+    </div>
+  </div>
+
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css">
+  <style>
+    .select2-container.select2-container--default.select2-container--open {
+      z-index: 99999999;
+    }
+
+    [value="make-new-grouping"] ~ .item-inner .item-title {
+      position: relative;
+      top: -2px;
+      color: #1b9a59;
+    }
+
+    [value="make-new-grouping"] ~ .icon.icon-radio {
+      display: none;
+    }
+
+    [value="make-new-grouping"] ~ .item-inner .item-title:before {
+      content: '+';
+      position: relative;
+      top: -2px;
+      color: #1b9a59;
+      margin-right: 5px;
+      display: inline-block;
+    }
+  </style>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+
+  <script src='{% static "django-related-select.js" %}'></script>
+  <script>
+
+    // jquery hack to cause accordion collapse without having to id every single item...
+    $('body').on('click', '[data-toggle="collapse"][data-mytarget^="$("]', function () {
+      eval($(this).data('mytarget')).collapse('toggle');
+    });
+
+    $('body').on('click', '[value="make-new-grouping"] ~ .item-inner', function () {
+      var courseId = $('#id_course').val();
+      window.location = '/grouping/?course=' + courseId;
+    });
+    $("#id_context_tags").select2({
+      tags: true,
+      tokenSeparators: [',', ' ', '\n'],
+      createTag: function (params) {
+        var term = $.trim(params.term);
+
+        if (term === '') {
+          return null;
+        }
+
+        return {
+          id: term,
+          text: term,
+          newTag: true // add additional parameters
+        }
+      }
+    })
+  </script>
+
+{% endblock %}
