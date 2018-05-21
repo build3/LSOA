@@ -21,10 +21,16 @@ SITE_ID = 1
 USE_I18N = False
 USE_L10N = True
 USE_TZ = True
-
-EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 ROOT_URLCONF = 'urls'
 WSGI_APPLICATION = 'wsgi.application'
+
+# MAIL SETTINGS
+EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+ANYMAIL = {
+    'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_DOMAIN'),
+}
+DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@lsoa.local')
 
 # APP AND MIDDLEWARE SETTINGS
 
@@ -48,7 +54,6 @@ BACKEND_THIRD_PARTY_APPS = [
 ]
 
 FRONTEND_THIRD_PARTY_APPS = [
-    'compressor',  # asset compression
     'bootstrap4',  # handy b4 template tags
     'tz_detect',  # async JS timezone detector
     'related_select',  # for AJAX-powered related select boxes
@@ -122,6 +127,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                'lsoa.context_processors.has_current_observation',
             ],
         },
     },
@@ -138,7 +144,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'compressor.finders.CompressorFinder'
 ]
 
 STATICFILES_DIRS = [
@@ -149,7 +154,7 @@ STATICFILES_DIRS = [
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'  # require email instead of username
 ACCOUNT_EMAIL_REQUIRED = True  # require email instead of username
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # so that users must confirm their e-mail address first
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # so that users must confirm their e-mail address first
 ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy('account_login')
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # we no longer have a username field (email instead)
 ACCOUNT_USERNAME_REQUIRED = False  # require email instead of username
@@ -229,11 +234,3 @@ AWS_S3_REGION_NAME = 'us-east-2'
 
 # OTHER PLUGIN SETTINGS
 TINYMCE_DEFAULT_CONFIG = {'height': 400, 'width': 600}
-
-# MAIL SETTINGS
-ANYMAIL = {
-    'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
-    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_SENDER_DOMAIN'),
-}
-EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
-DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'local@lsoa-dev.trailblazingtech.com')
