@@ -54,7 +54,6 @@ BACKEND_THIRD_PARTY_APPS = [
 ]
 
 FRONTEND_THIRD_PARTY_APPS = [
-    'compressor',  # asset compression
     'bootstrap4',  # handy b4 template tags
     'tz_detect',  # async JS timezone detector
     'related_select',  # for AJAX-powered related select boxes
@@ -144,7 +143,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'compressor.finders.CompressorFinder'
 ]
 
 STATICFILES_DIRS = [

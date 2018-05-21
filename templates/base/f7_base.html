@@ -1,8 +1,6 @@
 {% extends 'base/f7_base_base.html' %}
-{% load compress %}
 
 {% block extrastyles %}
-  {% compress css %}
     <style>
       .panel.panel-left.panel-cover {
         width: 320px;
@@ -13,7 +11,6 @@
         height: 100%;
       }
     </style>
-  {% endcompress %}
 {% endblock %}
 
 {% block base-content %}

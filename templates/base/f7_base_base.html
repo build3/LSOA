@@ -1,4 +1,4 @@
-{% load staticfiles compress %}
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,12 +8,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#2196f3">
   <title>{% block title %}{% endblock %}</title>
-  {% compress css %}
-    <link href="{% static 'vendor/framework7/css/framework7.min.css' %}" rel="stylesheet">
-    <link href="{% static 'vendor/fontawesome4/css/font-awesome.min.css' %}" rel="stylesheet">
-    <link href="{% static 'vendor/bootstrap4/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'vendor/toastr/toastr.min.css' %}" rel="stylesheet">
-  {% endcompress %}
+
+  <link href="{% static 'vendor/framework7/css/framework7.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/fontawesome4/css/font-awesome.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap4/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/toastr/toastr.min.css' %}" rel="stylesheet">
+
   {% block extrastyles %}
   {% endblock %}
   <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
