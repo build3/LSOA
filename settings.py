@@ -175,7 +175,8 @@ CELERY_TIMEZONE = TIME_ZONE
 RAVEN_CONFIG = {
     'dsn': os.getenv('SENTRY_DSN', ''),
     # MUST USE "heroku labs:enable runtime-dyno-metadata -a <app name>"
-    'release': os.getenv('HEROKU_SLUG_COMMIT', 'DEBUG')
+    'release': os.getenv('HEROKU_SLUG_COMMIT', 'DEBUG'),
+    'environment': os.getenv('HEROKU_ENVIRONMENT', 'local'),
 }
 
 LOGGING = {
