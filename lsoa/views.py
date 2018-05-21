@@ -21,8 +21,8 @@ from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, Lear
 from utils.pagelets import PageletMixin
 
 
-class SetupView(LoginRequiredMixin, PageletMixin, FormView):
-    pagelet_name = 'pagelet_setup.html'
+class SetupView(LoginRequiredMixin, FormView):
+    template_name = 'b4_setup.html'
     form_class = SetupForm
 
     def get_initial(self):

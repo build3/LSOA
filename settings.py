@@ -58,6 +58,7 @@ FRONTEND_THIRD_PARTY_APPS = [
     'tz_detect',  # async JS timezone detector
     'related_select',  # for AJAX-powered related select boxes
     'tinymce',  # for HTML editor for sublevel examples
+    'active_link',  # for easy active classes
 ]
 LOCAL_APPS = [
     'taskapp',
