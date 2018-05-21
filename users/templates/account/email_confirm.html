@@ -19,7 +19,7 @@
 
         <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
           {% csrf_token %}
-          <button type="submit">Confirm</button>
+          {% bootstrap_button content='Confirm' button_type='submit' button_class='btn-success' %}
         </form>
       {% else %}
         {% url 'account_email' as email_url %}
