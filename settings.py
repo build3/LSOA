@@ -10,9 +10,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'RESETME')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = os.getenv('USE_SSL', 'False') == 'True'
 ALLOWED_HOSTS = '*'
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'False'
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
@@ -43,6 +44,7 @@ BACKEND_THIRD_PARTY_APPS = [
     'allauth.account',  # Authentication/Registration
     'formtools',  # for wizard views
     'storages',  # for S3-backed media
+    'anymail',  # for mailgun emails
 ]
 
 FRONTEND_THIRD_PARTY_APPS = [
@@ -227,3 +229,11 @@ AWS_S3_REGION_NAME = 'us-east-2'
 
 # OTHER PLUGIN SETTINGS
 TINYMCE_DEFAULT_CONFIG = {'height': 400, 'width': 600}
+
+# MAIL SETTINGS
+ANYMAIL = {
+    'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_SENDER_DOMAIN'),
+}
+EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'local@lsoa-dev.trailblazingtech.com')
