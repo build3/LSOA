@@ -1,0 +1,22 @@
+{% extends "base/b4_base.html" %}
+
+
+{% block content %}
+  <div class="row text-center mt-5">
+    <div class="col-md-6 offset-md-3">
+      <h2>{% block title %}Verify Your E-mail Address{% endblock %}</h2>
+      <hr>
+      <p>This part of the site requires us to verify that
+        you are who you claim to be. For this purpose, we require that you
+        verify ownership of your e-mail address.</p>
+      <p>We have sent an e-mail to you for
+        verification. Please click on the link inside this e-mail. Please
+        contact us if you do not receive it within a few minutes.</p>
+    </div>
+  </div>
+  <div class="row text-center">
+    <div class="col-md-6 offset-md-3">
+      <a href="{% url 'account_login' %}" class="btn btn-link">Back to sign in</a>
+    </div>
+  </div>
+{% endblock %}

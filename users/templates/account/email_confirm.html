@@ -1,0 +1,38 @@
+{% extends "base/b4_base.html" %}
+
+{% load static bootstrap4 account %}
+
+{% block content %}
+  <div class="row mt-5">
+    <div class="col-md-6 offset-md-3">
+      <h2>{% block title %}Confirm E-mail Address{% endblock %}</h2>
+      <hr>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      {% if confirmation %}
+        {% user_display confirmation.email_address.user as user_display %}
+        <p>{% with confirmation.email_address.email as email %}Please confirm that
+          <a href="mailto:{{ email }}">{{ email }}</a> is your e-mail address.{% endwith %}</p>
+
+        <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+          {% csrf_token %}
+          {% bootstrap_button content='Confirm' button_type='submit' button_class='btn-success' %}
+        </form>
+      {% else %}
+        {% url 'account_email' as email_url %}
+        <p>This e-mail confirmation link expired or is invalid. Please
+          <a href="{{ email_url }}">issue a new e-mail confirmation request</a>.</p>
+
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <a class="btn btn-link" href="{% url 'account_login' %}">Login with existing account</a>
+    </div>
+  </div>
+{% endblock %}
