@@ -126,6 +126,13 @@
             Set Up Students/Groups
           </a>
         </div>
+      {% if request.user.is_superuser %}
+        <div>
+          <a href="{% url 'pending_users' %}" class="button button-big external">
+            Approve/Deny Users
+          </a>
+        </div>
+      {% endif %}
       </div>
       <div class="col-25 full-height">
 
