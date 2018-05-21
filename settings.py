@@ -21,10 +21,16 @@ SITE_ID = 1
 USE_I18N = False
 USE_L10N = True
 USE_TZ = True
-
-EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 ROOT_URLCONF = 'urls'
 WSGI_APPLICATION = 'wsgi.application'
+
+# MAIL SETTINGS
+EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+ANYMAIL = {
+    'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_DOMAIN'),
+}
+DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@lsoa.local')
 
 # APP AND MIDDLEWARE SETTINGS
 
@@ -229,11 +235,3 @@ AWS_S3_REGION_NAME = 'us-east-2'
 
 # OTHER PLUGIN SETTINGS
 TINYMCE_DEFAULT_CONFIG = {'height': 400, 'width': 600}
-
-# MAIL SETTINGS
-ANYMAIL = {
-    'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
-    "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_SENDER_DOMAIN'),
-}
-EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
-DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'local@lsoa-dev.trailblazingtech.com')
