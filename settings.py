@@ -1,8 +1,9 @@
 import os
 
 import dj_database_url
+from django.urls import reverse_lazy
 
-APP_NAME = 'template-app'
+APP_NAME = 'lsoa'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # BASIC DJANGO SETTINGS
@@ -11,7 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'RESETME')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = '*'
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'False'
 
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
@@ -35,16 +36,28 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
 ]
-THIRD_PARTY_APPS = [
-    'django_extensions',                    # all kinds of goodness
-    'django_celery_beat',                   # db-backed periodic task defs
-    'django_celery_results',                # db-backed celery results (if needed)
-    'raven.contrib.django.raven_compat',    # sentry-django connector
+BACKEND_THIRD_PARTY_APPS = [
+    'django_extensions',  # all kinds of goodness
+    'raven.contrib.django.raven_compat',  # sentry-django connector
+    'allauth',  # Authentication/Registration
+    'allauth.account',  # Authentication/Registration
+    'formtools',  # for wizard views
+    'storages',  # for S3-backed media
+]
+
+FRONTEND_THIRD_PARTY_APPS = [
+    'compressor',  # asset compression
+    'bootstrap4',  # handy b4 template tags
+    'tz_detect',  # async JS timezone detector
+    'related_select',  # for AJAX-powered related select boxes
+    'tinymce',  # for HTML editor for sublevel examples
 ]
 LOCAL_APPS = [
     'taskapp',
+    'users',
+    'lsoa',
 ]
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + BACKEND_THIRD_PARTY_APPS + FRONTEND_THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -55,6 +68,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tz_detect.middleware.TimezoneMiddleware',
+    'middleware.DjangoThreadLocalMiddleware',
 ]
 
 # DATABASES AND CACHING
@@ -121,16 +136,36 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder'
 ]
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
+# AUTHENTICATION SETTINGS
+
+ACCOUNT_AUTHENTICATION_METHOD = 'email'  # require email instead of username
+ACCOUNT_EMAIL_REQUIRED = True  # require email instead of username
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # so that users must confirm their e-mail address first
+ACCOUNT_LOGOUT_REDIRECT_URL = reverse_lazy('account_login')
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # we no longer have a username field (email instead)
+ACCOUNT_USERNAME_REQUIRED = False  # require email instead of username
+ACCOUNT_ADAPTER = 'users.adapters.PendingUserAccountAdapter'  # allows correct "pending approval" flow
+AUTH_USER_MODEL = 'users.User'  # to use our model instead of the default Django one (ours uses email == username)
+ACCOUNT_SIGNUP_FORM_CLASS = 'users.forms.SignupForm'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+LOGIN_URL = reverse_lazy('account_login')  # to use allauth instead of django admin login page
+LOGIN_REDIRECT_URL = '/'  # TODO
+
 # CELERY SETTINGS
 
 CELERY_BROKER_URL = REDIS_LOCATION
-CELERY_RESULT_BACKEND = 'django-cache'  # could also use django-db but cache will be generally faster
+CELERY_RESULT_BACKEND = REDIS_LOCATION
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -140,7 +175,8 @@ CELERY_TIMEZONE = TIME_ZONE
 RAVEN_CONFIG = {
     'dsn': os.getenv('SENTRY_DSN', ''),
     # MUST USE "heroku labs:enable runtime-dyno-metadata -a <app name>"
-    'release': os.getenv('HEROKU_SLUG_COMMIT', 'DEBUG')
+    'release': os.getenv('HEROKU_SLUG_COMMIT', 'DEBUG'),
+    'environment': os.getenv('HEROKU_ENVIRONMENT', 'local'),
 }
 
 LOGGING = {
@@ -180,3 +216,14 @@ LOGGING = {
         },
     },
 }
+
+# MEDIA SETTINGS
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_REGION_NAME = 'us-east-2'
+
+# OTHER PLUGIN SETTINGS
+TINYMCE_DEFAULT_CONFIG = {'height': 400, 'width': 600}

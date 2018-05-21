@@ -1,0 +1,31 @@
+{% extends "base/b4_base.html" %}
+
+{% load static bootstrap4 %}
+
+{% block content %}
+  <form class="form-horizontal" role="form" action="{% url 'account_logout' %}" method="POST">
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        <h2>{% block title %}Sign Out{% endblock %}</h2>
+        <hr>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_messages %}
+        {% csrf_token %}
+        {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+        {% endif %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_button content='Sign Out' button_type='submit' button_class='btn-success' %}
+        <a href="#" class="btn-link" onclick="window.history.back();">Go Back</a><br/><br/>
+      </div>
+    </div>
+  </form>
+{% endblock %}
+
+

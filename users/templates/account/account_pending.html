@@ -1,0 +1,17 @@
+{% extends "base/b4_base.html" %}
+
+
+{% block content %}
+  <div class="row text-center">
+    <div class="col-md-6 offset-md-3">
+      <h2>{% block title %}Account Pending{% endblock %}</h2>
+      <hr>
+      <p>This account is currently pending approval.</p>
+    </div>
+  </div>
+  <div class="row text-center">
+    <div class="col-md-6 offset-md-3">
+      <a href="{% url 'account_login' %}" class="btn btn-link">Back to sign in</a>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base/b4_base.html" %}
+
+{% load static bootstrap4 %}
+
+{% block content %}
+  <form class="form-horizontal" role="form" action="{% url 'account_signup' %}" method="POST">
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        <h2>{% block title %}Sign Up{% endblock %}</h2>
+        <hr>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_messages %}
+        {% csrf_token %}
+        {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+        {% endif %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_field form.email %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_field form.password1 %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_field form.password2 %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_field form.first_name %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_field form.last_name %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_button content='Sign In' button_type='submit' button_class='btn-success' %}
+        <a class="btn btn-link" href="{% url 'account_login' %}">Login with existing account</a>
+      </div>
+    </div>
+  </form>
+{% endblock %}

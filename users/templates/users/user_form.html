@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load django_bootstrap_breadcrumbs %}
+{% load bootstrap3 %}
+
+{% block breadcrumbs %}
+  {{ block.super }}
+  {% breadcrumb "My Account" "account_edit" %}
+{% endblock %}
+
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xs-12">
+      <form method="POST" action="">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <button class="btn btn-primary" type="submit">Submit</button>
+      </form>
+    </div>
+    <hr/>
+    <div class="col-xs-12">
+      <h5>Your Connected Accounts</h5>
+      {% if connect_form.accounts %}
+        <p>You can sign in to your account using any of the following Google accounts:</p>
+        <form method="post" action="{% url 'account_update_connections' %}">
+          {% csrf_token %}
+          <fieldset>
+            {% if connect_form.non_field_errors %}
+              <div id="errorMsg">{{ connect_form.non_field_errors }}</div>
+            {% endif %}
+            {% for base_account in connect_form.accounts %}
+              {% with base_account.get_provider_account as account %}
+                <div class="radio">
+                  <label for="id_account_{{ base_account.id }}">
+                    <input id="id_account_{{ base_account.id }}" type="radio" name="account"
+                           value="{{ base_account.id }}"/>
+                    {{ base_account.extra_data.email }}
+                  </label>
+                </div>
+              {% endwith %}
+            {% endfor %}
+            <div>
+              <button type="submit" class="btn btn-primary">Remove</button>
+            </div>
+          </fieldset>
+        </form>
+      {% else %}
+        <p>You currently have no Google accounts connected to this account.</p>
+      {% endif %}
+    </div>
+    <div class="col-xs-12">
+      <h5>Connect Google Account</h5>
+
+      {% include "socialaccount/snippets/provider_list.html" with process="connect" %}
+    </div>
+    {% include "socialaccount/snippets/login_extra.html" %}
+  </div>
+{% endblock %}

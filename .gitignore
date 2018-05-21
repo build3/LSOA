@@ -2,6 +2,7 @@
 .DS_Store
 .AppleDouble
 .LSOverride
+dumpfile.gz
 
 ### SublimeText ###
 # cache files for sublime text
@@ -46,3 +47,8 @@ ENV/
 
 # django specific things
 staticfiles/
+
+# DB dumps
+dumpfile.gz
+
+celerybeat-schedule
