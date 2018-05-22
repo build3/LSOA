@@ -11,8 +11,8 @@ django-formtools==2.1               # Wizard-type forms
 django-dotenv==1.4.2                # To read .env file (because this project is open source)
 django-threadlocals==0.8            # To get current request
 django-braces==1.13.0               # For some class based view mixins
-django-anymail==2.2
-django-active-link==0.1.4
+django-anymail==2.2                 # for registration/password reset mails
+django-active-link==0.1.4           # for 'active' class links automagically
 
 ## INFRASTRUCTURE REQUIREMENTS
 boto3==1.7.24                       # to talk with amazon
