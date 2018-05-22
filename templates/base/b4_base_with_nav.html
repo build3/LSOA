@@ -12,10 +12,18 @@
         <li class="nav-item {% active_link 'observation_setup_view' %}">
           <a class="nav-link" href="{% url 'observation_setup_view' %}">Observation Setup</a>
         </li>
-        <li class="nav-item {% active_link 'observations_all' %}">
-          <a class="nav-link" href="{% url 'observations_all' %}">Previous Observations</a>
+        <li class="nav-item">
+          <a class="nav-link disabled" href="#">Previous Observations</a>
         </li>
-        <li class="nav-item {% active_link 'pending_users' %}">
+        <li class="nav-item {% active_link 'observations_all' %}">
+          <a class="nav-link" href="{% url 'observations_all' %}">Star Graphs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link disabled" href="#">New Course (via CSV)</a>
+        </li>
+
+
+        <li class="nav-item {% active_link 'pending_users' %}{% active_link 'approved_users' %}{% active_link 'denied_users' %}">
           <a class="nav-link" href="{% url 'pending_users' %}">Pending Users</a>
         </li>
         <li class="nav-item {% active_link 'admin:index' %}">

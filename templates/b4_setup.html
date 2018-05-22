@@ -23,26 +23,6 @@
         {% for field in form %}
           {% if field.name == 'constructs' %}
             {# pass, because we'll manually render that field later #}
-          {% elif field.field.widget.input_type == 'select' %}
-
-            <a href="#" class="item-link smart-select smart-select-init " data-navbar-theme="red"
-               data-close-on-select="true">
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-title">{{ field.label }}</div>
-                </div>
-              </div>
-              <div class="form-group has-errors text-danger small">
-                {{ field }}
-              </div>
-              {% if field.errors %}
-                {% for error in field.errors %}
-                  <div class="item-content small" style="color: red;">{{ error }}</div>
-                {% endfor %}
-              {% endif %}
-            </a>
-
-
           {% else %}
 
             <div class="item-inner">
@@ -143,17 +123,19 @@
       display: inline-block;
     }
   </style>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
 
-  <script src='{% static "django-related-select.js" %}'></script>
+{% endblock %}
+
+{% block extrascripts %}
   <script>
+    var $body = $('body');
 
     // jquery hack to cause accordion collapse without having to id every single item...
-    $('body').on('click', '[data-toggle="collapse"][data-mytarget^="$("]', function () {
+    $body.on('click', '[data-toggle="collapse"][data-mytarget^="$("]', function () {
       eval($(this).data('mytarget')).collapse('toggle');
     });
 
-    $('body').on('click', '[value="make-new-grouping"] ~ .item-inner', function () {
+    $body.on('click', '[value="make-new-grouping"] ~ .item-inner', function () {
       var courseId = $('#id_course').val();
       window.location = '/grouping/?course=' + courseId;
     });
@@ -175,5 +157,4 @@
       }
     })
   </script>
-
 {% endblock %}
