@@ -81,31 +81,13 @@
           {% if field.name == 'constructs' %}
             {# pass, because we'll manually render that field later #}
 
-          {% elif field.field.widget.input_type == 'select' %}
-
-            <a href="#" class="item-link smart-select smart-select-init " data-navbar-theme="red"
-               data-close-on-select="true">
-              <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
-                <div data-form-label="{{ field.auto_id }}">
-                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
-                  {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
-                </div>
-                {{ field }}
-              </div>
-              {% if field.errors %}
-                {% for error in field.errors %}
-                  <div class="item-content small" style="color: red;">{{ error }}</div>
-                {% endfor %}
-              {% endif %}
-            </a>
-
-
           {% else %}
 
             <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
-              <label for="{{ field.auto_id }}">
-                {{ field.label }}
-              </label>
+              <div data-form-label="{{ field.auto_id }}">
+                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                  {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
+                </div>
               {{ field }}
             </div>
             {% if field.errors %}

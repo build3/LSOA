@@ -49,7 +49,7 @@ class SetupView(LoginRequiredMixin, FormView):
             params['grouping'] = grouping
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping
-        self.request.session['context_tags'] = tags
+        self.request.session['context_tags'] = [t.id for t in tags]
         return HttpResponseRedirect(reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True))
 
     def get_context_data(self, **kwargs):
