@@ -2,6 +2,63 @@
 
 {% load staticfiles %}
 
+{% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'setup-form.css' %}">
+{% endblock %}
+
+{% block extrascripts %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+
+  <script src='{% static "django-related-select.js" %}'></script>
+  <script>
+
+    {% for message in messages %}
+      window.myApp.toast.create({
+        text: '{{ message }}'
+      }).open();
+    {% endfor %}
+
+    // jquery hack to cause accordion collapse without having to id every single item...
+    $('body').on('click', '[data-toggle="collapse"][data-mytarget^="$("]', function () {
+      eval($(this).data('mytarget')).collapse('toggle');
+    });
+
+    function updateGroupLink() {
+      var $gLink = $('#grouping_link');
+      var $courseField = $('#id_course');
+      if ($courseField.val()) {
+        $gLink.attr('href', '/grouping/?course=' + $courseField.val());
+      } else {
+        $gLink.removeAttr('href');
+      }
+    }
+
+    $('#id_course').on('click', updateGroupLink);
+    $('#id_course').on('update', updateGroupLink);
+    $('#id_course').on('change', updateGroupLink);
+    $('#id_course').on('focus', updateGroupLink);
+    $('#id_course').on('unfocus', updateGroupLink);
+
+    $("#id_context_tags").select2({
+      tags: true,
+      tokenSeparators: [',', ' ', '\n'],
+      createTag: function (params) {
+        var term = $.trim(params.term);
+
+        if (term === '') {
+          return null;
+        }
+
+        return {
+          id: term,
+          text: term,
+          newTag: true // add additional parameters
+        }
+      }
+    })
+  </script>
+{% endblock %}
+
 {% block content %}
   <div class="row">
     <div class="col-6 offset-3">
@@ -23,16 +80,16 @@
         {% for field in form %}
           {% if field.name == 'constructs' %}
             {# pass, because we'll manually render that field later #}
+
           {% elif field.field.widget.input_type == 'select' %}
 
             <a href="#" class="item-link smart-select smart-select-init " data-navbar-theme="red"
                data-close-on-select="true">
-              <div class="item-content">
-                <div class="item-inner">
-                  <div class="item-title">{{ field.label }}</div>
+              <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
+                <div data-form-label="{{ field.auto_id }}">
+                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                  {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
                 </div>
-              </div>
-              <div class="form-group has-errors text-danger small">
                 {{ field }}
               </div>
               {% if field.errors %}
@@ -45,24 +102,24 @@
 
           {% else %}
 
-            <div class="item-inner">
-              <div class="item-title item-label">{{ field.label }}</div>
-              <div class="item-input-wrap">
-                {{ field }}
-              </div>
+            <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
+              <label for="{{ field.auto_id }}">
+                {{ field.label }}
+              </label>
+              {{ field }}
             </div>
-
             {% if field.errors %}
               {% for error in field.errors %}
-                <div class="item-content small text-danger">{{ error }}</div>
+                <div class="item-content small" style="color: red;">{{ error }}</div>
               {% endfor %}
             {% endif %}
           {% endif %}
+
         {% endfor %}
 
 
         <div class="item-content">
-          <div class="item-title">Select Learning Constructs</div>
+          <div class="item-title  {% if form.constructs.errors %}text-danger{% endif %}">Select Learning Constructs</div>
         </div>
         {% if form.constructs.errors %}
           {% for error in form.constructs.errors %}
@@ -107,13 +164,14 @@
           {% endfor %}
         </div>
 
-      </form>
-    </div>
-  </div>
 
-  <div class="row">
-    <div class="col-6 offset-3">
-      <input class="button button-big" type="submit" value="Submit"/>
+        <div class="row" style="margin-top: 30px;">
+          <div class="col">
+            <input class="btn btn-primary col" type="submit" value="Submit"/>
+          </div>
+        </div>
+
+      </form>
     </div>
   </div>
 
@@ -143,37 +201,5 @@
       display: inline-block;
     }
   </style>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
-
-  <script src='{% static "django-related-select.js" %}'></script>
-  <script>
-
-    // jquery hack to cause accordion collapse without having to id every single item...
-    $('body').on('click', '[data-toggle="collapse"][data-mytarget^="$("]', function () {
-      eval($(this).data('mytarget')).collapse('toggle');
-    });
-
-    $('body').on('click', '[value="make-new-grouping"] ~ .item-inner', function () {
-      var courseId = $('#id_course').val();
-      window.location = '/grouping/?course=' + courseId;
-    });
-    $("#id_context_tags").select2({
-      tags: true,
-      tokenSeparators: [',', ' ', '\n'],
-      createTag: function (params) {
-        var term = $.trim(params.term);
-
-        if (term === '') {
-          return null;
-        }
-
-        return {
-          id: term,
-          text: term,
-          newTag: true // add additional parameters
-        }
-      }
-    })
-  </script>
 
 {% endblock %}
