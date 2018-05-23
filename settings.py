@@ -128,6 +128,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                'lsoa.context_processors.has_current_observation',
             ],
         },
     },

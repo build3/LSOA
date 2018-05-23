@@ -7,6 +7,7 @@
   <title>{% block title %}{% endblock %}</title>
   <link href="{% static 'vendor/bootstrap4/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/fontawesome4/css/font-awesome.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/datatables/datatables.min.css' %}" rel="stylesheet">
   {% block extrastyles %}{% endblock %}
 </head>
 <body class="h-100">
@@ -15,6 +16,9 @@
 
 <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/bootstrap4/js/bootstrap.bundle.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/datatables/datatables.min.js' %}"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+<script src='{% static "django-related-select.js" %}'></script>
 {% tz_detect %}
 {% block extrascripts %}{% endblock %}
 </body>

@@ -1,4 +1,21 @@
 <div class="content-block">
+  {% if has_current_observation %}
+    <div class="block-title">Current Observation</div>
+    <div class="list">
+    <ul>
+      <li>
+        <a href="{% url 'current_observation' %}" class="item-link panel-close external">
+          <div class="item-content">
+            <div class="item-inner">
+              <div class="item-title">Back To Current Observation</div>
+            </div>
+          </div>
+        </a>
+      </li>
+    </ul>
+    </div>
+  {% endif %}
+
   <div class="block-title">Current Class</div>
   <div class="list">
     <ul>
@@ -30,7 +47,6 @@
           </div>
         </a>
       </li>
-
     </ul>
   </div>
   <div class="block-title">Settings</div>
@@ -60,4 +76,4 @@
       </a></li>
     </ul>
   </div>
-</div>
+  </div>

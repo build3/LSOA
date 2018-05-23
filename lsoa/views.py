@@ -49,6 +49,7 @@ class SetupView(LoginRequiredMixin, FormView):
             params['grouping'] = grouping
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping
+        self.request.session['context_tags'] = tags
         return HttpResponseRedirect(reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True))
 
     def get_context_data(self, **kwargs):
@@ -274,3 +275,15 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
             'top_level_construct_map': top_level_construct_map,
         })
         return data
+
+
+def current_observation(request):
+    initial = {
+        'course': request.session.get('course'),
+        'grouping': request.session.get('grouping'),
+        'context_tags': request.session.get('context_tags'),
+    }
+    get_args = '&'.join([str(k) + '=' + str(v) for k, v in initial.items()])
+    url = reverse('observation_view') + '?' + get_args
+    print(url)
+    return HttpResponseRedirect(url)

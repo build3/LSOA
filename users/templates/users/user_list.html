@@ -1,32 +1,24 @@
-{% extends 'base.html' %}
-
-{% load django_bootstrap_breadcrumbs %}
-{% load utils %}
-
-{% block title %}Dashboard{% endblock %}
-
-{% block breadcrumbs %}
-  {{ block.super }}
-  {% breadcrumb "Users" "" %}
-  {% if view.name == '' %}
-
-  {% endif %}
-  {% breadcrumb "Pending Users" "pending_users" %}
-{% endblock %}
+{% extends 'base/b4_base_with_nav.html' %}
+{% load active_link_tags %}
 
 {% block content %}
   <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <h2>{% block title %}Approve/Deny Users{% endblock %}</h2>
+    </div>
+  </div>
+  <div class="row">
     <div class="col-xs-12">
       <ul class="nav nav-pills">
-        <li class="{% active 'pending_users' %}"><a href="{% url 'pending_users' %}">Pending Users</a></li>
-        <li class="{% active 'approved_users' %}"><a href="{% url 'approved_users' %}">Approved Users</a></li>
-        <li class="{% active 'denied_users' %}"><a href="{% url 'denied_users' %}">Denied Users</a></li>
+        <li class="nav-item"><a class="nav-link {% active_link 'pending_users' %}" href="{% url 'pending_users' %}">Pending Users</a></li>
+        <li class="nav-item"><a class="nav-link {% active_link 'approved_users' %}" href="{% url 'approved_users' %}">Approved Users</a></li>
+        <li class="nav-item"><a class="nav-link {% active_link 'denied_users' %}" href="{% url 'denied_users' %}">Denied Users</a></li>
       </ul>
     </div>
   </div>
-  <div class="row mar-top">
-    <div class="col-xs-12">
-      <table class="table table-bordered table-striped display">
+  <div class="row mt-5">
+    <div class="col-xs-12 w-100">
+      <table class="table table-bordered table-striped display w-100">
         <thead>
         <tr>
           <th>First Name</th>
@@ -61,14 +53,14 @@
 
 {% block extrascripts %}
   <script>
-      $(document).ready(function () {
-          $('table.display').DataTable({
-              aLengthMenu: [
-                  [25, 50, 100, 200, -1],
-                  [25, 50, 100, 200, "All"]
-              ],
-              iDisplayLength: 25
-          });
+    $(document).ready(function () {
+      $('table.display').DataTable({
+        aLengthMenu: [
+          [25, 50, 100, 200, -1],
+          [25, 50, 100, 200, "All"]
+        ],
+        iDisplayLength: 25
       });
+    });
   </script>
 {% endblock %}

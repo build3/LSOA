@@ -1,0 +1,19 @@
+{% extends "base/b4_base.html" %}
+
+
+{% block content %}
+  <div class="row text-center mt-5">
+    <div class="col-md-6 offset-md-3">
+      <h2>{% block title %}Verification E-mail Sent{% endblock %}</h2>
+      <hr>
+      <p>We have sent an e-mail to you for verification. Follow the link provided to finalize the signup process.
+        Please contact us if you do not receive it within a few minutes.</p>
+    </div>
+  </div>
+  <div class="row text-center">
+    <div class="col-md-6 offset-md-3">
+      <a href="{% url 'account_login' %}" class="btn btn-link">Back to sign in</a>
+    </div>
+  </div>
+{% endblock %}
+
