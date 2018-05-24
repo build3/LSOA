@@ -18,11 +18,6 @@
       }).open();
     {% endfor %}
 
-    // jquery hack to cause accordion collapse without having to id every single item...
-    $('body').on('click', '[data-toggle="collapse"][data-mytarget^="$("]', function () {
-      eval($(this).data('mytarget')).collapse('toggle');
-    });
-
     function updateGroupLink() {
       var $gLink = $('#grouping_link');
       var $courseField = $('#id_course');
@@ -85,9 +80,9 @@
 
             <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
               <div data-form-label="{{ field.auto_id }}">
-                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
-                  {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
-                </div>
+                <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
+              </div>
               {{ field }}
             </div>
             {% if field.errors %}
@@ -101,7 +96,8 @@
 
 
         <div class="item-content">
-          <div class="item-title  {% if form.constructs.errors %}text-danger{% endif %}">Select Learning Constructs</div>
+          <div class="item-title  {% if form.constructs.errors %}text-danger{% endif %}">Select Learning Constructs
+          </div>
         </div>
         {% if form.constructs.errors %}
           {% for error in form.constructs.errors %}
@@ -112,31 +108,31 @@
         <div id="accordion">
           {% for construct in constructs %}
             <div class="card">
-              <a class="card-header mb-0 d-inline"
-                 data-toggle="collapse"
-                 data-mytarget="$(this).next()">
+              <a class="card-header mb-0 d-inline" href="#"
+                 data-toggle="collapse" data-target="#{{ construct.name|cut:' ' }}">
                 {{ construct.name }}
               </a>
-              <div class="{% if something %}show{% else %}collapse{% endif %}">
+              <div class="collapse" id="{{ construct.name|cut:' ' }}">
                 <div class="card-body">
                   {% for level in construct.levels %}
                     <div class="card">
-                      <a class="card-header mb-0 d-inline"
-                         data-toggle="collapse"
-                         data-mytarget="$(this).next()">
+                      <a class="card-header mb-0 d-inline" href="#"
+                         data-toggle="collapse" data-target="#level-{{ level.id }}">
                         {{ level.name }}
                       </a>
-                      <div class="card-body collapse">
-                        {% for sublevel in level.sublevels %}
-                          <div class="form-check">
-                            <input name="constructs" class="form-check-input" type="checkbox"
-                                   value="{{ sublevel.id }}" id="checkbox-{{ sublevel.id }}"
-                                   {% if sublevel.id|stringformat:"i" in form.constructs.value %}checked{% endif %}>
-                            <label class="form-check-label" for="checkbox-{{ sublevel.id }}">
-                              {{ sublevel.name }}) {{ sublevel.description }}
-                            </label>
-                          </div>
-                        {% endfor %}
+                      <div class="collapse" id="level-{{ level.id }}">
+                        <div class="card-body">
+                          {% for sublevel in level.sublevels %}
+                            <div class="form-check">
+                              <input name="constructs" class="form-check-input" type="checkbox"
+                                     value="{{ sublevel.id }}" id="checkbox-{{ sublevel.id }}"
+                                     {% if sublevel.id|stringformat:"i" in form.constructs.value %}checked{% endif %}>
+                              <label class="form-check-label" for="checkbox-{{ sublevel.id }}">
+                                {{ sublevel.name }}) {{ sublevel.description }}
+                              </label>
+                            </div>
+                          {% endfor %}
+                        </div>
                       </div>
                     </div>
                   {% endfor %}
