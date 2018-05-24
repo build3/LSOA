@@ -49,6 +49,7 @@ class SetupView(LoginRequiredMixin, FormView):
             params['grouping'] = grouping
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping
+        self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
         return HttpResponseRedirect(reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True))
 
@@ -228,25 +229,38 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
     pagelet_name = 'pagelet_view_observations.html'
 
     def get_data_for_construct_id(self, construct_id):
+        IS_OTHER = False
         all_students = Student.objects.all()
         all_observations = Observation.objects.prefetch_related('students').filter(
             constructs__level__construct_id=construct_id)
         all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
-
-        c_name = LearningConstruct.objects.get(id=construct_id).abbreviation + ' '
+        c_name = LearningConstruct.objects.filter(id=construct_id).first()
+        if c_name:
+            c_name = c_name.abbreviation + ' '
+        else:
+            IS_OTHER = True
+            c_name = 'Observations without constructs '
 
         # Create data dicts
         student_map = {s.id: str(s) for s in all_students}
         construct_map = collections.OrderedDict(
             {csl.id: {'description': csl.description, 'name': csl.name.replace(c_name, '')} for csl in
              all_constructs_sublevels})
+
+        if IS_OTHER:
+            construct_map['other'] = {'Description': 'Observations without constructs', 'name': ' '}
+
         observations_map = {}
-        matrix = {s.id: {} for s in all_students}
+        matrix = {s.id: collections.defaultdict(set) for s in all_students}
 
         for observation in all_observations:
-            for obs_construct in observation.constructs.all():
+            if observation.constructs.count():
+                for obs_construct in observation.constructs.all():
+                    for obs_student in observation.students.all():
+                        matrix[obs_student.id][obs_construct.id].add(observation.id)
+            else:
                 for obs_student in observation.students.all():
-                    matrix[obs_student.id][obs_construct.id] = observation.id
+                    matrix[obs_student.id]['other'].add(observation.id)
 
         return {
             'student_map': student_map,
@@ -254,7 +268,8 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
             'construct_map': construct_map,
             'matrix': matrix,
             'c_name': c_name,
-            'all_observations': all_observations
+            'all_observations': all_observations,
+            'IS_OTHER': IS_OTHER
         }
 
     def get_context_data(self, **kwargs):
@@ -269,6 +284,7 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
             constructs_to_cover = constructs_to_cover.filter(id=construct_id)
 
         tables = [self.get_data_for_construct_id(cid) for cid in constructs_to_cover.values_list('id', flat=True)]
+        tables.append(self.get_data_for_construct_id(None))
 
         data = super().get_context_data(**kwargs)
         data.update({
@@ -282,11 +298,11 @@ def current_observation(request):
     initial = {
         'course': request.session.get('course'),
         'grouping': request.session.get('grouping'),
-        'context_tags': request.session.get('context_tags'),
+        'constructs': '&constructs='.join([str(c) for c in request.session.get('constructs')]),
+        'context_tags': '&context_tags='.join([str(ct) for ct in request.session.get('context_tags')]),
     }
     get_args = '&'.join([str(k) + '=' + str(v) for k, v in initial.items()])
     url = reverse('observation_view') + '?' + get_args
-    print(url)
     return HttpResponseRedirect(url)
 
 
