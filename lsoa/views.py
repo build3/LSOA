@@ -298,8 +298,8 @@ def current_observation(request):
     initial = {
         'course': request.session.get('course'),
         'grouping': request.session.get('grouping'),
-        'constructs': '&constructs='.join([str(c) for c in request.session.get('constructs')]),
-        'context_tags': '&context_tags='.join([str(ct) for ct in request.session.get('context_tags')]),
+        'constructs': '&constructs='.join([str(c) for c in request.session.get('constructs', [])]),
+        'context_tags': '&context_tags='.join([str(ct) for ct in request.session.get('context_tags', [])]),
     }
     get_args = '&'.join([str(k) + '=' + str(v) for k, v in initial.items()])
     url = reverse('observation_view') + '?' + get_args
