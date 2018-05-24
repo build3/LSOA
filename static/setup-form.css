@@ -1,0 +1,12 @@
+div[data-form-label=id_grouping]{
+  display: flex;
+  justify-content: space-between;
+}
+
+div[data-form-label=id_grouping] > a, div[data-form-label=id_grouping] > span {
+  display: inline-block;
+}
+
+#grouping_link:not([href]){
+  display: none;
+}

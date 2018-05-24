@@ -21,8 +21,8 @@ from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, Lear
 from utils.pagelets import PageletMixin
 
 
-class SetupView(LoginRequiredMixin, PageletMixin, FormView):
-    pagelet_name = 'pagelet_setup.html'
+class SetupView(LoginRequiredMixin, FormView):
+    template_name = 'b4_setup.html'
     form_class = SetupForm
 
     def get_initial(self):
@@ -49,7 +49,7 @@ class SetupView(LoginRequiredMixin, PageletMixin, FormView):
             params['grouping'] = grouping
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping
-        self.request.session['context_tags'] = tags
+        self.request.session['context_tags'] = [t.id for t in tags]
         return HttpResponseRedirect(reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True))
 
     def get_context_data(self, **kwargs):
