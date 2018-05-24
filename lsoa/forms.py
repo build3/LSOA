@@ -125,3 +125,11 @@ class ObservationForm(forms.ModelForm):
 
 class GroupingForm(forms.Form):
     pass
+
+
+class NewCourseForm(forms.Form):
+    course_name = forms.CharField()
+    student_csv = forms.FileField()
+
+    def clean_student_csv(self):
+        pass

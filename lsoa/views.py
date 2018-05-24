@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View
 from related_select.views import RelatedSelectView
 
-from lsoa.forms import ObservationForm, SetupForm, GroupingForm
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm, NewCourseForm
 from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
     Observation
 from utils.pagelets import PageletMixin
@@ -63,6 +63,7 @@ class SetupView(LoginRequiredMixin, FormView):
             }
             for lcl in lc.learningconstructlevel_set.all():
                 level = {
+                    'id': lcl.id,
                     'name': '{}) {}'.format(lcl.level, lcl.description),
                     'sublevels': []
                 }
@@ -287,3 +288,11 @@ def current_observation(request):
     url = reverse('observation_view') + '?' + get_args
     print(url)
     return HttpResponseRedirect(url)
+
+
+class NewCourseView(LoginRequiredMixin, FormView):
+    form_class = NewCourseForm
+
+    def form_valid(self, form):
+        # TODO parse csv, save course
+        self.request.session['course'] = course.id
