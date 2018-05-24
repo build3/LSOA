@@ -1,4 +1,5 @@
-{% extends 'base/b4_base.html' %}
+{% extends 'base/b4_base_with_nav.html' %}
+{% load active_link_tags %}
 
 {% block content %}
   <div class="row">
@@ -9,10 +10,9 @@
   <div class="row">
     <div class="col-xs-12">
       <ul class="nav nav-pills">
-        <li class="nav-item"><a class="nav-link" href="{% url 'pending_users' %}">Pending Users</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'approved_users' %}">Approved Users</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'denied_users' %}">Denied Users</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'observation_setup_view' %}">Back to Setup</a></li>
+        <li class="nav-item"><a class="nav-link {% active_link 'pending_users' %}" href="{% url 'pending_users' %}">Pending Users</a></li>
+        <li class="nav-item"><a class="nav-link {% active_link 'approved_users' %}" href="{% url 'approved_users' %}">Approved Users</a></li>
+        <li class="nav-item"><a class="nav-link {% active_link 'denied_users' %}" href="{% url 'denied_users' %}">Denied Users</a></li>
       </ul>
     </div>
   </div>
