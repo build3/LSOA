@@ -156,12 +156,13 @@
             {% endif %}
 
             {% if observation.original_image %}
-              <img src="{{ observation.original_image }}" alt="">
+              <img src="{{ observation.original_image.url }}" alt="">
               <hr>
             {% endif %}
 
             {% if observation.video %}
-              <img src="{{ observation.original_image }}" alt="">
+              <p>Note: TODO fix this</p>
+              <img src="{{ observation.original_image.url }}" alt="">
               <hr>
             {% endif %}
 
@@ -173,6 +174,7 @@
 
             {% if observation.video_notes %}
               <h3>Video Note:</h3>
+              <p>Note: TODO fix this</p>
               <p>{{ observation.video_notes }}</p>
               <hr>
             {% endif %}
