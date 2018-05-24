@@ -241,12 +241,12 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
             {csl.id: {'description': csl.description, 'name': csl.name.replace(c_name, '')} for csl in
              all_constructs_sublevels})
         observations_map = {}
-        matrix = {s.id: {} for s in all_students}
+        matrix = {s.id: collections.defaultdict(set) for s in all_students}
 
         for observation in all_observations:
             for obs_construct in observation.constructs.all():
                 for obs_student in observation.students.all():
-                    matrix[obs_student.id][obs_construct.id] = observation.id
+                    matrix[obs_student.id][obs_construct.id].add(observation.id)
 
         return {
             'student_map': student_map,
