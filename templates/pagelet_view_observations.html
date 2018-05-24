@@ -156,13 +156,12 @@
             {% endif %}
 
             {% if observation.original_image %}
-              <img src="{{ observation.original_image.url }}" alt="">
+              <img src="{{ observation.original_image.url }}" alt="" style="max-width: 80vw; max-height: 80vh" />
               <hr>
             {% endif %}
 
             {% if observation.video %}
-              <p>Note: TODO fix this</p>
-              <img src="{{ observation.original_image.url }}" alt="">
+              <video src="{{ observation.video.url }}" alt="" style="max-width: 80vw; max-height: 80vh" />
               <hr>
             {% endif %}
 
@@ -174,8 +173,7 @@
 
             {% if observation.video_notes %}
               <h3>Video Note:</h3>
-              <p>Note: TODO fix this</p>
-              <p>{{ observation.video_notes }}</p>
+              <video src="{{ observation.video_notes.url }}" style="max-width: 80vw; max-height: 80vh" />
               <hr>
             {% endif %}
           </div>
