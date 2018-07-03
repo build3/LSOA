@@ -12,17 +12,16 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, View
+from django.views.generic import FormView, View, TemplateView
 from related_select.views import RelatedSelectView
 
-from lsoa.forms import ObservationForm, SetupForm, GroupingForm, NewCourseForm
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm
 from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
     Observation
-from utils.pagelets import PageletMixin
 
 
 class SetupView(LoginRequiredMixin, FormView):
-    template_name = 'b4_setup.html'
+    template_name = 'setup.html'
     form_class = SetupForm
 
     def get_initial(self):
@@ -80,8 +79,8 @@ class SetupView(LoginRequiredMixin, FormView):
         return r
 
 
-class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
-    pagelet_name = 'pagelet_grouping.html'
+class GroupingView(LoginRequiredMixin, FormView):
+    template_name = 'grouping.html'
     form_class = GroupingForm
 
     def get(self, request, *args, **kwargs):
@@ -104,8 +103,8 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
         return super().get_context_data(**kwargs)
 
 
-class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
-    pagelet_name = 'pagelet_observation.html'
+class ObservationView(LoginRequiredMixin, FormView):
+    template_name = 'observation.html'
     form_class = ObservationForm
 
     def get_success_url(self):
@@ -222,17 +221,20 @@ class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
         return self.render_json_response(return_data)
 
 
-class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
+class ObservationAdminView(LoginRequiredMixin, TemplateView):
     """
     View the matrix of stars for users
     """
-    pagelet_name = 'pagelet_view_observations.html'
+    template_name = 'observations.html'
 
-    def get_data_for_construct_id(self, construct_id):
+    def get_data_for_construct_id(self, construct_id, course_id):
         IS_OTHER = False
-        all_students = Student.objects.all()
+        if course_id:
+            all_students = Student.objects.filter(course=course_id)
+        else:
+            all_students = Student.objects.all()
         all_observations = Observation.objects.prefetch_related('students').filter(
-            constructs__level__construct_id=construct_id)
+            constructs__level__construct_id=construct_id, students__in=all_students)
         all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
         c_name = LearningConstruct.objects.filter(id=construct_id).first()
         if c_name:
@@ -256,10 +258,10 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
         for observation in all_observations:
             if observation.constructs.count():
                 for obs_construct in observation.constructs.all():
-                    for obs_student in observation.students.all():
+                    for obs_student in observation.students.filter(id__in=all_students):
                         matrix[obs_student.id][obs_construct.id].add(observation.id)
             else:
-                for obs_student in observation.students.all():
+                for obs_student in observation.students.filter(id__in=all_students):
                     matrix[obs_student.id]['other'].add(observation.id)
 
         return {
@@ -273,23 +275,22 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
         }
 
     def get_context_data(self, **kwargs):
-        construct_id = kwargs.get('construct_id')
+        course_id = kwargs.get('course_id')
         all_constructs = LearningConstruct.objects.all()
         top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
 
         constructs_to_cover = LearningConstruct.objects.annotate(
             q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
 
-        if construct_id:
-            constructs_to_cover = constructs_to_cover.filter(id=construct_id)
-
-        tables = [self.get_data_for_construct_id(cid) for cid in constructs_to_cover.values_list('id', flat=True)]
-        tables.append(self.get_data_for_construct_id(None))
+        tables = [self.get_data_for_construct_id(cid, course_id) for cid in constructs_to_cover.values_list('id', flat=True)]
+        tables.append(self.get_data_for_construct_id(None, course_id))
 
         data = super().get_context_data(**kwargs)
         data.update({
             'tables': tables,
             'top_level_construct_map': top_level_construct_map,
+            'courses': Course.objects.all(),
+            'course_id': course_id
         })
         return data
 
@@ -304,11 +305,3 @@ def current_observation(request):
     get_args = '&'.join([str(k) + '=' + str(v) for k, v in initial.items()])
     url = reverse('observation_view') + '?' + get_args
     return HttpResponseRedirect(url)
-
-
-class NewCourseView(LoginRequiredMixin, FormView):
-    form_class = NewCourseForm
-
-    def form_valid(self, form):
-        # TODO parse csv, save course
-        self.request.session['course'] = course.id

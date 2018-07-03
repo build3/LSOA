@@ -61,7 +61,6 @@ FRONTEND_THIRD_PARTY_APPS = [
     'active_link',  # for easy active classes
 ]
 LOCAL_APPS = [
-    'taskapp',
     'users',
     'lsoa',
 ]
@@ -85,24 +84,6 @@ MIDDLEWARE = [
 DATABASES = {}
 DATABASES['default'] = dj_database_url.config(conn_max_age=600,
                                               default='postgres://localhost:5432/{}'.format(APP_NAME))
-
-REDIS_LOCATION = '{0}/{1}'.format(os.getenv('REDIS_URL', 'redis://127.0.0.1:6379'), 0)
-CACHES = {
-    'default': {
-        'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': REDIS_LOCATION,
-        'OPTIONS': {
-            'DB': 0,
-            'PASSWORD': '',
-            'PARSER_CLASS': 'redis.connection.HiredisParser',
-            'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
-            'CONNECTION_POOL_CLASS_KWARGS': {
-                'max_connections': 50,
-                'timeout': 20,
-            }
-        }
-    }
-}
 
 # TEMPLATES AND STATIC FILES
 
@@ -169,15 +150,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 LOGIN_URL = reverse_lazy('account_login')  # to use allauth instead of django admin login page
 LOGIN_REDIRECT_URL = '/'  # TODO
-
-# CELERY SETTINGS
-
-CELERY_BROKER_URL = REDIS_LOCATION
-CELERY_RESULT_BACKEND = REDIS_LOCATION
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
 
 # SENTRY AND LOGGING SETTINGS
 RAVEN_CONFIG = {

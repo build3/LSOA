@@ -62,7 +62,7 @@
   </div>
   <div class="row">
     <div class="col-6 offset-3">
-      <form action="{% url 'observation_setup_view' %}" method="post" novalidate>
+      <form action="{% url 'setup' %}" method="post" novalidate>
         {% csrf_token %}
         {{ form.media }}
 
