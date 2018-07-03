@@ -196,7 +196,6 @@
 
       $("#videoUpload").on("change", function (e) {
         recordedVideo.src = URL.createObjectURL(this.files[0]);
-        recordedVideo.play();
         image.style.display = 'none';
         recordedVideo.style.display = '';
 
@@ -208,7 +207,6 @@
 
       $("#videoNoteUpload").on("change", function (e) {
         recordedVideoNote.src = URL.createObjectURL(this.files[0]);
-        recordedVideoNote.play();
         recordedVideoNote.style.display = '';
         $('#videoNoteUploadVerb').text('Replace')
       });
