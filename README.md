@@ -45,5 +45,4 @@ user that can log into the admin panel to modify data from there as well.
 
 From here, you're all set. To actually run the entire service, type `./manage.py runserver`. This will run the server
 locally at `http://127.0.0.1:8000/` (or alternatively accessible at `http://localhost:8000/`. At this point you 
-should be able to use everything in your browser. Errors will not propagate up to Sentry however data will submit to
-Redcap when you complete a survey.
+should be able to use everything in your browser.
