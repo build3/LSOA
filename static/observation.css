@@ -24,9 +24,6 @@
 }
 
 .swiper-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   background: #fff;
   box-sizing: border-box;
   border: 1px solid #ccc;
