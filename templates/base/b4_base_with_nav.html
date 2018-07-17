@@ -9,11 +9,22 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavDropdown">
       <ul class="navbar-nav">
+        {% if request.session.course %}
+        <li class="nav-item {% active_link 'observation_view' %}">
+          <a class="nav-link" href="{% url 'observation_view' %}">Current Course</a>
+        </li>
+        {% endif %}
         <li class="nav-item {% active_link 'setup' %}">
-          <a class="nav-link" href="{% url 'setup' %}">Observation Setup</a>
+          <a class="nav-link" href="{% url 'setup' %}">Setup</a>
         </li>
         <li class="nav-item {% active_link 'observations_all' %}">
-          <a class="nav-link" href="{% url 'observations_all' %}">Previous Observations</a>
+          <a class="nav-link" href="
+            {% if request.session.course %}
+            {% url 'observations_specific' request.session.course %}
+            {% else %}
+            {% url 'observations_all' %}
+            {% endif %}
+          ">Star Charts</a>
         </li>
         <li class="nav-item {% active_link 'pending_users' %}">
           <a class="nav-link" href="{% url 'pending_users' %}">Pending Users</a>
@@ -24,7 +35,7 @@
       </ul>
     </div>
   </nav>
-  <div class="container">
+  <div class="container-fluid">
     {% block content %}
     {% endblock %}
   </div>

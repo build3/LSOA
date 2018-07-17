@@ -1,7 +1,6 @@
 import collections
 import json
 from datetime import timedelta
-from urllib.parse import urlencode
 
 from braces.views import JSONResponseMixin
 from django.contrib import messages
@@ -29,6 +28,8 @@ class SetupView(LoginRequiredMixin, FormView):
         initial.update({
             'course': self.request.session.get('course'),
             'grouping': self.request.session.get('grouping'),
+            'constructs': self.request.session.get('constructs'),
+            'context_tags': self.request.session.get('context_tags'),
             'request': self.request
         })
         return initial
@@ -39,18 +40,11 @@ class SetupView(LoginRequiredMixin, FormView):
         course = d['course']
         constructs = d['constructs']
         tags = d['context_tags']
-        params = {
-            'course': course.id,
-            'constructs': [c.id for c in constructs],
-            'context_tags': [ct.id for ct in tags]
-        }
-        if grouping:
-            params['grouping'] = grouping
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping
         self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
-        return HttpResponseRedirect(reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True))
+        return HttpResponseRedirect(reverse_lazy('observation_view'))
 
     def get_context_data(self, **kwargs):
         r = super(SetupView, self).get_context_data(**kwargs)
@@ -84,14 +78,15 @@ class GroupingView(LoginRequiredMixin, FormView):
     form_class = GroupingForm
 
     def get(self, request, *args, **kwargs):
-        if not self.request.GET.get('course'):
-            return HttpResponseRedirect(reverse('observation_setup_view'))
+        if not self.request.session.get('course'):
+            return HttpResponseRedirect(reverse('setup'))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).prefetch_related('students').first()
-        if self.request.GET.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.GET.get('grouping'))
+        kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).prefetch_related(
+            'students').first()
+        if self.request.session.get('grouping'):
+            kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.session.get('grouping'))
         else:
             kwargs['grouping'] = StudentGrouping(course=kwargs['course'])
         kwargs['initial_grouping_dict'] = {}
@@ -111,8 +106,8 @@ class ObservationView(LoginRequiredMixin, FormView):
         return self.request.build_absolute_uri()
 
     def get(self, request, *args, **kwargs):
-        if not self.request.GET.get('course'):
-            return HttpResponseRedirect(reverse('observation_setup_view'))
+        if not self.request.session.get('course'):
+            return HttpResponseRedirect(reverse('setup'))
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -123,10 +118,11 @@ class ObservationView(LoginRequiredMixin, FormView):
             return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        if self.request.GET.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.GET.get('grouping'))).first()
-        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).first()
-        kwargs['constructs'] = LearningConstructSublevel.objects.filter(pk__in=self.request.GET.getlist('constructs')) \
+        if self.request.session.get('grouping'):
+            kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.session.get('grouping'))).first()
+        kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).first()
+        kwargs['constructs'] = LearningConstructSublevel.objects.filter(
+            pk__in=self.request.session.get('constructs')) \
             .select_related('level', 'level__construct').prefetch_related('examples')
 
         within_timeframe = timezone.now() - timedelta(hours=2)
@@ -282,7 +278,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         constructs_to_cover = LearningConstruct.objects.annotate(
             q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
 
-        tables = [self.get_data_for_construct_id(cid, course_id) for cid in constructs_to_cover.values_list('id', flat=True)]
+        tables = [self.get_data_for_construct_id(cid, course_id) for cid in
+                  constructs_to_cover.values_list('id', flat=True)]
         tables.append(self.get_data_for_construct_id(None, course_id))
 
         data = super().get_context_data(**kwargs)
