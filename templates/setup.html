@@ -104,7 +104,6 @@
             <div class="item-content small text-danger">{{ error }}</div>
           {% endfor %}
         {% endif %}
-
         <div id="accordion">
           {% for construct in constructs %}
             <div class="card">
@@ -126,7 +125,7 @@
                             <div class="form-check">
                               <input name="constructs" class="form-check-input" type="checkbox"
                                      value="{{ sublevel.id }}" id="checkbox-{{ sublevel.id }}"
-                                     {% if sublevel.id|stringformat:"i" in form.constructs.value %}checked{% endif %}>
+                                     {% if sublevel.id in form.constructs.value %}checked{% endif %}>
                               <label class="form-check-label" for="checkbox-{{ sublevel.id }}">
                                 {{ sublevel.name }}) {{ sublevel.description }}
                               </label>
