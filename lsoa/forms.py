@@ -89,6 +89,14 @@ class ObservationForm(forms.ModelForm):
     visual evidence (picture or video).
     """
 
+    class Meta:
+        model = Observation
+        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
+                  'notes', 'video_notes', 'parent', 'owner']
+        widgets = {
+            'notes': forms.Textarea(attrs={'class': 'notes-container'}),
+        }
+
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=None,
                  empty_permitted=False, instance=None, use_required_attribute=None, request=None):
@@ -116,11 +124,6 @@ class ObservationForm(forms.ModelForm):
             context_tags_ids = get_args.getlist('context_tags', [])
             self.cleaned_data['tags'] = context_tags_ids
         return self.cleaned_data
-
-    class Meta:
-        model = Observation
-        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
-                  'notes', 'video_notes', 'parent', 'owner']
 
 
 class GroupingForm(forms.Form):

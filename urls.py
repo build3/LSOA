@@ -27,7 +27,8 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
     # observation view - the main screen of the application
-    url(r'^observation/$', lsoa.views.ObservationView.as_view(), name='observation_view'),
+    url(r'^observation/$', lsoa.views.ObservationCreateView.as_view(), name='observation_view'),
+    url(r'^observation/(?P<pk>\d+)/$', lsoa.views.ObservationDetailView.as_view(), name='observation_detail_view'),
     url(r'^current-observation/$', lsoa.views.current_observation, name='current_observation'),
 
     # plugins
