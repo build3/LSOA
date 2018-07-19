@@ -161,6 +161,7 @@ class ObservationDetailView(LoginRequiredMixin, UpdateView):
         return self.request.build_absolute_uri()
 
     def get_context_data(self, **kwargs):
+        # TODO probably need to save the course ID, grouping ID, and constructs that were visible to each observation...
         kwargs['header'] = 'Observation {}'.format(self.object.id)
         kwargs['created'] = self.object.created
         if self.request.session.get('grouping'):

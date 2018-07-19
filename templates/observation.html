@@ -271,9 +271,10 @@
       {# 5. Use Last observation, image (fresh) #}
         {# "#image.src => url", button-rows => image_taken_no_reset() #}
       {# 6. Use Last observation, image, annotated #}
-        {# "#image.src => in-memory file", button-rows => image_annotated_no_reset() #}
+        {# "#image.src => url", button-rows => image_annotated_no_reset() #}
       {# 7. Use Last observation, video #}
         {# "#image => hidden", "#video => url", button-rows => none() #}
+      {# TODO need to be able to reset fo 5, 6, 7... #}
 
       {# 8. Edit observation, image (can't replace) #}
         {# "#image.src => url", button-rows => image_taken_no_reset() #}
@@ -319,6 +320,26 @@
         $("#videoUpload").val('');
         $("#useMostRecentMedia").prop('checked', false);
       });
+
+      {# THIS HANDLES ENTRY INTO STATE 8 OR 9 #}
+      {# FROM HERE YOU CAN'T MOVE STATES #}
+      if ("{% if object.original_image %}{{ object.original_image.url }}{% endif %}") {
+        {# this if block is goofy but otherwise it throws an error #}
+        $("#image").attr("src", '{% if object.original_image %}{{ object.original_image.url|safe }}{% endif %}').show();
+        $("#recorded").hide();
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").hide(); // TODO show this and show previous annotation with ability to edit it
+        setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
+      }
+
+      if ("{% if object.video %}{{ object.video.url }}{% endif %}") {
+        {# this if block is goofy but otherwise it throws an error #}
+        $("#recorded").attr("src", '{% if object.video %}{{ object.video.url|safe }}{% endif %}').show();
+        $("#image").hide();
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").hide();
+        setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
+      }
 
 
       {# THIS SECTION IS THE IMAGE ANNOTATION CODE #}
