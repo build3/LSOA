@@ -22,13 +22,34 @@
   </li>
 {% endblock %}
 
-
 {% block content %}
   <form id="form" action="" method="POST" enctype='multipart/form-data'>
     {% csrf_token %}
     <div class="row no-gutters">
       <div class="col-6" style="">
         <div class="art" style="">
+          {# There are many states possible here... #}
+          {# 1. New observation, empty image/video #}
+            {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
+          {# 2. New observation, just took image #}
+            {# "#image.src => in-memory file", button-rows => image_taken() #}
+          {# 3. New observation, just took image, annotated #}
+            {# "#image.src => in-memory file", button-rows => image_annotated() #}
+          {# 4. New observation, just took video #}
+            {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
+
+          {# 5. Use Last observation, image (fresh) #}
+            {# "#image.src => url", button-rows => image_taken_no_reset() #}
+          {# 6. Use Last observation, image, annotated #}
+            {# "#image.src => in-memory file", button-rows => image_annotated_no_reset() #}
+          {# 7. Use Last observation, video #}
+            {# "#image => hidden", "#video => url", button-rows => none() #}
+
+          {# 8. Edit observation, image (can't replace) #}
+            {# "#image.src => url", button-rows => image_taken_no_reset() #}
+          {# 9. Edit observation, video (can't replace) #}
+            {# "#image => hidden", "#video => url", button-rows => none() #}
+
           <img id="image" src="
               {% if recent_observation.original_image %}
               {{ recent_observation.original_image.url }}
@@ -39,13 +60,13 @@
               {% static 'images/photo-placeholder.svg' %}
               {% endif %}
               " style="width: 100%;">
-          <video id="recorded" style="display:none;width: 100%;" muted controls playsinline></video>
+          <video id="recorded" style="display:none;width: 100%;" controls playsinline></video>
 
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
           <input type="hidden" id="annotated-image" name="annotation_data" value="">
         </div>
 
-        <div class="btn-group-lg text-center mt-1" id="row-media-buttons">
+        <div class="btn-group-lg text-center mt-1" id="buttons-capture">
           <label class="btn btn-primary mb-0" for="photoUpload">Take photo
             <input name="original_image" hidden
                    type="file" accept="image/*"
@@ -61,7 +82,7 @@
             </button>
           {% endif %}
         </div>
-        <div class="btn-group-lg text-center mt-1" id="row-capture-buttons" style="display:none;">
+        <div class="btn-group-lg text-center mt-1" id="buttons-draw-or-reset" style="display:none;">
           <a id="reset" class="btn btn-primary mb-0 text-white">Reset</a>
           <a id="enable-draw" class="btn btn-primary mb-0 enab disabled text-white">
             <span class="enab">Enable</span>
@@ -69,6 +90,7 @@
           <a id="drawing-color-button" class="disabled btn btn-primary mb-0 text-white">Change Color <span
             id="drawing-color"></span></a>
         </div>
+
         {#    Constructs    #}
         <div class="text-center mt-2">
           {% for sublevel in avail_constructs %}
@@ -148,18 +170,19 @@
           {% endfor %}
         {% else %}
           {% for student in course.students.all %}
-              <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
-              <button type="button" class="btn btn-link w-100 text-left student"
-                            data-student-id="{{ student.id }}">
-                      &nbsp;{{ student }}
-                    </button>
+            <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
+            <button type="button" class="btn btn-link w-100 text-left student"
+                    data-student-id="{{ student.id }}">
+              &nbsp;{{ student }}
+            </button>
           {% endfor %}
         {% endif %}
       </div>
     </div>
     <div class="row">
       <div class="col-12">
-        <a href="#" id="submit" class="btn fa fa-3x fa-plus float-right text-dark" onclick="document.getElementById('form').submit()"></a>
+        <a href="#" id="submit" class="btn fa fa-3x fa-plus float-right text-dark"
+           onclick="document.getElementById('form').submit()"></a>
       </div>
     </div>
   </form>
@@ -167,34 +190,10 @@
 
   <script>
     $(document).ready(function () {
+      {# THIS SECTION HANDLES THE STUDENT/CONSTRUCT TOGGLING #}
+
       var checkedStudents = {};
       var checkedConstructs = {};
-      var color, stage;
-      var index = parseInt(Math.random() * 100);
-      var colors = [
-        "#1abc9c", "#2ecc71",
-        "#3498db", "#9b59b6",
-        "#34495e", "#ecf0f1",
-        "#e74c3c", "#95a5a6",
-        "#e67e22", "#f1c40f"
-      ];
-
-      var photoUpload = document.querySelector('input#photoUpload');
-      var videoUpload = document.querySelector('input#videoUpload');
-      var videoNoteUpload = document.querySelector('input#videoNoteUpload');
-      var useMostRecentMedia = document.querySelector('input#useMostRecentMedia');
-      var image = document.querySelector('img#image');
-      var annotationInput = document.querySelector('#annotated-image');
-      var reset = document.querySelector('a#reset');
-      var enableDisableDraw = document.querySelector('a#enable-draw');
-      var drawingColorButton = document.querySelector('a#drawing-color-button');
-      var drawingColorDisplay = document.querySelector('#drawing-color');
-
-      var rowMediaButtons = document.querySelector('div#row-media-buttons');
-      var rowCaptureButtons = document.querySelector('div#row-capture-buttons');
-      var recordedVideo = document.querySelector('video#recorded');
-      var recordedVideoNote = document.querySelector('video#recordedNote');
-      var submitButton = document.querySelector('#submit');
 
       var toggleStudent = function (studentId) {
         $('[data-student-id="' + studentId + '"]').toggleClass('bg-warning');
@@ -220,141 +219,195 @@
         }
       };
 
-      $("#videoUpload").on("change", function (e) {
-        recordedVideo.src = URL.createObjectURL(this.files[0]);
-        image.style.display = 'none';
-        recordedVideo.style.display = '';
+      var markSelectStudents = function() {
+        var chosen_students = JSON.parse("{{ chosen_students }}");
+        for (var index = 0; index < chosen_students.length; index++) {
+          toggleStudent(chosen_students[index]);
+        }
+      };
 
-        // hide the Take Photo // Take Video buttons
-        rowMediaButtons.style.display = 'none';
-        // show the annotation buttons
-        rowCaptureButtons.style.display = '';
+      var markSelectConstructs = function() {
+        var chosen_constructs = JSON.parse("{{ chosen_constructs }}");
+        for (var index = 0; index < chosen_constructs.length; index++) {
+          toggleConstruct(chosen_constructs[index]);
+        }
+      };
+
+      $('.construct').on('click', function (e) {
+        toggleConstruct($(this).data('construct-id'));
+        $('#sublevel-description').html($(this).find('.sublevel-desc').html());
+        $('#sublevel-examples').html($(this).find('.sublevel-example').html());
       });
 
+      $('.student').on('click', function (e) {
+        toggleStudent($(this).data('student-id'));
+      });
+
+      // INITIALIZE STUDENTS/CONSTRUCTS IF "View/Edit Observation" PAGE
+      markSelectStudents();
+      markSelectConstructs();
+
+      {# THIS SECTION IS THE VIDEO NOTE CODE #}
+
+      var recordedVideoNote = document.querySelector('video#recordedNote'); // TODO change to jquery
       $("#videoNoteUpload").on("change", function (e) {
         recordedVideoNote.src = URL.createObjectURL(this.files[0]);
         recordedVideoNote.style.display = '';
         $('#videoNoteUploadVerb').text('Replace')
       });
 
-      $("#photoUpload").on("change", function (e) {
-        image.src = URL.createObjectURL(this.files[0]);
-        recordedVideo.style.display = 'none';
-        image.style.display = '';
+      {# THIS SECTION IS THE IMAGE/VIDEO SAMPLE CODE #}
 
-        // hide the Take Photo // Take Video buttons
-        rowMediaButtons.style.display = 'none';
-        // show the annotation buttons
-        rowCaptureButtons.style.display = '';
+      {# There are many states possible here... #}
+      {# 1. New observation, empty image/video #}
+        {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
+      {# 2. New observation, just took image #}
+        {# "#image.src => in-memory file", button-rows => image_taken() #}
+      {# 3. New observation, just took image, annotated #}
+        {# "#image.src => in-memory file", button-rows => image_annotated() #}
+      {# 4. New observation, just took video #}
+        {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
+
+      {# 5. Use Last observation, image (fresh) #}
+        {# "#image.src => url", button-rows => image_taken_no_reset() #}
+      {# 6. Use Last observation, image, annotated #}
+        {# "#image.src => in-memory file", button-rows => image_annotated_no_reset() #}
+      {# 7. Use Last observation, video #}
+        {# "#image => hidden", "#video => url", button-rows => none() #}
+
+      {# 8. Edit observation, image (can't replace) #}
+        {# "#image.src => url", button-rows => image_taken_no_reset() #}
+      {# 9. Edit observation, video (can't replace) #}
+        {# "#image => hidden", "#video => url", button-rows => none() #}
+
+      {# CAN START IN STATES 1, 5, 7, 8, and 9 #}
+
+      {# THIS HANDLES STATE 1 TO STATE 2 #}
+      $("#photoUpload").on("change", function (e) {
+        $("#image").attr("src", URL.createObjectURL(this.files[0])).show();
+        $("#video").hide();
+
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").show();
 
         enableDisableDraw.classList.remove('disabled');
+        setTimeout(initStage, 100); // I hate this hack, but otherwise the new sized image hasn't loaded
+        // TODO maybe replace with "on image changed"?
       });
 
-      reset.addEventListener("click", function (ev) {
-        rowMediaButtons.style.display = '';
-        rowCaptureButtons.style.display = 'none';
-        image.style.display = '';
-        image.src = '{% static "images/photo-placeholder.svg" %}';
-        recordedVideo.style.display = 'none';
-        recordedVideo.src = '';
+      {# THIS HANDLES STATE 1 TO STATE 4 #}
+      $("#videoUpload").on("change", function (e) {
+        $("#recorded").attr("src", URL.createObjectURL(this.files[0])).show();
+        $("#image").hide();
+
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").show();
+      });
+
+      {# THIS HANDLES STATES {2, 3, 4} TO STATE 1 #}
+      $("#reset").on("click", function (e) {
+        $("#buttons-capture").show();
+        $("#buttons-draw-or-reset").hide();
+        $("#image").attr("src", '{% static "images/photo-placeholder.svg" %}').show();
+        $("#recorded").hide();
+
         enableDisableDraw.classList.add('disabled');
-        initStage();
+        hideStage();
         stage.clear();
-        photoUpload.value = '';
-        videoUpload.value = '';
-        useMostRecentMedia.checked = false;
+
+        $("#photoUpload").val('');
+        $("#videoUpload").val('');
+        $("#useMostRecentMedia").prop('checked', false);
       });
 
-      markSelectStudents();
-      markSelectConstructs();
+
+      {# THIS SECTION IS THE IMAGE ANNOTATION CODE #}
+
+      var annotationInput = document.querySelector('#annotated-image');
+
+      var enableDisableDraw = document.querySelector('a#enable-draw');
+      var drawingColorButton = document.querySelector('a#drawing-color-button');
+      var drawingColorDisplay = document.querySelector('#drawing-color');
+      var color;
+      var stage = new fabric.Canvas('easel-canvas', {
+        isDrawingMode: false,
+        selection: false
+      });
+      var index = parseInt(Math.random() * 100);
+      var colors = [
+        "#1abc9c", "#2ecc71",
+        "#3498db", "#9b59b6",
+        "#34495e", "#ecf0f1",
+        "#e74c3c", "#95a5a6",
+        "#e67e22", "#f1c40f"
+      ];
+
       setUpEasel();
-
-      function markSelectStudents() {
-        var chosen_students = JSON.parse("{{ chosen_students }}");
-        var arrLength = chosen_students.length;
-        var studentId = null;
-
-        for (var index = 0; index < arrLength; index++) {
-          studentId = chosen_students[index];
-          toggleStudent(studentId);
-        }
-      }
-
-      function markSelectConstructs() {
-        var chosen_constructs = JSON.parse("{{ chosen_constructs }}");
-        var arrLength = chosen_constructs.length;
-        var constructId = null;
-
-        for (var index = 0; index < arrLength; index++) {
-          constructId = chosen_constructs[index];
-          toggleConstruct(constructId);
-        }
-      }
-
       function setUpEasel() {
-
         color = colors[(index++) % colors.length];
-
         initStage();
         initEnableDisable();
         initChangeColorButton();
         updateDrawingColorDisplay();
+      }
 
-        function updateAnnotationJson() {
-          annotationInput.value = getEaselData();
-        }
+      function updateAnnotationJson() {
+        annotationInput.value = getEaselData();
+      }
 
-        function initStage() {
-          stage = new fabric.Canvas('easel-canvas', {
-            isDrawingMode: false,
-            selection: false
-          });
+      function hideStage() {
+        stage.setHeight(0);
+        stage.setWidth(0);
+      }
 
-          stage.on('object:added', updateAnnotationJson);
-          stage.on('object:removed', updateAnnotationJson);
-          stage.on('object:modified', updateAnnotationJson);
+      function initStage() {
+        stage.on('object:added', updateAnnotationJson);
+        stage.on('object:removed', updateAnnotationJson);
+        stage.on('object:modified', updateAnnotationJson);
 
-          stage.setHeight(image.height);
-          stage.setWidth(image.width);
+        var $image = $("#image");
+        stage.setHeight($image.height());
+        stage.setWidth($image.width());
 
+
+        updateDrawingColorDisplay();
+        stage.freeDrawingBrush = new fabric['PencilBrush'](stage);
+        stage.freeDrawingBrush.width = 10;
+      }
+
+      function updateDrawingColorDisplay() {
+        stage.freeDrawingBrush.color = color;
+        drawingColorDisplay.style.backgroundColor = color;
+      }
+
+      function initChangeColorButton() {
+        drawingColorButton.onclick = function () {
+          color = colors[(index++) % colors.length];
           updateDrawingColorDisplay();
-          stage.freeDrawingBrush = new fabric['PencilBrush'](stage);
-          stage.freeDrawingBrush.width = 10;
         }
+      }
 
-        function updateDrawingColorDisplay() {
-          stage.freeDrawingBrush.color = color;
-          drawingColorDisplay.style.backgroundColor = color;
-        }
+      function initEnableDisable() {
+        enableDisableDraw.onclick = function () {
+          if (enableDisableDraw.classList.contains('enab')) {
+            // Enable drawing
+            enableDisableDraw.classList.remove('enab');
+            enableDisableDraw.classList.add('disa');
+            drawingColorButton.classList.remove('disabled');
 
-        function initChangeColorButton() {
-          drawingColorButton.onclick = function () {
-            color = colors[(index++) % colors.length];
-            updateDrawingColorDisplay();
+            var $image = $("#image");
+            stage.setHeight($image.height());
+            stage.setWidth($image.width());
           }
-        }
-
-        function initEnableDisable() {
-          enableDisableDraw.onclick = function () {
-            if (enableDisableDraw.classList.contains('enab')) {
-              // Enable drawing
-              enableDisableDraw.classList.remove('enab');
-              enableDisableDraw.classList.add('disa');
-              drawingColorButton.classList.remove('disabled');
-
-              stage.setHeight(image.height);
-              stage.setWidth(image.width);
-            }
-            else if (enableDisableDraw.classList.contains('disa')) {
-              // Disable drawing
-              enableDisableDraw.classList.add('enab');
-              enableDisableDraw.classList.remove('disa');
-              drawingColorButton.classList.add('disabled');
-              stage.clear();
-            }
-            updateAnnotationJson();
-            stage.isDrawingMode = !stage.isDrawingMode;
+          else if (enableDisableDraw.classList.contains('disa')) {
+            // Disable drawing
+            enableDisableDraw.classList.add('enab');
+            enableDisableDraw.classList.remove('disa');
+            drawingColorButton.classList.add('disabled');
+            stage.clear();
           }
+          updateAnnotationJson();
+          stage.isDrawingMode = !stage.isDrawingMode;
         }
       }
 
@@ -365,21 +418,7 @@
         return null;
       }
 
-      $('.construct').on('click', function (e) {
-        var constructId = $(this).data('construct-id');
-        toggleConstruct(constructId);
 
-        var chip = $(this);
-        var text = chip.find('.sublevel-desc').html();
-        $('#sublevel-description').html(text);
-        var example = chip.find('.sublevel-example').html();
-        $('#sublevel-examples').html(example);
-      });
-
-      $('.student').on('click', function (e) {
-        var studentId = $(this).data('student-id');
-        toggleStudent(studentId);
-      });
 
     });
 
