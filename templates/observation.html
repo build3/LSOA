@@ -16,15 +16,16 @@
   </script>
 {% endblock %}
 
+{% block extranav %}
+  <li class="nav-item text-info">
+    {{ header }}{% if created %}&nbsp;<span class="text-info float-right">({{ created|localtime }})</span>{% endif %}
+  </li>
+{% endblock %}
+
 
 {% block content %}
   <form id="form" action="" method="POST" enctype='multipart/form-data'>
     {% csrf_token %}
-    <div class="row no-gutters">
-      <div class="col-12">
-        <h4 class="float-left">{{ header }}</h4>{% if created %}<span class="text-muted float-right">Taken on {{ created|localtime }}</span>{% endif %}
-      </div>
-    </div>
     <div class="row no-gutters">
       <div class="col-6" style="">
         <div class="art" style="">

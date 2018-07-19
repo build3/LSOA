@@ -78,15 +78,15 @@ class GroupingView(LoginRequiredMixin, FormView):
     form_class = GroupingForm
 
     def get(self, request, *args, **kwargs):
-        if not self.request.session.get('course'):
+        if not self.request.GET.get('course'):
             return HttpResponseRedirect(reverse('setup'))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).prefetch_related(
+        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).prefetch_related(
             'students').first()
-        if self.request.session.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.session.get('grouping'))
+        if self.request.GET.get('grouping'):
+            kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.GET.get('grouping'))
         else:
             kwargs['grouping'] = StudentGrouping(course=kwargs['course'])
         kwargs['initial_grouping_dict'] = {}

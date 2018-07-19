@@ -1,3 +1,5 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
 {% load staticfiles %}
 
 {% block extrastyles %}
@@ -20,8 +22,9 @@
   </script>
 {% endblock %}
 
-<div class="page">
-  <div class="navbar">
+{% block content %}
+<div class="row">
+  <div class="col-12">
     <div class="navbar-inner">
       <div class="left">&nbsp;</div>
       <div class="title">{% block title %}LSOA: New Groupset{% endblock %}</div>
@@ -36,9 +39,9 @@
       </div>
     </div>
   </div>
-  <div class="page-content" style="padding-left: 1em;">
-    <div class="row full-height">
-      <div class="col-100 full-height buckets">
+  <div class="row">
+    <div class="col-12 h-10">
+      <div class="buckets">
 
         <div class="bucket-column bucket-column--locked bucket-column--all">
           <div class="bucket">
@@ -122,8 +125,9 @@
       </div>
     </div>
   </div>
+
   <script>
-    var pageInit = function () {
+    $(document).ready(function() {
       var groupingInitData = {{ initial_grouping_dict | safe }};
 
       /**
@@ -222,7 +226,7 @@
       initializeNewColumnColumn();
       initializeBucketColumns();
       makeStudentsDraggable();
-    };
+    });
 
 
     var allStudentsArea = $('.bucket-column--all .dropzone');
@@ -396,7 +400,7 @@
      * @returns {jQuery|HTMLElement}
      */
     function makeNewBucket(groupId) {
-      var $newElem = $(emptyBucketTemplate.outerHTML());
+      var $newElem = $(emptyBucketTemplate[0].outerHTML);
       $('.buckets .bucket-column--new').before($newElem);
       attachBucketHandlers($newElem);
       if(groupId) {
@@ -524,17 +528,7 @@
       return data;
     }
 
-    {% for message in messages %}
-      window.myApp.toast.create({
-        text: '{{ message }}'
-      }).open();
-    {% endfor %}
-
-    if (typeof $$ !== 'undefined') {
-      pageInit();
-    } else {
-      document.addEventListener("DOMContentLoaded", pageInit);
-    }
 
   </script>
 </div>
+{% endblock %}
