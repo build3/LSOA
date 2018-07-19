@@ -145,7 +145,7 @@
     {% for table in tables %}
       {% for observation in table.all_observations %}
         <div class="observation-body" data-observation-id="{{ observation.id }}">
-          <h3>Observation #{{ observation.id }}</h3>
+          <h3><a href="{% url 'observation_detail_view' pk=observation.id %}">Observation #{{ observation.id }}</a></h3>
           <small style="display: block;">Constructs: {{ observation.constructs.all|join:', ' }}</small>
           <small style="display: block;">Recorded on: {{ observation.created }}</small>
           {% if observation.tags.count %}

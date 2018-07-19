@@ -1,6 +1,6 @@
 {% extends 'base/b4_base_with_nav.html' %}
 
-{% load staticfiles %}
+{% load staticfiles tz %}
 
 {% block extrastyles %}
   <link rel="stylesheet" href="{% static 'observation.css' %}">
@@ -14,6 +14,12 @@
       'albumLabel': ''
     })
   </script>
+{% endblock %}
+
+{% block extranav %}
+  <li class="nav-item text-info">
+    {{ header }}{% if created %}&nbsp;<span class="text-info float-right">({{ created|localtime }})</span>{% endif %}
+  </li>
 {% endblock %}
 
 
@@ -48,7 +54,7 @@
             <input name="video" style="display:none;" type="file"
                    accept="video/*"
                    id="videoUpload"></label>
-          {% if recent_observation_exists %}
+          {% if recent_observation_exists and not view.kwargs.pk %}
             <button class="btn btn-primary mb-0"
                     type="submit"
                     name="use_recent_observation" value="True">Use Last Sample
@@ -65,7 +71,7 @@
         </div>
         {#    Constructs    #}
         <div class="text-center mt-2">
-          {% for sublevel in constructs %}
+          {% for sublevel in avail_constructs %}
             <input type="hidden" value="{{ sublevel.id }}" data-construct-id-value="{{ sublevel.id }}">
             <div class="btn btn-light construct" data-construct-id="{{ sublevel.id }}" style="padding: 15px 15px;">
               {{ sublevel.name }}
@@ -106,11 +112,10 @@
       <div class="col-3">
         <h4 style="text-align: center; margin: 0;">Notes</h4>
         <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
-        <input style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
+        <input name="video_notes" style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
         <label class="btn btn-primary w-100" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio
           note</label>
-        <textarea name="notes"
-                  style="margin-bottom: 50px;width: calc(100% - 6px); height: 150px; font-size: 2em; background-color: white;"></textarea>
+        <div>{{ form.notes }}</div>
         <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
         <div id="sublevel-examples" style="height: 300px;">
           <p>Once you select a learning construct using the toggle buttons to the left, different
@@ -143,12 +148,11 @@
           {% endfor %}
         {% else %}
           {% for student in course.students.all %}
-            <li class="item-content student" data-student-id="{{ student.id }}">
               <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
-              <div class="item-inner">
-                <div class="item-title">{{ student }}</div>
-              </div>
-            </li>
+              <button type="button" class="btn btn-link w-100 text-left student"
+                            data-student-id="{{ student.id }}">
+                      &nbsp;{{ student }}
+                    </button>
           {% endfor %}
         {% endif %}
       </div>
@@ -191,6 +195,30 @@
       var recordedVideo = document.querySelector('video#recorded');
       var recordedVideoNote = document.querySelector('video#recordedNote');
       var submitButton = document.querySelector('#submit');
+
+      var toggleStudent = function (studentId) {
+        $('[data-student-id="' + studentId + '"]').toggleClass('bg-warning');
+        if (checkedStudents.hasOwnProperty(studentId)) {
+          // Remove
+          delete checkedStudents[studentId];
+          $('[data-student-id-value="' + studentId + '"]').removeAttr('name');
+        } else {
+          checkedStudents[studentId] = true;
+          $('[data-student-id-value="' + studentId + '"]').attr('name', 'students');
+        }
+      };
+
+      var toggleConstruct = function (constructId) {
+        $('[data-construct-id="' + constructId + '"]').toggleClass('bg-success', 'text-white');
+        if (checkedConstructs.hasOwnProperty(constructId)) {
+          // Remove
+          delete checkedConstructs[constructId];
+          $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
+        } else {
+          checkedConstructs[constructId] = true;
+          $('[data-construct-id-value="' + constructId + '"]').attr('name', 'constructs');
+        }
+      };
 
       $("#videoUpload").on("change", function (e) {
         recordedVideo.src = URL.createObjectURL(this.files[0]);
@@ -237,7 +265,31 @@
         useMostRecentMedia.checked = false;
       });
 
+      markSelectStudents();
+      markSelectConstructs();
       setUpEasel();
+
+      function markSelectStudents() {
+        var chosen_students = JSON.parse("{{ chosen_students }}");
+        var arrLength = chosen_students.length;
+        var studentId = null;
+
+        for (var index = 0; index < arrLength; index++) {
+          studentId = chosen_students[index];
+          toggleStudent(studentId);
+        }
+      }
+
+      function markSelectConstructs() {
+        var chosen_constructs = JSON.parse("{{ chosen_constructs }}");
+        var arrLength = chosen_constructs.length;
+        var constructId = null;
+
+        for (var index = 0; index < arrLength; index++) {
+          constructId = chosen_constructs[index];
+          toggleConstruct(constructId);
+        }
+      }
 
       function setUpEasel() {
 
@@ -314,36 +366,19 @@
       }
 
       $('.construct').on('click', function (e) {
-        var chip = $(this);
         var constructId = $(this).data('construct-id');
-        chip.toggleClass('bg-success');
-        chip.toggleClass('text-white');
+        toggleConstruct(constructId);
+
+        var chip = $(this);
         var text = chip.find('.sublevel-desc').html();
         $('#sublevel-description').html(text);
         var example = chip.find('.sublevel-example').html();
         $('#sublevel-examples').html(example);
-
-        if (checkedConstructs.hasOwnProperty(constructId)) {
-          // Remove
-          delete checkedConstructs[constructId];
-          $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
-        } else {
-          checkedConstructs[constructId] = true;
-          $('[data-construct-id-value="' + constructId + '"]').attr('name', 'constructs');
-        }
       });
 
       $('.student').on('click', function (e) {
         var studentId = $(this).data('student-id');
-        $('[data-student-id="' + studentId + '"]').toggleClass('bg-warning');
-        if (checkedStudents.hasOwnProperty(studentId)) {
-          // Remove
-          delete checkedStudents[studentId];
-          $('[data-student-id-value="' + studentId + '"]').removeAttr('name');
-        } else {
-          checkedStudents[studentId] = true;
-          $('[data-student-id-value="' + studentId + '"]').attr('name', 'students');
-        }
+        toggleStudent(studentId);
       });
 
     });

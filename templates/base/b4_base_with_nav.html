@@ -8,11 +8,11 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavDropdown">
-      <ul class="navbar-nav">
+      <ul class="navbar-nav mr-auto">
         {% if request.session.course %}
-        <li class="nav-item {% active_link 'observation_view' %}">
-          <a class="nav-link" href="{% url 'observation_view' %}">Current Course</a>
-        </li>
+          <li class="nav-item {% active_link 'observation_view' %}">
+            <a class="nav-link" href="{% url 'observation_view' %}">Current Course</a>
+          </li>
         {% endif %}
         <li class="nav-item {% active_link 'setup' %}">
           <a class="nav-link" href="{% url 'setup' %}">Setup</a>
@@ -32,6 +32,10 @@
         <li class="nav-item {% active_link 'admin:index' %}">
           <a class="nav-link" href="{% url 'admin:index' %}">Admin Site</a>
         </li>
+      </ul>
+      <ul class="navbar-nav">
+        {% block extranav %}
+        {% endblock %}
       </ul>
     </div>
   </nav>

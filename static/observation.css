@@ -37,3 +37,11 @@
   bottom: 0;
   right: 0;
 }
+
+.notes-container {
+  margin-bottom: 50px;
+  width: calc(100% - 6px);
+  height: 150px;
+  font-size: 2em;
+  background-color: white;
+}

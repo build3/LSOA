@@ -11,7 +11,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, View, TemplateView
+from django.views.generic import FormView, View, TemplateView, UpdateView
 from related_select.views import RelatedSelectView
 
 from lsoa.forms import ObservationForm, SetupForm, GroupingForm
@@ -78,15 +78,15 @@ class GroupingView(LoginRequiredMixin, FormView):
     form_class = GroupingForm
 
     def get(self, request, *args, **kwargs):
-        if not self.request.session.get('course'):
+        if not self.request.GET.get('course'):
             return HttpResponseRedirect(reverse('setup'))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).prefetch_related(
+        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).prefetch_related(
             'students').first()
-        if self.request.session.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.session.get('grouping'))
+        if self.request.GET.get('grouping'):
+            kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.GET.get('grouping'))
         else:
             kwargs['grouping'] = StudentGrouping(course=kwargs['course'])
         kwargs['initial_grouping_dict'] = {}
@@ -98,7 +98,7 @@ class GroupingView(LoginRequiredMixin, FormView):
         return super().get_context_data(**kwargs)
 
 
-class ObservationView(LoginRequiredMixin, FormView):
+class ObservationCreateView(LoginRequiredMixin, FormView):
     template_name = 'observation.html'
     form_class = ObservationForm
 
@@ -118,10 +118,11 @@ class ObservationView(LoginRequiredMixin, FormView):
             return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        kwargs['header'] = 'New Observation'
         if self.request.session.get('grouping'):
             kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.session.get('grouping'))).first()
         kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).first()
-        kwargs['constructs'] = LearningConstructSublevel.objects.filter(
+        kwargs['avail_constructs'] = LearningConstructSublevel.objects.filter(
             pk__in=self.request.session.get('constructs')) \
             .select_related('level', 'level__construct').prefetch_related('examples')
 
@@ -135,6 +136,9 @@ class ObservationView(LoginRequiredMixin, FormView):
                 .filter(owner=self.request.user, created__gte=within_timeframe) \
                 .order_by('-created').first()
 
+        kwargs['chosen_students'] = json.dumps([])
+        kwargs['chosen_constructs'] = json.dumps([])
+
         return super().get_context_data(**kwargs)
 
     def get_form_kwargs(self):
@@ -145,6 +149,49 @@ class ObservationView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         form.save()
         messages.success(self.request, 'Observation added')
+        return super().form_valid(form)
+
+
+class ObservationDetailView(LoginRequiredMixin, UpdateView):
+    template_name = 'observation.html'
+    form_class = ObservationForm
+    model = Observation
+
+    def get_success_url(self):
+        return self.request.build_absolute_uri()
+
+    def get_context_data(self, **kwargs):
+        kwargs['header'] = 'Observation {}'.format(self.object.id)
+        kwargs['created'] = self.object.created
+        if self.request.session.get('grouping'):
+            kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.session.get('grouping'))).first()
+        kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).first()
+        kwargs['avail_constructs'] = LearningConstructSublevel.objects.filter(
+            pk__in=self.request.session.get('constructs')) \
+            .select_related('level', 'level__construct').prefetch_related('examples')
+
+        within_timeframe = timezone.now() - timedelta(hours=2)
+        kwargs['recent_observation_exists'] = Observation.objects \
+            .filter(owner=self.request.user, created__gte=within_timeframe) \
+            .order_by('-created').exists()
+
+        if kwargs.get('use_recent_observation'):
+            kwargs['recent_observation'] = Observation.objects \
+                .filter(owner=self.request.user, created__gte=within_timeframe) \
+                .order_by('-created').first()
+
+        kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
+        kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
+        return super().get_context_data(**kwargs)
+
+    def get_form_kwargs(self):
+        data = super().get_form_kwargs()
+        data['request'] = self.request
+        return data
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, 'Observation Updated')
         return super().form_valid(form)
 
 
