@@ -27,6 +27,7 @@ class UploadToPathAndRename(object):
 class Course(TimeStampedModel, OwnerMixin):
     name = models.CharField(max_length=255)
     students = models.ManyToManyField('lsoa.Student', blank=True)
+    grade_level = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -40,10 +41,15 @@ class Student(TimeStampedModel):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     nickname = models.CharField(max_length=255, blank=True, default='')
+    grade_level = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return '{} {} '.format(self.nickname, self.last_name[0]) if self.nickname else \
             '{} {}'.format(self.first_name, self.last_name[0])
+
+    def advance_grade_level(self):
+        self.grade_level += 1
+        self.save()
 
 
 class StudentGroup(TimeStampedModel):
@@ -167,6 +173,9 @@ class ContextTag(TimeStampedModel, OwnerMixin):
     """
     text = models.CharField(max_length=255)
     last_used = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.text
 
     def use(self):
         self.last_used = timezone.now()

@@ -59,6 +59,7 @@ FRONTEND_THIRD_PARTY_APPS = [
     'related_select',  # for AJAX-powered related select boxes
     'tinymce',  # for HTML editor for sublevel examples
     'active_link',  # for easy active classes
+    'import_export',  # for file uploads
 ]
 LOCAL_APPS = [
     'users',
