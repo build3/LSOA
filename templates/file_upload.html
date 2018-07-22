@@ -1,0 +1,8 @@
+<form method="post" enctype="multipart/form-data" action="{% block form_action %}{% endblock %}">
+  {% csrf_token %}
+  <div>
+    <input type="file" name="uploadedFile" class="form-control">
+    <button type="submit" class="btn btn-lg btn-primary col" style="margin-top: 10px;">Upload and Preview</button>
+  </div>
+</form>
+

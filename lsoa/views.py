@@ -1,22 +1,32 @@
+import io
+import logging
+
 import collections
 import json
-from datetime import timedelta
 
+from datetime import timedelta
 from braces.views import JSONResponseMixin
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View, TemplateView, UpdateView
 from related_select.views import RelatedSelectView
+from tablib import Dataset
 
+from lsoa.exceptions import InvalidFileFormatError
 from lsoa.forms import ObservationForm, SetupForm, GroupingForm
 from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
     Observation
+from lsoa.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
+
+logger = logging.getLogger(__name__)
 
 
 class SetupView(LoginRequiredMixin, FormView):
@@ -350,3 +360,111 @@ def current_observation(request):
     get_args = '&'.join([str(k) + '=' + str(v) for k, v in initial.items()])
     url = reverse('observation_view') + '?' + get_args
     return HttpResponseRedirect(url)
+
+
+class ImportClassRoster(LoginRequiredMixin, TemplateView):
+    template_name = 'import_class_roster.html'
+    session_variable = 'class_roster_preview_data'
+
+    def get(self, request, *args, **kwargs):
+        # clear any residual data
+        if self.session_variable in self.request.session.keys():
+            del(self.request.session[self.session_variable])
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        file = request.FILES.get('uploadedFile')
+
+        if not file:
+            message = 'Please click "Choose File" below and select a file'
+            return self.handle_error(message)
+
+        try:
+            fmt = file.name.split('.')[1]
+            if fmt not in ACCEPTED_FILE_EXTENSIONS:
+                message = 'Accepted file types are csv and excel'
+                return self.handle_error(message)
+
+        except Exception as err:
+            message = 'Cannot determine file type.  Please make sure the file name ends with .csv, .xlsx or .xls'
+            logger.exception('{}: {}'.format(message, err))
+            return self.handle_error(message)
+
+        try:
+            # in memory file is in bytes, tablib wants csv data to be a string...
+            if fmt == 'csv':
+                file = io.TextIOWrapper(file, encoding='utf-8')
+
+            file_data = Dataset().load(file.read())
+            preview_data = ClassRoster(user=request.user).preview_rows(file_data)
+            context = {'preview_data': preview_data.html}
+            self.request.session[self.session_variable] = preview_data.json
+            return render(request=request, template_name=self.template_name, context=context)
+
+        except Exception as err:
+            message = 'An error occurred preparing data for preview.'
+            logger.exception(err)
+            return self.handle_error(message)
+
+    def handle_error(self, message):
+        messages.error(request=self.request, message=message, fail_silently=True, extra_tags='alert alert-contrast alert-danger')
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+
+@login_required
+def process_class_roster(request):
+    try:
+        dataset = Dataset()
+        dataset.dict = json.loads(request.session[ImportClassRoster.session_variable])
+        ClassRoster(user=request.user).process_rows(dataset)
+        messages.success(request, message='File imported successfully', extra_tags='alert alert-contrast alert-success',
+                         fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+    except Exception as err:
+        message = 'An error occurred loading the file'
+        logger.exception(err)
+        messages.error(request, message=message, extra_tags='alert alert-contrast alert-danger', fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+
+@login_required
+def export_class_roster(request):
+    """
+    Export course/student roster
+    You can supply in the querystring:
+    :fmt: defaults to xlsx.  determines file format to use
+    :id: list of course ids, this filter overrides
+    :user_id: can take a list of user_id which will be used to filter class owners
+    """
+    try:
+        course_ids = request.GET.getlist('id')
+        class_owners = [int(user) for user in request.GET.getlist('user_id')]
+        fmt = request.GET.get('fmt') or 'xlsx'
+        if fmt not in ACCEPTED_FILE_EXTENSIONS:
+            raise InvalidFileFormatError('{} is not an acceptable export file format'.format(fmt))
+
+        if course_ids:
+            courses = Course.objects.filter(id__in=int(course_ids)).order_by('name')
+        elif class_owners:
+            courses = Course.objects.filter(owner_id__in=class_owners).order_by('name')
+        else:
+            courses = []
+
+        return ClassRoster.export(user=request.user, queryset=courses, fmt=fmt)
+
+    except InvalidFileFormatError as err:
+        message = str(err)
+        messages.error(request, message=message, extra_tags='alert alert-contrast alert-danger', fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+    except Exception as err:
+        message = 'An error occurred exporting the file'
+        logger.exception(err)
+        messages.error(request, message=message, extra_tags='alert alert-contrast alert-danger', fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+
+
+

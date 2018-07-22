@@ -14,6 +14,8 @@ django-braces==1.13.0               # For some class based view mixins
 django-anymail==3.0                 # for registration/password reset mails
 django-active-link==0.1.5           # for 'active' class links automagically
 django-import-export==1.0.1         # for CSV import/export
+tablib==0.12.1                      # for custom import/export
+openpyxl==2.4.11                    # this must be pinned for tablib to work with excel formats
 
 ## INFRASTRUCTURE REQUIREMENTS
 boto3==1.7.49                       # to talk with amazon

@@ -51,6 +51,11 @@ class Student(TimeStampedModel):
         self.grade_level += 1
         self.save()
 
+    def save(self, **kwargs):
+        # this keeps excel import from bombing on nulls
+        self.nickname = self.nickname or ''
+        return super().save(**kwargs)
+
 
 class StudentGroup(TimeStampedModel):
     """

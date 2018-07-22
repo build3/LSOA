@@ -1,8 +1,8 @@
 from django.contrib import admin, messages
 from import_export import resources, fields
 from import_export.admin import ImportExportActionModelAdmin
-from import_export.formats import base_formats
 
+from lsoa.resources import ACCEPTED_FILE_FORMATS, ClassRoster
 from .models import Course, LearningConstruct, LearningConstructLevel, LearningConstructSublevel, \
     LearningConstructSublevelExample, Observation, Student, StudentGroup, StudentGrouping
 
@@ -22,6 +22,13 @@ def advance_grade(modeladmin, request, queryset):
 
 
 advance_grade.short_description = 'Advance Grade'
+
+
+def export_class_roster(modeladmin, request, queryset):
+    return ClassRoster.export(user=request.user, queryset=queryset)
+
+
+export_class_roster.short_description = 'Export selected course rosters'
 
 
 class StudentResource(resources.ModelResource):
@@ -55,7 +62,7 @@ class CourseResource(resources.ModelResource):
 
 @admin.register(Student)
 class StudentAdmin(ImportExportActionModelAdmin):
-    formats = [base_formats.CSV, ]
+    formats = ACCEPTED_FILE_FORMATS
     actions = [advance_grade, ]
     resource_class = StudentResource
     list_display = ('first_name', 'nickname', 'last_name', 'grade_level', 'modified')
@@ -77,9 +84,10 @@ class StudentAdmin(ImportExportActionModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(ImportExportActionModelAdmin):
-    formats = [base_formats.CSV, ]
+    formats = ACCEPTED_FILE_FORMATS
     resource_class = CourseResource
     preserve_filters = True
+    actions = [export_class_roster, ]
     filter_horizontal = ('students', )
     list_display = ('name', 'grade_level', 'owner', 'modified',)
     list_filter = ('grade_level', 'owner', )
