@@ -1,5 +1,6 @@
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.urls import path
 from django.views.generic import RedirectView
 
 import lsoa.views
@@ -34,4 +35,9 @@ urlpatterns = [
     # plugins
     url(r'^plugins/tz_detect/', include('tz_detect.urls')),
     url(r'^tinymce/', include('tinymce.urls')),
+
+    # data imports
+    path('class-roster/import/', lsoa.views.ImportClassRoster.as_view(), name='import_class_roster'),
+    path('class-roster/process-import/', lsoa.views.process_class_roster, name='process_import_class_roster'),
+    path('class-roster/export/', lsoa.views.export_class_roster, name='export_class_roster')
 ]

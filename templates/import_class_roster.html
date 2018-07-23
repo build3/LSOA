@@ -1,0 +1,35 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-6 offset-3">
+      {% if not preview_data %}
+        <h1>Class Roster: Import</h1>
+        {% include 'messages.html' %}
+        <div class="row">
+            <div class="btn-group col">
+              <div class="">
+            <a href="{% url 'export_class_roster' %}?fmt=csv" class="btn-sm btn-default">Download CSV Template</a>
+                </div>
+              <div class="">
+            <a href="{% url 'export_class_roster' %}?fmt=xlsx" class="btn-sm btn-default">Download XLSX Template</a>
+                </div>
+          </div>
+        </div>
+        <br>
+        {% include 'file_upload.html' %}
+      {% else %}
+        <h1>Class Roster: Import Preview</h1>
+        <form action="{% url 'process_import_class_roster' %}" method="post">
+          {% csrf_token %}
+          <div>
+            {{ preview_data|safe }}
+          </div>
+          <button type="submit" class="btn btn-lg btn-primary col">Confirm Import</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
