@@ -17,12 +17,18 @@
 {% endblock %}
 
 {% block extranav %}
-  <li class="nav-item text-info">
-    {{ header }}{% if created %}&nbsp;<span class="text-info float-right">({{ created|localtime }})</span>{% endif %}
+  <li class="nav-item text-info" data-toggle="tooltip" data-html="true" title="{{ header }}">
+    {{ header|truncatechars:20 }}{% if created %}&nbsp;
+      <span class="text-info float-right">({{ created|localtime|date:"n-j-y g:i A" }})</span>{% endif %}
   </li>
 {% endblock %}
 
 {% block content %}
+  {% if form.non_field_errors %}
+    <div role="alert" class="alert alert-danger">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
   <form id="form" action="" method="POST" enctype='multipart/form-data'>
     {% csrf_token %}
     <div class="row no-gutters">
@@ -51,13 +57,13 @@
             {# "#image => hidden", "#video => url", button-rows => none() #}
 
           <img id="image" src="
-              {% if recent_observation.original_image %}
-              {{ recent_observation.original_image.url }}
+              {% if form.original_image.url %}
+                {{ form.original_image.url }}
               {% elif recent_observation.video %}
               <!-- TODO FIX VIDEO -->
-              {% static 'images/photo-placeholder.svg' %}
+                {% static 'images/photo-placeholder.svg' %}
               {% else %}
-              {% static 'images/photo-placeholder.svg' %}
+                {% static 'images/photo-placeholder.svg' %}
               {% endif %}
               " style="width: 100%;">
           <video id="recorded" style="display:none;width: 100%;" controls playsinline></video>
@@ -75,7 +81,7 @@
             <input name="video" style="display:none;" type="file"
                    accept="video/*"
                    id="videoUpload"></label>
-          {% if recent_observation_exists and not view.kwargs.pk %}
+          {% if recent_observation and not view.kwargs.pk %}
             <button class="btn btn-primary mb-0"
                     type="submit"
                     name="use_recent_observation" value="True">Use Last Sample
@@ -92,8 +98,13 @@
         </div>
 
         {#    Constructs    #}
+        {% if form.constructs.errors %}
+          <div role="alert" class="alert alert-danger">
+            {{ form.constructs.errors }}
+          </div>
+        {% endif %}
         <div class="text-center mt-2">
-          {% for sublevel in avail_constructs %}
+          {% for sublevel in construct_choices %}
             <input type="hidden" value="{{ sublevel.id }}" data-construct-id-value="{{ sublevel.id }}">
             <div class="btn btn-light construct" data-construct-id="{{ sublevel.id }}" style="padding: 15px 15px;">
               {{ sublevel.name }}
@@ -146,6 +157,11 @@
       </div>
       <div class="col-3">
         <h4 class="text-center">Students</h4>
+        {% if form.students.errors %}
+          <div role="alert" class="alert alert-danger">
+            {{ form.students.errors }}
+          </div>
+        {% endif %}
         {% if grouping %}
           {% for group in grouping.groups.all %}
             <div class="card">
@@ -181,10 +197,18 @@
     </div>
     <div class="row">
       <div class="col-12">
+        {% if last_observation_url %}
+          <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
+        {% else %}
+          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">New Observation</a>
+        {% endif %}
         <a href="#" id="submit" class="btn fa fa-3x fa-plus float-right text-dark"
            onclick="document.getElementById('form').submit()"></a>
       </div>
     </div>
+      {% for hidden in form.hidden_fields %}
+        {{ hidden }}
+      {% endfor %}
   </form>
 
 
@@ -445,3 +469,10 @@
 
   </script>
 {% endblock %}
+{% if form.errors %}
+  {% if DEBUG %}
+    <div role="alert" class="alert alert-contrast alert-danger">
+      {{ form.errors }}
+    </div>
+  {% endif %}
+{% endif %}

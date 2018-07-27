@@ -9,8 +9,9 @@ from braces.views import JSONResponseMixin
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -108,12 +109,13 @@ class GroupingView(LoginRequiredMixin, FormView):
         return super().get_context_data(**kwargs)
 
 
-class ObservationCreateView(LoginRequiredMixin, FormView):
+class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
     template_name = 'observation.html'
     form_class = ObservationForm
+    success_message = 'Observation Added'
 
     def get_success_url(self):
-        return self.request.build_absolute_uri()
+        return reverse_lazy('observation_view')
 
     def get(self, request, *args, **kwargs):
         if not self.request.session.get('course'):
@@ -123,87 +125,68 @@ class ObservationCreateView(LoginRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         if self.request.POST.get('use_recent_observation'):
             kwargs['use_recent_observation'] = True
+            recent_observation = get_recent_observations(self.request.user).first()
+            if recent_observation:
+                self.initial['original_image'] = recent_observation.original_image
+                self.initial['video'] = recent_observation.video
             return self.get(request, *args, **kwargs)
         else:
             return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        session_course = self.request.session.get('course')
+        session_grouping = self.request.session.get('grouping')
+        session_construct_choices = self.request.session.get('constructs') or []
+        session_tags = self.request.session.get('context_tags') or []
+        last_observation_id = self.request.session.get('last_observation_id')
+
+        course = Course.objects.filter(pk=session_course).first()
+        grouping = None
+        if session_grouping:
+            grouping = StudentGrouping.objects.filter(pk=session_grouping).first()
+
+        self.initial.update({'name': '{} Observed'.format(course.name),
+                             'course': course, 'grouping': grouping, 'tags': session_tags,
+                             'construct_choices': session_construct_choices, 'owner': self.request.user})
+
+        if last_observation_id:
+            kwargs['last_observation_url'] = reverse_lazy('observation_detail_view', kwargs={'pk': last_observation_id})
+
         kwargs['header'] = 'New Observation'
-        if self.request.session.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.session.get('grouping'))).first()
-        kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).first()
-        kwargs['avail_constructs'] = LearningConstructSublevel.objects.filter(
-            pk__in=self.request.session.get('constructs')) \
-            .select_related('level', 'level__construct').prefetch_related('examples')
-
-        within_timeframe = timezone.now() - timedelta(hours=2)
-        kwargs['recent_observation_exists'] = Observation.objects \
-            .filter(owner=self.request.user, created__gte=within_timeframe) \
-            .order_by('-created').exists()
-
-        if kwargs.get('use_recent_observation'):
-            kwargs['recent_observation'] = Observation.objects \
-                .filter(owner=self.request.user, created__gte=within_timeframe) \
-                .order_by('-created').first()
-
-        kwargs['chosen_students'] = json.dumps([])
-        kwargs['chosen_constructs'] = json.dumps([])
+        kwargs['course'] = course
+        kwargs['grouping'] = grouping
+        kwargs['construct_choices'] = get_constructs(pk_list=session_construct_choices)
+        kwargs['chosen_students'] = json.dumps([int(item) for item in self.request.POST.getlist('students')])
+        kwargs['chosen_constructs'] = json.dumps([int(item) for item in self.request.POST.getlist('constructs')])
+        kwargs['recent_observation'] = get_recent_observations(owner=self.request.user).first()
 
         return super().get_context_data(**kwargs)
 
-    def get_form_kwargs(self):
-        data = super().get_form_kwargs()
-        data['request'] = self.request
-        return data
-
     def form_valid(self, form):
-        form.save()
-        messages.success(self.request, 'Observation added')
+        obj = form.save()
+        self.request.session['last_observation_id'] = obj.id
         return super().form_valid(form)
 
 
-class ObservationDetailView(LoginRequiredMixin, UpdateView):
+class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Observation
     template_name = 'observation.html'
     form_class = ObservationForm
-    model = Observation
+    success_message = 'Observation Updated'
 
     def get_success_url(self):
-        return self.request.build_absolute_uri()
+        return reverse_lazy('observation_detail_view', kwargs={'pk': self.object.id})
 
     def get_context_data(self, **kwargs):
-        # TODO probably need to save the course ID, grouping ID, and constructs that were visible to each observation...
-        kwargs['header'] = 'Observation {}'.format(self.object.id)
+        kwargs['header'] = self.object.name.strip() or 'Observation {}'.format(self.object.id)
         kwargs['created'] = self.object.created
-        if self.request.session.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.session.get('grouping'))).first()
-        kwargs['course'] = Course.objects.filter(pk=self.request.session.get('course')).first()
-        kwargs['avail_constructs'] = LearningConstructSublevel.objects.filter(
-            pk__in=self.request.session.get('constructs')) \
-            .select_related('level', 'level__construct').prefetch_related('examples')
-
-        within_timeframe = timezone.now() - timedelta(hours=2)
-        kwargs['recent_observation_exists'] = Observation.objects \
-            .filter(owner=self.request.user, created__gte=within_timeframe) \
-            .order_by('-created').exists()
-
-        if kwargs.get('use_recent_observation'):
-            kwargs['recent_observation'] = Observation.objects \
-                .filter(owner=self.request.user, created__gte=within_timeframe) \
-                .order_by('-created').first()
-
+        kwargs['course'] = self.object.course
+        kwargs['grouping'] = self.object.grouping
+        kwargs['construct_choices'] = get_constructs(pk_list=self.object.construct_choices)
         kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
+
         return super().get_context_data(**kwargs)
-
-    def get_form_kwargs(self):
-        data = super().get_form_kwargs()
-        data['request'] = self.request
-        return data
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, 'Observation Updated')
-        return super().form_valid(form)
 
 
 class GroupingRelatedSelectView(RelatedSelectView):
@@ -466,5 +449,12 @@ def export_class_roster(request):
         return HttpResponseRedirect(reverse('import_class_roster'))
 
 
+def get_constructs(pk_list):
+    return LearningConstructSublevel.objects.filter(pk__in=pk_list).\
+        select_related('level', 'level__construct').prefetch_related('examples')
 
 
+def get_recent_observations(owner, age=None):
+    age = age or timedelta(hours=2)
+    within_timeframe = timezone.now() - age
+    return Observation.objects.filter(owner=owner, created__gte=within_timeframe).order_by('-created')

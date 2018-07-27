@@ -1,6 +1,7 @@
 import os
 from uuid import uuid4
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
@@ -92,7 +93,12 @@ class Observation(TimeStampedModel, OwnerMixin):
     visual evidence (picture or video).
     """
     # if an observation is checked with "use previous observation", use this to denote which one
+    name = models.CharField(max_length=75, blank=True, default='')
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.PROTECT)
+
+    course = models.ForeignKey('lsoa.Course', blank=True, null=True, on_delete=models.PROTECT)
+    grouping = models.ForeignKey('lsoa.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
+    construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
 
     # regardless of how they're grouped, just save the raw students to the observation
     students = models.ManyToManyField('lsoa.Student', blank=True)
@@ -110,7 +116,8 @@ class Observation(TimeStampedModel, OwnerMixin):
     video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
 
     def __str__(self):
-        return 'Observation at {}'.format(self.created)
+        _display = self.name or 'Observation at {}'.format(self.created)
+        return _display
 
 
 class LearningConstruct(TimeStampedModel):
