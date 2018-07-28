@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms.utils import ErrorList
 from django.forms.widgets import SelectMultiple
 from django.urls import reverse_lazy
@@ -92,21 +93,25 @@ class ObservationForm(forms.ModelForm):
     class Meta:
         model = Observation
         fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
-                  'notes', 'video_notes', 'parent', 'owner']
+                  'notes', 'video_notes', 'parent', 'owner', 'name', 'course', 'grouping', 'construct_choices', ]
         widgets = {
+            'course': forms.HiddenInput(),
+            'grouping': forms.HiddenInput(),
+            'owner': forms.HiddenInput(),
+            'name': forms.HiddenInput(),
+            'construct_choices': forms.HiddenInput(),
+            'tags': forms.MultipleHiddenInput(),
             'notes': forms.Textarea(attrs={'class': 'notes-container'}),
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=None,
-                 empty_permitted=False, instance=None, use_required_attribute=None, request=None):
+                 empty_permitted=False, instance=None, use_required_attribute=None):
         if data:
             data = data.copy()
-            data['owner'] = request.user.id
             if not data.get('useMostRecentMedia'):
                 data['parent'] = None
 
-        self.request = request
         super().__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
                          initial=initial, error_class=error_class, label_suffix=label_suffix,
                          empty_permitted=empty_permitted, instance=instance,
@@ -116,13 +121,14 @@ class ObservationForm(forms.ModelForm):
         super().clean()
         if self.cleaned_data.get('annotation_data') or self.cleaned_data['original_image']:
             if self.cleaned_data['video']:
-                raise forms.ValidationError(
-                    'Technical Error: Video was uploaded alongside an image. Something\'s wrong')
+                self.add_error(field=None, error='Technical Error: Video was uploaded alongside an image. Something\'s wrong')
 
-        get_args = self.request.GET
-        if get_args.get('context_tags'):
-            context_tags_ids = get_args.getlist('context_tags', [])
-            self.cleaned_data['tags'] = context_tags_ids
+        if not self.cleaned_data['students']:
+            self.add_error(field='students', error='You must choose at least one student for the observation')
+
+        if not self.cleaned_data['constructs']:
+            self.add_error(field='constructs', error='You must choose at least one learning construct for the observation')
+
         return self.cleaned_data
 
 

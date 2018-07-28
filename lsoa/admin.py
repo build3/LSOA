@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django import forms
 from import_export import resources, fields
 from import_export.admin import ImportExportActionModelAdmin
 
@@ -116,9 +117,65 @@ class StudentGroupingAdmin(admin.ModelAdmin):
     pass
 
 
+class ObservationAdminForm(forms.ModelForm):
+
+    class Meta:
+        model = Observation
+        exclude = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        student_qs = Student.objects
+        construct_sublevel_qs = LearningConstructSublevel.objects
+
+        if self.instance.course:
+            student_qs = self.instance.course.students
+
+        if self.instance.construct_choices:
+            construct_sublevel_qs = LearningConstructSublevel.objects.filter(id__in=self.instance.construct_choices)
+
+        self.fields['students'].queryset = student_qs
+        self.fields['constructs'].queryset = construct_sublevel_qs
+
+
 @admin.register(Observation)
 class ObservationAdmin(admin.ModelAdmin):
-    pass
+    form = ObservationAdminForm
+    preserve_filters = True
+    filter_horizontal = ('students', 'constructs', 'tags', )
+    list_display = ('name', 'owner', 'course', 'created',)
+    list_filter = ('course', 'owner',)
+    raw_id_fields = ('owner', 'course', 'parent', 'grouping', )
+    search_fields = ('name', 'notes')
+    ordering = ('name',)
+    fieldsets = (
+        (None, {
+            'fields': (
+                'name',
+                'original_image',
+                'video',
+                'students',
+                'constructs',
+                'tags',
+                'parent',
+            )
+        }),
+        ('Notes', {
+           'fields': (
+               'notes',
+               'video_notes',
+           )
+        }),
+        ('Setup Values', {
+            'fields': (
+                'owner',
+                'course',
+                'grouping',
+                'construct_choices',
+                'parent',
+            )
+        })
+    )
 
 
 @admin.register(LearningConstruct)
