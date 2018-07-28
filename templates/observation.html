@@ -22,7 +22,6 @@
       <span class="text-info float-right">({{ created|localtime|date:"n-j-y g:i A" }})</span>{% endif %}
   </li>
 {% endblock %}
-
 {% block content %}
   {% if form.non_field_errors %}
     <div role="alert" class="alert alert-danger">
@@ -210,8 +209,6 @@
         {{ hidden }}
       {% endfor %}
   </form>
-
-
   <script>
     $(document).ready(function () {
       {# THIS SECTION HANDLES THE STUDENT/CONSTRUCT TOGGLING #}
@@ -388,6 +385,7 @@
       ];
 
       setUpEasel();
+
       function setUpEasel() {
         color = colors[(index++) % colors.length];
         initStage();
@@ -464,15 +462,8 @@
       }
 
 
-
     });
 
   </script>
 {% endblock %}
-{% if form.errors %}
-  {% if DEBUG %}
-    <div role="alert" class="alert alert-contrast alert-danger">
-      {{ form.errors }}
-    </div>
-  {% endif %}
-{% endif %}
+
