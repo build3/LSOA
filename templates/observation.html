@@ -56,11 +56,11 @@
           {# 9. Edit observation, video (can't replace) #}
             {# "#image => hidden", "#video => url", button-rows => none() #}
 
+          <!-- TODO FIX VIDEO -->
           <img id="image" src="
               {% if form.original_image.url %}
                 {{ form.original_image.url }}
               {% elif recent_observation.video %}
-              <!-- TODO FIX VIDEO -->
                 {% static 'images/photo-placeholder.svg' %}
               {% else %}
                 {% static 'images/photo-placeholder.svg' %}
