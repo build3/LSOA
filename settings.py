@@ -51,6 +51,7 @@ BACKEND_THIRD_PARTY_APPS = [
     'formtools',  # for wizard views
     'storages',  # for S3-backed media
     'anymail',  # for mailgun emails
+    'django_user_agents', # for device type recognizing
 ]
 
 FRONTEND_THIRD_PARTY_APPS = [
@@ -76,6 +77,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_user_agents.middleware.UserAgentMiddleware',
     'tz_detect.middleware.TimezoneMiddleware',
     'middleware.DjangoThreadLocalMiddleware',
 ]
@@ -208,3 +210,6 @@ AWS_S3_REGION_NAME = 'us-east-2'
 
 # OTHER PLUGIN SETTINGS
 TINYMCE_DEFAULT_CONFIG = {'height': 400, 'width': 600}
+
+# DJANGO USER AGENTS
+USER_AGENTS_CACHE = 'default'

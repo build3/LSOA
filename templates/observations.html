@@ -2,6 +2,7 @@
 
 {% load staticfiles %}
 {% load keyvalue %}
+{% load user_agents %}
 
 {% block extrastyles %}
   <style>
@@ -40,7 +41,11 @@
     $(function () {
 
       // Init tooltips
-      $('[data-toggle="tooltip"]').tooltip();
+      {% if request.user_agent.is_mobile or request.user_agent.is_tablet %}
+          $('[data-toggle="tooltip"]').tooltip({trigger: "click"});
+      {% else %}
+          $('[data-toggle="tooltip"]').tooltip();
+      {% endif %}
 
       // Remove duplicate modals
       var seen = {};
@@ -108,8 +113,12 @@
                 <tr>
                   <th scope="col">&nbsp;</th>
                   {% for csl_id, csl_data in table.construct_map.items %}
-                    <th scope="col" title="{{ csl_data.description }}"
-                        data-toggle="tooltip">{{ csl_data.name }}</th>
+                    <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
+                        {{ csl_data.name }}
+                        {% if request.user_agent.is_mobile or request.user_agent.is_tablet %}
+                            <span><i class="fa fa-info-circle"></i></span>
+                        {% endif %}
+                    </th>
                   {% endfor %}
                 </tr>
                 </thead>
