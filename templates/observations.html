@@ -2,7 +2,6 @@
 
 {% load staticfiles %}
 {% load keyvalue %}
-{% load user_agents %}
 
 {% block extrastyles %}
   <style>
@@ -41,11 +40,17 @@
     $(function () {
 
       // Init tooltips
-      {% if request.user_agent.is_mobile or request.user_agent.is_tablet %}
-          $('[data-toggle="tooltip"]').tooltip({trigger: "click"});
-      {% else %}
-          $('[data-toggle="tooltip"]').tooltip();
-      {% endif %}
+      var is_touch_device = (
+          ("ontouchstart" in window)
+          || window.DocumentTouch
+          && document instanceof DocumentTouch
+      );
+
+      if (is_touch_device) {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'click'});
+      } else {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'});
+      }
 
       // Remove duplicate modals
       var seen = {};
@@ -114,10 +119,10 @@
                   <th scope="col">&nbsp;</th>
                   {% for csl_id, csl_data in table.construct_map.items %}
                     <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
-                        {{ csl_data.name }}
-                        {% if request.user_agent.is_mobile or request.user_agent.is_tablet %}
-                            <span><i class="fa fa-info-circle"></i></span>
-                        {% endif %}
+                      {{ csl_data.name }}
+                      {% if csl_data.description|length > 0 %}
+                        <span><i class="fa fa-info-circle"></i></span>
+                      {% endif %}
                     </th>
                   {% endfor %}
                 </tr>
