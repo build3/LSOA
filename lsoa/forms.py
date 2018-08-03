@@ -145,6 +145,11 @@ class NewCourseForm(forms.Form):
 
 class ContextTagForm(forms.ModelForm):
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
+
     class Meta:
         model = ContextTag
-        fields = ['text']
+        fields = ['text', 'color']

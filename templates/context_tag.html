@@ -8,21 +8,35 @@
   <form action="" method="POST">
       <div class="row">
         <div class="col-6 offset-3">
-          <h3>{{ title }}</h3>
+          <h1>{{ title }}</h1>
+          {% csrf_token %}
           {% for field in form %}
-              {% csrf_token %}
-              <div class="form-group">
-                <div data-form-label="{{ field.auto_id }}">
-                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
-                  {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
-                </div>
-                {{ field }}
+            <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}">
+              <div data-form-label="{{ field.auto_id }}">
+                <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
               </div>
+              {{ field }}
+              {% if field.errors %}
+                {% for error in field.errors %}
+                  <div class="item-content small" style="color: red;">{{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
           {% endfor %}
-          <input type="submit" class="btn btn-primary" value="Submit">
+          <input type="submit" class="btn btn-primary col" value="Submit">
         </div>
       </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extrascripts %}
+<script>
+    // init color picker
+    $('#id_color').colorpicker({
+        format: 'hex'
+    });
+</script>
 
 {% endblock %}
