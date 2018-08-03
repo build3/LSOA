@@ -464,7 +464,6 @@ def get_recent_observations(owner, age=None):
 class BaseTagManagement(LoginRequiredMixin):
     model = ContextTag
     form_class = ContextTagForm
-    template_name = 'context_tag.html'
     success_url = reverse_lazy('setup')
 
     def get_context_data(self, *args, **kwargs):
@@ -474,6 +473,7 @@ class BaseTagManagement(LoginRequiredMixin):
 
 
 class CreateTag(BaseTagManagement, CreateView):
+    template_name = 'context_tag.html'
     title = 'Create Tag'
 
     def form_valid(self, form):
@@ -484,6 +484,7 @@ class CreateTag(BaseTagManagement, CreateView):
 
 
 class EditTag(BaseTagManagement, UpdateView):
+    template_name = 'context_tag.html'
     title = 'Edit Tag'
 
     def check_owner(self, request, pk):
@@ -502,3 +503,11 @@ class EditTag(BaseTagManagement, UpdateView):
     def post(self, request, pk):
         self.check_owner(request, pk)
         return super().post(request, pk)
+
+
+class ListTag(BaseTagManagement, ListView):
+    title = 'Tags'
+    template_name = 'context_tag_list.html'
+
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user).order_by('id')

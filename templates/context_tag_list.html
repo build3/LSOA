@@ -1,0 +1,48 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+<h3>{{ title }}</h3>
+
+<div class="row mt-5">
+  <div class="col-xs-12 w-100">
+    <table class="table table-bordered table-striped display w-100">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      {% for tag in object_list %}
+        <tr>
+          <td>{{ tag.text }}</td>
+          <td>
+            <ul class="list-unstyled list-inline">
+              <li>
+                <a href="{% url 'edit_tag' tag.pk %}" class="btn btn-sm btn-primary">
+                  Edit
+                </a>
+              </li>
+            </ul>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+  <script>
+    $(document).ready(function () {
+      $('table.display').DataTable({
+        aLengthMenu: [
+          [25, 50, 100, 200, -1],
+          [25, 50, 100, 200, "All"]
+        ],
+        iDisplayLength: 25
+      });
+    });
+  </script>
+{% endblock %}

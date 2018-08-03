@@ -35,6 +35,7 @@ urlpatterns = [
     # tag management
     url(r'^tag/$', lsoa.views.CreateTag.as_view(), name='create_tag'),
     url(r'^tag/(?P<pk>\d+)/$', lsoa.views.EditTag.as_view(), name='edit_tag'),
+    url(r'^tag/list/$', lsoa.views.ListTag.as_view(), name='tag_list'),
 
     # plugins
     url(r'^plugins/tz_detect/', include('tz_detect.urls')),
