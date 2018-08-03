@@ -11,20 +11,21 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, View, TemplateView, UpdateView
+from django.views.generic import FormView, View, TemplateView, UpdateView, \
+        CreateView, ListView
 from related_select.views import RelatedSelectView
 from tablib import Dataset
 
 from lsoa.exceptions import InvalidFileFormatError
-from lsoa.forms import ObservationForm, SetupForm, GroupingForm
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm
 from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
-    Observation
+    Observation, ContextTag
 from lsoa.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
 
 logger = logging.getLogger(__name__)
@@ -458,3 +459,46 @@ def get_recent_observations(owner, age=None):
     age = age or timedelta(hours=2)
     within_timeframe = timezone.now() - age
     return Observation.objects.filter(owner=owner, created__gte=within_timeframe).order_by('-created')
+
+
+class BaseTagManagement(LoginRequiredMixin):
+    model = ContextTag
+    form_class = ContextTagForm
+    template_name = 'context_tag.html'
+    success_url = reverse_lazy('setup')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['title'] = self.title
+        return context
+
+
+class CreateTag(BaseTagManagement, CreateView):
+    title = 'Create Tag'
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.owner = self.request.user
+        self.object.save()
+        return super().form_valid(form)
+
+
+class EditTag(BaseTagManagement, UpdateView):
+    title = 'Edit Tag'
+
+    def check_owner(self, request, pk):
+        """
+        Check if request user can access to requested resource.
+        """
+        try:
+            ContextTag.objects.get(owner=request.user, pk=pk)
+        except ContextTag.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        self.check_owner(request, pk)
+        return super().get(request, pk)
+
+    def post(self, request, pk):
+        self.check_owner(request, pk)
+        return super().post(request, pk)

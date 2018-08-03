@@ -142,3 +142,9 @@ class NewCourseForm(forms.Form):
 
     def clean_student_csv(self):
         pass
+
+class ContextTagForm(forms.ModelForm):
+
+    class Meta:
+        model = ContextTag
+        fields = ['text']

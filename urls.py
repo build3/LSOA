@@ -32,6 +32,10 @@ urlpatterns = [
     url(r'^observation/(?P<pk>\d+)/$', lsoa.views.ObservationDetailView.as_view(), name='observation_detail_view'),
     url(r'^current-observation/$', lsoa.views.current_observation, name='current_observation'),
 
+    # tag management
+    url(r'^tag/$', lsoa.views.CreateTag.as_view(), name='create_tag'),
+    url(r'^tag/(?P<pk>\d+)/$', lsoa.views.EditTag.as_view(), name='edit_tag'),
+
     # plugins
     url(r'^plugins/tz_detect/', include('tz_detect.urls')),
     url(r'^tinymce/', include('tinymce.urls')),
@@ -39,5 +43,5 @@ urlpatterns = [
     # data imports
     path('class-roster/import/', lsoa.views.ImportClassRoster.as_view(), name='import_class_roster'),
     path('class-roster/process-import/', lsoa.views.process_class_roster, name='process_import_class_roster'),
-    path('class-roster/export/', lsoa.views.export_class_roster, name='export_class_roster')
+    path('class-roster/export/', lsoa.views.export_class_roster, name='export_class_roster'),
 ]

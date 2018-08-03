@@ -1,0 +1,28 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+<div class="container-fluid">
+  <form action="" method="POST">
+      <div class="row">
+        <div class="col-6 offset-3">
+          <h3>{{ title }}</h3>
+          {% for field in form %}
+              {% csrf_token %}
+              <div class="form-group">
+                <div data-form-label="{{ field.auto_id }}">
+                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                  {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
+                </div>
+                {{ field }}
+              </div>
+          {% endfor %}
+          <input type="submit" class="btn btn-primary" value="Submit">
+        </div>
+      </div>
+  </form>
+</div>
+
+{% endblock %}
