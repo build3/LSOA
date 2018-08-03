@@ -11,10 +11,9 @@
           <h1>{{ title }}</h1>
           {% csrf_token %}
           {% for field in form %}
-            <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}">
+            <div class="form-group {% if field.errors %}has-errors text-danger{% endif %}">
               <div data-form-label="{{ field.auto_id }}">
                 <label for="{{ field.auto_id }}">{{ field.label }}</label>
-                {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
               </div>
               {{ field }}
               {% if field.errors %}
