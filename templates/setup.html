@@ -18,7 +18,7 @@
       }).open();
     {% endfor %}
 
-    function updateGroupLink() {
+    function updateAddGroupLink() {
       var $gLink = $('#grouping_link');
       var $courseField = $('#id_course');
       if ($courseField.val()) {
@@ -28,11 +28,31 @@
       }
     }
 
-    $('#id_course').on('click', updateGroupLink);
-    $('#id_course').on('update', updateGroupLink);
-    $('#id_course').on('change', updateGroupLink);
-    $('#id_course').on('focus', updateGroupLink);
-    $('#id_course').on('unfocus', updateGroupLink);
+    function updateEditGroupLink() {
+      var $gLink = $('#edit_grouping_link');
+      var $courseField = $('#id_course');
+      var $groupField = $('#id_grouping');
+      // handle unresolved backend problem for grouping selecting for selected course
+      if ($courseField.val() && $groupField.val() && $groupField.val() !== 'error') {
+        $gLink.attr('href', '/grouping/?course=' + $courseField.val() + '&grouping=' + $groupField.val());
+      } else {
+        $gLink.removeAttr('href');
+      }
+    }
+
+    function registerGroupingListeners(id, func) {
+        var listeners = ['click', 'update', 'change', 'focus', 'unfocus'];
+        listeners.forEach(function(listener) {
+            $(id).on(listener, func);
+        });
+    }
+
+    registerGroupingListeners('#id_course', updateAddGroupLink);
+    registerGroupingListeners('#id_grouping', updateAddGroupLink);
+
+    registerGroupingListeners('#id_course', updateEditGroupLink);
+    registerGroupingListeners('#id_grouping', updateEditGroupLink);
+
 
     $("#id_context_tags").select2({
       tags: true,
@@ -81,9 +101,18 @@
             <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
               <div data-form-label="{{ field.auto_id }}">
                 <label for="{{ field.auto_id }}">{{ field.label }}</label>
-                {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
               </div>
               {{ field }}
+              {% if field.name == "grouping" %}
+                  <div class="d-flex flex-row-reverse">
+                    <a id="edit_grouping_link" class="btn btn-primary btn-sm mt-1 ml-1">
+                      <i class="fa fa-edit"></i> Edit Grouping
+                    </a>
+                    <a id="grouping_link" class="btn btn-primary btn-sm mt-1">
+                      <i class="fa fa-plus"></i> Add New Grouping
+                    </a>
+                </div>
+              {% endif %}
             </div>
             {% if field.errors %}
               {% for error in field.errors %}

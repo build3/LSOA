@@ -10,3 +10,7 @@ div[data-form-label=id_grouping] > a, div[data-form-label=id_grouping] > span {
 #grouping_link:not([href]){
   display: none;
 }
+
+#edit_grouping_link:not([href]){
+  display: none;
+}
