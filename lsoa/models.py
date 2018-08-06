@@ -115,6 +115,8 @@ class Observation(TimeStampedModel, OwnerMixin):
     notes = models.TextField(blank=True)
     video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
 
+    observation_date = models.DateField()
+
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
         return _display

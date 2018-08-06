@@ -4,6 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.utils import ErrorList
 from django.forms.widgets import SelectMultiple
+from django.utils.timezone import now
 from django.urls import reverse_lazy
 from threadlocals.threadlocals import get_current_request
 from related_select.fields import RelatedChoiceField
@@ -38,6 +39,13 @@ class TagField(forms.ModelMultipleChoiceField):
         return tags
 
 
+class DateInput(forms.widgets.DateInput):
+    """
+    Widgets to set input type to date - required for default datepicker.
+    By defaulty Date Input has input type set to text.
+    """
+    input_type = 'date'
+
 class ConstructModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def __init__(self, queryset, **kwargs):
         super(ConstructModelMultipleChoiceField, self).__init__(queryset, **kwargs)
@@ -70,6 +78,7 @@ class SetupForm(forms.Form):
     constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(),
                                                    widget=forms.CheckboxSelectMultiple)
     context_tags = TagField(queryset=ContextTag.objects.all(), required=False)
+    observation_date = forms.DateField(widget=DateInput, initial=now)
 
     def __init__(self, **kwargs):
         super(SetupForm, self).__init__(**kwargs)
@@ -92,7 +101,7 @@ class ObservationForm(forms.ModelForm):
 
     class Meta:
         model = Observation
-        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
+        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video', 'observation_date',
                   'notes', 'video_notes', 'parent', 'owner', 'name', 'course', 'grouping', 'construct_choices', ]
         widgets = {
             'course': forms.HiddenInput(),
@@ -102,6 +111,7 @@ class ObservationForm(forms.ModelForm):
             'construct_choices': forms.HiddenInput(),
             'tags': forms.MultipleHiddenInput(),
             'notes': forms.Textarea(attrs={'class': 'notes-container'}),
+            'observation_date': forms.HiddenInput(),
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
