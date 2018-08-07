@@ -35,21 +35,7 @@
     $('#id_course').on('unfocus', updateGroupLink);
 
     $("#id_context_tags").select2({
-      tags: true,
-      tokenSeparators: [',', '\n'],
-      createTag: function (params) {
-        var term = $.trim(params.term);
-
-        if (term === '') {
-          return null;
-        }
-
-        return {
-          id: term,
-          text: term,
-          newTag: true // add additional parameters
-        }
-      }
+      tokenSeparators: [',', '\n']
     })
   </script>
 {% endblock %}
@@ -84,6 +70,9 @@
                 {% if field.name == "grouping" %}<a id="grouping_link">+ Add New Grouping</a>{% endif %}
               </div>
               {{ field }}
+              {% if field.name == "context_tags" %}
+                  <a id="add_tag" href="/tag/">+ Add New Tag</a>
+              {% endif %}
             </div>
             {% if field.errors %}
               {% for error in field.errors %}

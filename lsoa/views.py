@@ -11,18 +11,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, View, TemplateView, UpdateView
+from django.views.generic import FormView, View, TemplateView, UpdateView, \
+    CreateView, ListView
 from related_select.views import RelatedSelectView
 from tablib import Dataset
 
 from lsoa.exceptions import InvalidFileFormatError
-from lsoa.forms import ObservationForm, SetupForm, GroupingForm
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm
 from lsoa.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -474,3 +475,40 @@ def get_recent_observations(owner, age=None):
     age = age or timedelta(hours=2)
     within_timeframe = timezone.now() - age
     return Observation.objects.filter(owner=owner, created__gte=within_timeframe).order_by('-created')
+
+
+class BaseTagManagement(LoginRequiredMixin):
+    model = ContextTag
+    form_class = ContextTagForm
+    success_url = reverse_lazy('setup')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['title'] = self.title
+        return context
+
+
+class CreateTag(BaseTagManagement, CreateView):
+    template_name = 'context_tag.html'
+    title = 'Create Tag'
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.owner = self.request.user
+        self.object.save()
+        return super().form_valid(form)
+
+
+class EditTag(BaseTagManagement, UpdateView):
+    template_name = 'context_tag.html'
+    title = 'Edit Tag'
+
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user)
+
+class ListTag(BaseTagManagement, ListView):
+    title = 'Tags'
+    template_name = 'context_tag_list.html'
+
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user).order_by('id')
