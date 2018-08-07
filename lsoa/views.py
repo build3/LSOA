@@ -25,7 +25,7 @@ from lsoa.exceptions import InvalidFileFormatError
 from lsoa.forms import ObservationForm, SetupForm, GroupingForm
 from lsoa.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
-    LearningConstruct, StudentGroup, Student,Observation
+    LearningConstruct, StudentGroup, Student, Observation
 )
 from lsoa.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
 
