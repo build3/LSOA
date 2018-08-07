@@ -97,6 +97,14 @@
         </div>
 
         {#    Constructs    #}
+        <div class="text-center">
+          {% for tag in tags %}
+              <input type="hidden" value="{{ tag.id }}" data-tag-id-value="{{ tag.id }}">
+              <div class="btn btn-light tag" data-tag-id="{{ tag.id }}" style="padding: 15px 15px;">
+                {{ tag.text }}
+              </div>
+          {% endfor %}
+        </div>
         {% if form.constructs.errors %}
           <div role="alert" class="alert alert-danger">
             {{ form.constructs.errors }}
@@ -215,6 +223,7 @@
 
       var checkedStudents = {};
       var checkedConstructs = {};
+      var checkedTags = {};
 
       var toggleStudent = function (studentId) {
         $('[data-student-id="' + studentId + '"]').toggleClass('bg-warning');
@@ -240,6 +249,17 @@
         }
       };
 
+      var toggleTags = function (tagId) {
+        $('[data-tag-id="' + tagId + '"]').toggleClass('bg-success', 'text-white');
+        if (checkedTags.hasOwnProperty(tagId)) {
+          delete checkedTags[tagId];
+          $('[data-tag-id-value="' + tagId + '"]').removeAttr('name');
+        } else {
+          checkedTags[tagId] = true;
+          $('[data-tag-id-value="' + tagId + '"]').attr('name', 'tags');
+        }
+      };
+
       var markSelectStudents = function() {
         var chosen_students = JSON.parse("{{ chosen_students }}");
         for (var index = 0; index < chosen_students.length; index++) {
@@ -254,6 +274,13 @@
         }
       };
 
+      var markSelectTags = function() {
+        var chosen_tags = JSON.parse("{{ chosen_tags }}");
+        for (var index = 0; index < chosen_tags.length; index++) {
+          toggleTags(chosen_tags[index]);
+        }
+      };
+
       $('.construct').on('click', function (e) {
         toggleConstruct($(this).data('construct-id'));
         $('#sublevel-description').html($(this).find('.sublevel-desc').html());
@@ -264,9 +291,14 @@
         toggleStudent($(this).data('student-id'));
       });
 
+      $('.tag').on('click', function (e) {
+        toggleTags($(this).data('tag-id'));
+      });
+
       // INITIALIZE STUDENTS/CONSTRUCTS IF "View/Edit Observation" PAGE
       markSelectStudents();
       markSelectConstructs();
+      markSelectTags();
 
       {# THIS SECTION IS THE VIDEO NOTE CODE #}
 
@@ -466,4 +498,3 @@
 
   </script>
 {% endblock %}
-
