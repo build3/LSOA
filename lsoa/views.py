@@ -23,8 +23,10 @@ from tablib import Dataset
 
 from lsoa.exceptions import InvalidFileFormatError
 from lsoa.forms import ObservationForm, SetupForm, GroupingForm
-from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
-    Observation
+from lsoa.models import (
+    ContextTag, Course, StudentGrouping, LearningConstructSublevel,
+    LearningConstruct, StudentGroup, Student, Observation
+)
 from lsoa.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
 
 logger = logging.getLogger(__name__)
@@ -146,18 +148,28 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             grouping = StudentGrouping.objects.filter(pk=session_grouping).first()
 
         self.initial.update({'name': '{} Observed'.format(course.name),
-                             'course': course, 'grouping': grouping, 'tags': session_tags,
+                             'course': course, 'grouping': grouping, 'tag_choices': session_tags,
                              'construct_choices': session_construct_choices, 'owner': self.request.user})
 
         if last_observation_id:
             kwargs['last_observation_url'] = reverse_lazy('observation_detail_view', kwargs={'pk': last_observation_id})
 
+        available_tags = ContextTag.objects.filter(pk__in=session_tags)
+
+        if self.request.POST:
+            chosen_tags = [int(item) for item in self.request.POST.getlist('tags')]
+        else:
+            # select all tags by default
+            chosen_tags = [tag.id for tag in available_tags]
+
         kwargs['header'] = 'New Observation'
         kwargs['course'] = course
         kwargs['grouping'] = grouping
+        kwargs['tags'] = available_tags
         kwargs['construct_choices'] = get_constructs(pk_list=session_construct_choices)
         kwargs['chosen_students'] = json.dumps([int(item) for item in self.request.POST.getlist('students')])
         kwargs['chosen_constructs'] = json.dumps([int(item) for item in self.request.POST.getlist('constructs')])
+        kwargs['chosen_tags'] = chosen_tags
         kwargs['recent_observation'] = get_recent_observations(owner=self.request.user).first()
 
         return super().get_context_data(**kwargs)
@@ -178,13 +190,17 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         return reverse_lazy('observation_detail_view', kwargs={'pk': self.object.id})
 
     def get_context_data(self, **kwargs):
+
+        available_tags = self.object.tag_choices
         kwargs['header'] = self.object.name.strip() or 'Observation {}'.format(self.object.id)
         kwargs['created'] = self.object.created
         kwargs['course'] = self.object.course
         kwargs['grouping'] = self.object.grouping
+        kwargs['tags'] = ContextTag.objects.filter(owner=self.request.user, pk__in=available_tags)
         kwargs['construct_choices'] = get_constructs(pk_list=self.object.construct_choices)
         kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
+        kwargs['chosen_tags'] = list(self.object.tags.all().values_list('id', flat=True))
 
         return super().get_context_data(**kwargs)
 
