@@ -143,6 +143,7 @@ class NewCourseForm(forms.Form):
     def clean_student_csv(self):
         pass
 
+
 class ContextTagForm(forms.ModelForm):
 
     def __init__(self, **kwargs):

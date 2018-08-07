@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View, TemplateView, UpdateView, \
-        CreateView, ListView
+    CreateView, ListView
 from related_select.views import RelatedSelectView
 from tablib import Dataset
 
@@ -487,23 +487,8 @@ class EditTag(BaseTagManagement, UpdateView):
     template_name = 'context_tag.html'
     title = 'Edit Tag'
 
-    def check_owner(self, request, pk):
-        """
-        Check if request user can access to requested resource.
-        """
-        try:
-            ContextTag.objects.get(owner=request.user, pk=pk)
-        except ContextTag.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk):
-        self.check_owner(request, pk)
-        return super().get(request, pk)
-
-    def post(self, request, pk):
-        self.check_owner(request, pk)
-        return super().post(request, pk)
-
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user)
 
 class ListTag(BaseTagManagement, ListView):
     title = 'Tags'
