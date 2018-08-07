@@ -32,6 +32,19 @@
     .star-number {
       font-size: 12px;
     }
+
+    .dot {
+      height: 25px;
+      width: 25px;
+      background-color: #f2a287;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 3px auto;
+    }
+
+    .dot:hover {
+      background-color: #cb6634;
+    }
   </style>
 {% endblock %}
 
@@ -100,40 +113,89 @@
             </select>
           </div>
 
-          {% for table in tables %}
-            <div style="overflow-x: scroll;width:100%;">
-              <h4 class="text-align-center" style="margin-bottom: 25px;">{{ table.c_name }}</h4>
-              <table class="table table-bordered">
-                <thead>
-                <tr>
-                  <th scope="col">&nbsp;</th>
-                  {% for csl_id, csl_data in table.construct_map.items %}
-                    <th scope="col" title="{{ csl_data.description }}"
-                        data-toggle="tooltip">{{ csl_data.name }}</th>
-                  {% endfor %}
-                </tr>
-                </thead>
-                <tbody>
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#chart_v2">Star Chart v2</a>
+            </li>
+          </ul>
 
-                {% for student_id, construct_data in table.matrix.items %}
-                  <tr>
-                    <th scope="row">{{ table.student_map | keyvalue:student_id }}</th>
-                    {% for csl_id, csl_data in table.construct_map.items %}
-                      {% with exists=table.matrix|keyvalue:student_id|keyvalue:csl_id %}
-                        <td data-csl-id="{{ csl_id }}" class="text-center"
-                            {% if exists %}data-modal-launch-observations="[{{ exists|join:',' }}]">
-                              <i data-toggle="tooltip" title=""
-                                 class="fa fa-star"></i>{% if exists|length > 1 %}
-                              <span class="star-number">({{ exists|length }})</span>{% endif %}
-                            {% else %}>&nbsp;{% endif %}</td>
-                      {% endwith %}
-                    {% endfor %}
-                  </tr>
+          <div class="tab-content">
+            <div class="tab-pane container active" id="chart_v1">
+                {% for table in tables %}
+                  <div style="overflow-x: scroll;width:100%;">
+                    <h4 class="text-align-center" style="margin-bottom: 25px;">{{ table.c_name }}</h4>
+                    <table class="table table-bordered">
+                      <thead>
+                      <tr>
+                        <th scope="col">&nbsp;</th>
+                        {% for csl_id, csl_data in table.construct_map.items %}
+                          <th scope="col" title="{{ csl_data.description }}"
+                              data-toggle="tooltip">{{ csl_data.name }}</th>
+                        {% endfor %}
+                      </tr>
+                      </thead>
+                      <tbody>
+
+                      {% for student_id, construct_data in table.matrix.items %}
+                        <tr>
+                          <th scope="row">{{ table.student_map | keyvalue:student_id }}</th>
+                          {% for csl_id, csl_data in table.construct_map.items %}
+                            {% with exists=table.matrix|keyvalue:student_id|keyvalue:csl_id %}
+                              <td data-csl-id="{{ csl_id }}" class="text-center"
+                                  {% if exists %}data-modal-launch-observations="[{{ exists|join:',' }}]">
+                                    <i data-toggle="tooltip" title=""
+                                       class="fa fa-star"></i>{% if exists|length > 1 %}
+                                    <span class="star-number">({{ exists|length }})</span>{% endif %}
+                                  {% else %}>&nbsp;{% endif %}</td>
+                            {% endwith %}
+                          {% endfor %}
+                        </tr>
+                      {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
                 {% endfor %}
-                </tbody>
-              </table>
             </div>
-          {% endfor %}
+            <div class="tab-pane container fade" id="chart_v2">
+              {% for table in tables %}
+                <div style="overflow-x: scroll;width:100%;">
+                  <h4 class="text-align-center"  style="margin-bottom: 25px;">{{ table.c_name }}</h4>
+                  <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                      {% for csl_id, csl_data in table.construct_map.items %}
+                        <th scope="col" title="{{ csl_data.description }}"
+                            data-toggle="tooltip">{{ csl_data.name }}</th>
+                      {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                      {% for csl_id, csl_data in table.construct_map.items %}
+                        <td>
+                        {% for student_id, construct_data in table.matrix.items %}
+                          {% for e in table.matrix|keyvalue:student_id|keyvalue:csl_id %}
+                            <div class="row">
+                              <span
+                                class="dot"
+                                data-csl-id="{{ csl_id }}"
+                                data-modal-launch-observations="[{{ e }}]"
+                              />
+                            </div>
+                          {% endfor %}
+                        {% endfor %}
+                        </td>
+                      {% endfor %}
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
       </div>
     </form>
