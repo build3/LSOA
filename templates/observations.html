@@ -40,7 +40,17 @@
     $(function () {
 
       // Init tooltips
-      $('[data-toggle="tooltip"]').tooltip();
+      var is_touch_device = (
+          ("ontouchstart" in window)
+          || window.DocumentTouch
+          && document instanceof DocumentTouch
+      );
+
+      if (is_touch_device) {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'click'});
+      } else {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'});
+      }
 
       // Remove duplicate modals
       var seen = {};
@@ -108,8 +118,12 @@
                 <tr>
                   <th scope="col">&nbsp;</th>
                   {% for csl_id, csl_data in table.construct_map.items %}
-                    <th scope="col" title="{{ csl_data.description }}"
-                        data-toggle="tooltip">{{ csl_data.name }}</th>
+                    <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
+                      {{ csl_data.name }}
+                      {% if csl_data.description|length > 0 %}
+                        <span><i class="fa fa-info-circle"></i></span>
+                      {% endif %}
+                    </th>
                   {% endfor %}
                 </tr>
                 </thead>
