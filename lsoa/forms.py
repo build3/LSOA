@@ -92,7 +92,7 @@ class ObservationForm(forms.ModelForm):
 
     class Meta:
         model = Observation
-        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
+        fields = ['students', 'constructs', 'tag_choices', 'tags', 'annotation_data', 'original_image', 'video',
                   'notes', 'video_notes', 'parent', 'owner', 'name', 'course', 'grouping', 'construct_choices', ]
         widgets = {
             'course': forms.HiddenInput(),
@@ -100,7 +100,7 @@ class ObservationForm(forms.ModelForm):
             'owner': forms.HiddenInput(),
             'name': forms.HiddenInput(),
             'construct_choices': forms.HiddenInput(),
-            'tags': forms.MultipleHiddenInput(),
+            'tag_choices': forms.HiddenInput(),
             'notes': forms.Textarea(attrs={'class': 'notes-container'}),
         }
 
@@ -142,3 +142,15 @@ class NewCourseForm(forms.Form):
 
     def clean_student_csv(self):
         pass
+
+
+class ContextTagForm(forms.ModelForm):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
+
+    class Meta:
+        model = ContextTag
+        fields = ['text', 'color']

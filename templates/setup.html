@@ -55,21 +55,7 @@
 
 
     $("#id_context_tags").select2({
-      tags: true,
-      tokenSeparators: [',', '\n'],
-      createTag: function (params) {
-        var term = $.trim(params.term);
-
-        if (term === '') {
-          return null;
-        }
-
-        return {
-          id: term,
-          text: term,
-          newTag: true // add additional parameters
-        }
-      }
+      tokenSeparators: [',', '\n']
     })
   </script>
 {% endblock %}
@@ -112,6 +98,10 @@
                       <i class="fa fa-plus"></i> Add New Grouping
                     </a>
                 </div>
+              {% endif %}
+
+              {% if field.name == "context_tags" %}
+                  <a id="add_tag" href="/tag/">+ Add New Tag</a>
               {% endif %}
             </div>
             {% if field.errors %}

@@ -11,20 +11,23 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, Http404
 from django.shortcuts import render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, View, TemplateView, UpdateView
+from django.views.generic import FormView, View, TemplateView, UpdateView, \
+    CreateView, ListView
 from related_select.views import RelatedSelectView
 from tablib import Dataset
 
 from lsoa.exceptions import InvalidFileFormatError
-from lsoa.forms import ObservationForm, SetupForm, GroupingForm
-from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
-    Observation
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm
+from lsoa.models import (
+    ContextTag, Course, StudentGrouping, LearningConstructSublevel,
+    LearningConstruct, StudentGroup, Student, Observation
+)
 from lsoa.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
 
 logger = logging.getLogger(__name__)
@@ -146,18 +149,28 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             grouping = StudentGrouping.objects.filter(pk=session_grouping).first()
 
         self.initial.update({'name': '{} Observed'.format(course.name),
-                             'course': course, 'grouping': grouping, 'tags': session_tags,
+                             'course': course, 'grouping': grouping, 'tag_choices': session_tags,
                              'construct_choices': session_construct_choices, 'owner': self.request.user})
 
         if last_observation_id:
             kwargs['last_observation_url'] = reverse_lazy('observation_detail_view', kwargs={'pk': last_observation_id})
 
+        available_tags = ContextTag.objects.filter(pk__in=session_tags)
+
+        if self.request.POST:
+            chosen_tags = [int(item) for item in self.request.POST.getlist('tags')]
+        else:
+            # select all tags by default
+            chosen_tags = [tag.id for tag in available_tags]
+
         kwargs['header'] = 'New Observation'
         kwargs['course'] = course
         kwargs['grouping'] = grouping
+        kwargs['tags'] = available_tags
         kwargs['construct_choices'] = get_constructs(pk_list=session_construct_choices)
         kwargs['chosen_students'] = json.dumps([int(item) for item in self.request.POST.getlist('students')])
         kwargs['chosen_constructs'] = json.dumps([int(item) for item in self.request.POST.getlist('constructs')])
+        kwargs['chosen_tags'] = chosen_tags
         kwargs['recent_observation'] = get_recent_observations(owner=self.request.user).first()
 
         return super().get_context_data(**kwargs)
@@ -178,13 +191,17 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         return reverse_lazy('observation_detail_view', kwargs={'pk': self.object.id})
 
     def get_context_data(self, **kwargs):
+
+        available_tags = self.object.tag_choices
         kwargs['header'] = self.object.name.strip() or 'Observation {}'.format(self.object.id)
         kwargs['created'] = self.object.created
         kwargs['course'] = self.object.course
         kwargs['grouping'] = self.object.grouping
+        kwargs['tags'] = ContextTag.objects.filter(owner=self.request.user, pk__in=available_tags)
         kwargs['construct_choices'] = get_constructs(pk_list=self.object.construct_choices)
         kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
+        kwargs['chosen_tags'] = list(self.object.tags.all().values_list('id', flat=True))
 
         return super().get_context_data(**kwargs)
 
@@ -458,3 +475,40 @@ def get_recent_observations(owner, age=None):
     age = age or timedelta(hours=2)
     within_timeframe = timezone.now() - age
     return Observation.objects.filter(owner=owner, created__gte=within_timeframe).order_by('-created')
+
+
+class BaseTagManagement(LoginRequiredMixin):
+    model = ContextTag
+    form_class = ContextTagForm
+    success_url = reverse_lazy('setup')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['title'] = self.title
+        return context
+
+
+class CreateTag(BaseTagManagement, CreateView):
+    template_name = 'context_tag.html'
+    title = 'Create Tag'
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.owner = self.request.user
+        self.object.save()
+        return super().form_valid(form)
+
+
+class EditTag(BaseTagManagement, UpdateView):
+    template_name = 'context_tag.html'
+    title = 'Edit Tag'
+
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user)
+
+class ListTag(BaseTagManagement, ListView):
+    title = 'Tags'
+    template_name = 'context_tag_list.html'
+
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user).order_by('id')

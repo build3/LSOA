@@ -99,6 +99,7 @@ class Observation(TimeStampedModel, OwnerMixin):
     course = models.ForeignKey('lsoa.Course', blank=True, null=True, on_delete=models.PROTECT)
     grouping = models.ForeignKey('lsoa.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
     construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
+    tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
 
     # regardless of how they're grouped, just save the raw students to the observation
     students = models.ManyToManyField('lsoa.Student', blank=True)
@@ -184,6 +185,7 @@ class ContextTag(TimeStampedModel, OwnerMixin):
     A context tag for tagging observations
     """
     text = models.CharField(max_length=255)
+    color = models.CharField(max_length=7, default='#000000')
     last_used = models.DateTimeField(auto_now=True)
 
     def __str__(self):
