@@ -46,6 +46,7 @@ class DateInput(forms.widgets.DateInput):
     """
     input_type = 'date'
 
+
 class ConstructModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def __init__(self, queryset, **kwargs):
         super(ConstructModelMultipleChoiceField, self).__init__(queryset, **kwargs)

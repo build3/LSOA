@@ -7,7 +7,7 @@ from django.db import migrations, models
 def set_observation_date_to_created(apps, schema_editor):
     """
     Make `observation_date` for existing observation equals to `created`.
-    There is assumption that observation is related to day, it was created.
+    There is assumption that observation is related to day it was created.
     """
     Observation = apps.get_model('lsoa', 'Observation')
     observations = Observation.objects.all()
