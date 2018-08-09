@@ -54,12 +54,10 @@ class SetupView(LoginRequiredMixin, FormView):
         course = d['course']
         constructs = d['constructs']
         tags = d['context_tags']
-        observation_date = d['observation_date']
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping
         self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
-        self.request.session['observation_date'] = str(observation_date)
         return HttpResponseRedirect(reverse_lazy('observation_view'))
 
     def get_context_data(self, **kwargs):
@@ -144,7 +142,6 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         session_construct_choices = self.request.session.get('constructs') or []
         session_tags = self.request.session.get('context_tags') or []
         last_observation_id = self.request.session.get('last_observation_id')
-        session_observation_date = self.request.session.get('observation_date')
 
         course = Course.objects.filter(pk=session_course).first()
         grouping = None
@@ -155,7 +152,6 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             'name': '{} Observed'.format(course.name),
             'course': course, 'grouping': grouping, 'tag_choices': session_tags,
             'construct_choices': session_construct_choices, 'owner': self.request.user,
-            'observation_date': session_observation_date,
         })
         if last_observation_id:
             kwargs['last_observation_url'] = reverse_lazy('observation_detail_view', kwargs={'pk': last_observation_id})

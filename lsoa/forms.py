@@ -4,7 +4,6 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.utils import ErrorList
 from django.forms.widgets import SelectMultiple
-from django.utils.timezone import now
 from django.urls import reverse_lazy
 from threadlocals.threadlocals import get_current_request
 from related_select.fields import RelatedChoiceField
@@ -79,7 +78,6 @@ class SetupForm(forms.Form):
     constructs = ConstructModelMultipleChoiceField(queryset=LearningConstructSublevel.objects.all(),
                                                    widget=forms.CheckboxSelectMultiple)
     context_tags = TagField(queryset=ContextTag.objects.all(), required=False)
-    observation_date = forms.DateField(widget=DateInput, initial=now)
 
     def __init__(self, **kwargs):
         super(SetupForm, self).__init__(**kwargs)
@@ -112,7 +110,7 @@ class ObservationForm(forms.ModelForm):
             'construct_choices': forms.HiddenInput(),
             'tag_choices': forms.HiddenInput(),
             'notes': forms.Textarea(attrs={'class': 'notes-container'}),
-            'observation_date': forms.HiddenInput(),
+            'observation_date': DateInput,
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
@@ -123,10 +121,14 @@ class ObservationForm(forms.ModelForm):
             if not data.get('useMostRecentMedia'):
                 data['parent'] = None
 
+
         super().__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
                          initial=initial, error_class=error_class, label_suffix=label_suffix,
                          empty_permitted=empty_permitted, instance=instance,
                          use_required_attribute=use_required_attribute)
+
+        self.fields['observation_date'].widget.attrs['class'] = 'form-control'
+        self.fields['observation_date'].required = True
 
     def clean(self):
         super().clean()
