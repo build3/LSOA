@@ -120,21 +120,22 @@
                 <p>{{ sublevel.description }}</p>
               </div>
               <div class="sublevel-example" style="display: none;">
-                <div class="swiper-container swiper-init">
-                  <div class="swiper-wrapper">
-                    {% for example in sublevel.examples.all %}
-                      <div class="swiper-slide" style="text-align: center;">
-                        <h4>{{ sublevel.name }}</h4>
-                        <p>{{ example.text }}</p>
-                        {% if example.image %}
-                          <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
-                            <img src="{{ example.image.url }}" style="max-height: 280px; max-width: 20vw;"/>
-                          </a>
-                        {% endif %}
-                      </div>
-                    {% endfor %}
-                  </div>
-
+                <div class="carousel-inner">
+                  {% for example in sublevel.examples.all %}
+                    <div class="carousel-item {% if forloop.first %} active {% endif %}" style="text-align: center;">
+                      <h4>{{ sublevel.name }}</h4>
+                      <p>{{ example.text }}</p>
+                      {% if example.image %}
+                        <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
+                          <img src="{{ example.image.url }}" style="max-height: 280px; max-width: 20vw;"/>
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% empty %}
+                    <div class="carousel-item active" style="text-align: center;">
+                      <p>Sublevel has no available examples</p>
+                    </div>
+                  {% endfor %}
                 </div>
               </div>
             </div>
@@ -165,8 +166,28 @@
         <div>{{ form.notes }}</div>
         <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
         <div id="sublevel-examples" style="height: 300px;">
-          <p>Once you select a learning construct using the toggle buttons to the left, different
-            examples of the learning constructs will be shown here.</p>
+          <div id="sublevelExampleControls" class="carousel slide carousel-fade" data-ride="carousel">
+            <div class="examples-block">
+              <div id="example-carousel-items">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <p>
+                      Once you select a learning construct using the toggle buttons to the left,
+                      different examples of the learning constructs will be shown here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a class="carousel-control-prev" href="#sublevelExampleControls" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#sublevelExampleControls" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
         </div>
       </div>
       <div class="col-3">
@@ -291,7 +312,7 @@
       $('.construct').on('click', function (e) {
         toggleConstruct($(this).data('construct-id'));
         $('#sublevel-description').html($(this).find('.sublevel-desc').html());
-        $('#sublevel-examples').html($(this).find('.sublevel-example').html());
+        $('#example-carousel-items').html($(this).find('.sublevel-example').html());
       });
 
       $('.student').on('click', function (e) {
