@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
+from django.utils.timezone import now
 from django_extensions.db.models import TimeStampedModel
 from tinymce.models import HTMLField
 
@@ -115,6 +116,8 @@ class Observation(TimeStampedModel, OwnerMixin):
     # the end user can type notes or take an AV sample and just talk into the mic
     notes = models.TextField(blank=True)
     video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
+
+    observation_date = models.DateField(default=now)
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)

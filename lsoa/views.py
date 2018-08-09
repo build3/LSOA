@@ -148,10 +148,11 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if session_grouping:
             grouping = StudentGrouping.objects.filter(pk=session_grouping).first()
 
-        self.initial.update({'name': '{} Observed'.format(course.name),
-                             'course': course, 'grouping': grouping, 'tag_choices': session_tags,
-                             'construct_choices': session_construct_choices, 'owner': self.request.user})
-
+        self.initial.update({
+            'name': '{} Observed'.format(course.name),
+            'course': course, 'grouping': grouping, 'tag_choices': session_tags,
+            'construct_choices': session_construct_choices, 'owner': self.request.user,
+        })
         if last_observation_id:
             kwargs['last_observation_url'] = reverse_lazy('observation_detail_view', kwargs={'pk': last_observation_id})
 

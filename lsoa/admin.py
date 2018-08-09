@@ -157,6 +157,7 @@ class ObservationAdmin(admin.ModelAdmin):
                 'students',
                 'constructs',
                 'tags',
+                'observation_date',
                 'parent',
             )
         }),

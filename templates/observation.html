@@ -151,6 +151,13 @@
         </div>
       </div>
       <div class="col-3">
+        <h4 style="text-align: center; margin: 0;">Observation date</h4>
+        {% if form.observation_date.errors %}
+          <div role="alert" class="alert alert-danger">
+            {{ form.observation_date.errors }}
+          </div>
+        {% endif %}
+        <div>{{ form.observation_date }}</div>
         <h4 style="text-align: center; margin: 0;">Notes</h4>
         <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
         <input name="video_notes" style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
