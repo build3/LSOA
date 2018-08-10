@@ -23,7 +23,8 @@ from related_select.views import RelatedSelectView
 from tablib import Dataset
 
 from lsoa.exceptions import InvalidFileFormatError
-from lsoa.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
+    DateFilteringForm
 from lsoa.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -282,14 +283,23 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
     """
     template_name = 'observations.html'
 
-    def get_data_for_construct_id(self, construct_id, course_id):
+    def get_data_for_construct_id(self, construct_id, course_id, date_from, date_to):
         IS_OTHER = False
         if course_id:
             all_students = Student.objects.filter(course=course_id)
         else:
             all_students = Student.objects.all()
         all_observations = Observation.objects.prefetch_related('students').filter(
-            constructs__level__construct_id=construct_id, students__in=all_students)
+            constructs__level__construct_id=construct_id,
+            students__in=all_students
+        )
+
+        if date_from:
+            all_observations = all_observations.filter(observation_date__gte=date_from)
+
+        if date_to:
+            all_observations = all_observations.filter(observation_date__lte=date_to)
+
         all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
         c_name = LearningConstruct.objects.filter(id=construct_id).first()
         if c_name:
@@ -333,20 +343,31 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         course_id = kwargs.get('course_id')
         all_constructs = LearningConstruct.objects.all()
         top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
+        date_filtering_form = DateFilteringForm(self.request.GET)
+        date_from = None
+        date_to = None
+
+        if date_filtering_form.is_valid():
+            date_from = date_filtering_form.cleaned_data['date_from']
+            date_to = date_filtering_form.cleaned_data['date_to']
 
         constructs_to_cover = LearningConstruct.objects.annotate(
-            q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
+            q_count=Count('learningconstructlevel__learningconstructsublevel__observation')
+        ).order_by('-q_count')
 
-        tables = [self.get_data_for_construct_id(cid, course_id) for cid in
+        tables = [self.get_data_for_construct_id(cid, course_id, date_from, date_to) for cid in
                   constructs_to_cover.values_list('id', flat=True)]
-        tables.append(self.get_data_for_construct_id(None, course_id))
+        star_chart_tables = tables + [self.get_data_for_construct_id(None, course_id, date_from, date_to)]
 
         data = super().get_context_data(**kwargs)
         data.update({
-            'tables': tables,
+            'star_chart_tables': star_chart_tables,
+            'dot_plot_tables': tables,
             'top_level_construct_map': top_level_construct_map,
             'courses': Course.objects.all(),
-            'course_id': course_id
+            'course_id': course_id,
+            'date_form': date_filtering_form,
+
         })
         return data
 

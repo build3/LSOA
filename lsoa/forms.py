@@ -167,3 +167,14 @@ class ContextTagForm(forms.ModelForm):
     class Meta:
         model = ContextTag
         fields = ['text', 'color']
+
+
+class DateFilteringForm(forms.Form):
+    date_from = forms.DateField(
+        widget=DateInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+    date_to = forms.DateField(
+        widget=DateInput(attrs={'class': 'form-control'}),
+        required=False
+    )
