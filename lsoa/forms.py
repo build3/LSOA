@@ -38,6 +38,14 @@ class TagField(forms.ModelMultipleChoiceField):
         return tags
 
 
+class DateInput(forms.widgets.DateInput):
+    """
+    Widgets to set input type to date - required for default datepicker.
+    By defaulty Date Input has input type set to text.
+    """
+    input_type = 'date'
+
+
 class ConstructModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def __init__(self, queryset, **kwargs):
         super(ConstructModelMultipleChoiceField, self).__init__(queryset, **kwargs)
@@ -92,7 +100,7 @@ class ObservationForm(forms.ModelForm):
 
     class Meta:
         model = Observation
-        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
+        fields = ['students', 'constructs', 'tag_choices', 'tags', 'annotation_data', 'original_image', 'video', 'observation_date',
                   'notes', 'video_notes', 'parent', 'owner', 'name', 'course', 'grouping', 'construct_choices', ]
         widgets = {
             'course': forms.HiddenInput(),
@@ -100,8 +108,9 @@ class ObservationForm(forms.ModelForm):
             'owner': forms.HiddenInput(),
             'name': forms.HiddenInput(),
             'construct_choices': forms.HiddenInput(),
-            'tags': forms.MultipleHiddenInput(),
+            'tag_choices': forms.HiddenInput(),
             'notes': forms.Textarea(attrs={'class': 'notes-container'}),
+            'observation_date': DateInput,
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
@@ -112,10 +121,14 @@ class ObservationForm(forms.ModelForm):
             if not data.get('useMostRecentMedia'):
                 data['parent'] = None
 
+
         super().__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
                          initial=initial, error_class=error_class, label_suffix=label_suffix,
                          empty_permitted=empty_permitted, instance=instance,
                          use_required_attribute=use_required_attribute)
+
+        self.fields['observation_date'].widget.attrs['class'] = 'form-control'
+        self.fields['observation_date'].required = True
 
     def clean(self):
         super().clean()
@@ -142,3 +155,15 @@ class NewCourseForm(forms.Form):
 
     def clean_student_csv(self):
         pass
+
+
+class ContextTagForm(forms.ModelForm):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
+
+    class Meta:
+        model = ContextTag
+        fields = ['text', 'color']

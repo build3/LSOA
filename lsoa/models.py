@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
+from django.utils.timezone import now
 from django_extensions.db.models import TimeStampedModel
 from tinymce.models import HTMLField
 
@@ -99,6 +100,7 @@ class Observation(TimeStampedModel, OwnerMixin):
     course = models.ForeignKey('lsoa.Course', blank=True, null=True, on_delete=models.PROTECT)
     grouping = models.ForeignKey('lsoa.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
     construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
+    tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
 
     # regardless of how they're grouped, just save the raw students to the observation
     students = models.ManyToManyField('lsoa.Student', blank=True)
@@ -114,6 +116,8 @@ class Observation(TimeStampedModel, OwnerMixin):
     # the end user can type notes or take an AV sample and just talk into the mic
     notes = models.TextField(blank=True)
     video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
+
+    observation_date = models.DateField(default=now)
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
@@ -184,6 +188,7 @@ class ContextTag(TimeStampedModel, OwnerMixin):
     A context tag for tagging observations
     """
     text = models.CharField(max_length=255)
+    color = models.CharField(max_length=7, default='#000000')
     last_used = models.DateTimeField(auto_now=True)
 
     def __str__(self):

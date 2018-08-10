@@ -53,7 +53,17 @@
     $(function () {
 
       // Init tooltips
-      $('[data-toggle="tooltip"]').tooltip();
+      var is_touch_device = (
+          ("ontouchstart" in window)
+          || window.DocumentTouch
+          && document instanceof DocumentTouch
+      );
+
+      if (is_touch_device) {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'click'});
+      } else {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'});
+      }
 
       // Remove duplicate modals
       var seen = {};
@@ -113,6 +123,7 @@
             </select>
           </div>
 
+
           <ul class="nav nav-tabs">
             <li class="nav-item">
               <a class="nav-link active" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
@@ -132,8 +143,12 @@
                       <tr>
                         <th scope="col">&nbsp;</th>
                         {% for csl_id, csl_data in table.construct_map.items %}
-                          <th scope="col" title="{{ csl_data.description }}"
-                              data-toggle="tooltip">{{ csl_data.name }}</th>
+                          <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
+                            {{ csl_data.name }}
+                            {% if csl_data.description|length > 0 %}
+                              <span><i class="fa fa-info-circle"></i></span>
+                            {% endif %}
+                          </th>
                         {% endfor %}
                       </tr>
                       </thead>
@@ -157,6 +172,7 @@
                       </tbody>
                     </table>
                   </div>
+
                 {% endfor %}
             </div>
             <div class="tab-pane container fade" id="chart_v2">
@@ -167,8 +183,12 @@
                     <thead>
                     <tr>
                       {% for csl_id, csl_data in table.construct_map.items %}
-                        <th scope="col" title="{{ csl_data.description }}"
-                            data-toggle="tooltip">{{ csl_data.name }}</th>
+                        <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
+                          {{ csl_data.name }}
+                          {% if csl_data.description|length > 0 %}
+                            <span><i class="fa fa-info-circle"></i></span>
+                          {% endif %}
+                        </th>
                       {% endfor %}
                     </tr>
                     </thead>
