@@ -103,7 +103,6 @@
 
 {% block content %}
   <div class="container-fluid">
-    <form action="" method="POST">
       {% csrf_token %}
       <div class="row">
         <div class="col-12">
@@ -123,8 +122,21 @@
             </select>
           </div>
 
+          <form action="" method="GET">
+              <div class="row">
+                <div class="col-6">
+                    {{ date_form.date_from }}
+                </div>
+                <div class="col-6">
+                    {{ date_form.date_to }}
+                </div>
+              </div>
+              <div class="d-flex flex-row-reverse">
+                <input type="submit" class="btn btn-primary">
+              </div>
+          </form>
 
-          <ul class="nav nav-tabs">
+          <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item">
               <a class="nav-link active" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
             </li>
@@ -134,8 +146,8 @@
           </ul>
 
           <div class="tab-content">
-            <div class="tab-pane container active" id="chart_v1">
-                {% for table in tables %}
+            <div class="tab-pane active" id="chart_v1">
+                {% for table in star_chart_tables %}
                   <div style="overflow-x: scroll;width:100%;">
                     <h4 class="text-align-center" style="margin-bottom: 25px;">{{ table.c_name }}</h4>
                     <table class="table table-bordered">
@@ -175,8 +187,8 @@
 
                 {% endfor %}
             </div>
-            <div class="tab-pane container fade" id="chart_v2">
-              {% for table in tables %}
+            <div class="tab-pane fade" id="chart_v2">
+              {% for table in dot_plot_tables %}
                 <div style="overflow-x: scroll;width:100%;">
                   <h4 class="text-align-center"  style="margin-bottom: 25px;">{{ table.c_name }}</h4>
                   <table class="table table-bordered">
@@ -218,13 +230,12 @@
           </div>
         </div>
       </div>
-    </form>
   </div>
 
 
   {# MODALS #}
   <div class="d-none">
-    {% for table in tables %}
+    {% for table in star_chart_tables %}
       {% for observation in table.all_observations %}
         <div class="observation-body" data-observation-id="{{ observation.id }}">
           <h3><a href="{% url 'observation_detail_view' pk=observation.id %}">{% if observation.name %}{{ observation.name }}{% else %}Observation #{{ observation.id }}{% endif %}</a></h3>

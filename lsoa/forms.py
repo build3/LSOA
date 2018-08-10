@@ -167,3 +167,13 @@ class ContextTagForm(forms.ModelForm):
     class Meta:
         model = ContextTag
         fields = ['text', 'color']
+
+
+class DateFilteringForm(forms.Form):
+    date_from = forms.DateField(widget=DateInput, required=False)
+    date_to = forms.DateField(widget=DateInput, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
