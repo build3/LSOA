@@ -45,6 +45,14 @@
     .dot:hover {
       background-color: #cb6634;
     }
+
+    /*
+     * Height of date input is broken if there is no value. It have been
+     * solved in higher version of bootstrap.
+     */
+    input[type="date"] {
+	     height: 2.375rem;
+    }
   </style>
 {% endblock %}
 
@@ -125,9 +133,11 @@
           <form action="" method="GET">
               <div class="row">
                 <div class="col-6">
+                    <label>Date from</label>
                     {{ date_form.date_from }}
                 </div>
                 <div class="col-6">
+                    <label>Date to</label>
                     {{ date_form.date_to }}
                 </div>
               </div>
