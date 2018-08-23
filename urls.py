@@ -11,6 +11,7 @@ urlpatterns = [
     # setup view is the first view you see after logging in
     url(r'^setup/$', lsoa.views.SetupView.as_view(), name='setup'),
     url(r'^setup-groupings-ajax/$', lsoa.views.GroupingRelatedSelectView.as_view(), name='student-groupings-ajax'),
+    url(r'^setup/course-default-ajax$', lsoa.views.DefaultCourse.as_view(), name='set-default-course'),
 
     # "New Group" screen
     url(r'^grouping/$', lsoa.views.GroupingView.as_view(), name='grouping'),
