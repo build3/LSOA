@@ -230,7 +230,7 @@ class GroupingRelatedSelectView(RelatedSelectView):
         return JsonResponse(ajax_list, safe=False)
 
 
-class DefaultCourse(LoginRequiredMixin, View):
+class DefaultCourseView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         course_id = request.POST.get('course', '')
