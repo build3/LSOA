@@ -123,8 +123,6 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
       any error should be ignored and form with last sample should be
       returned
     """
-    #
-    # *
     template_name = 'observation.html'
     form_class = ObservationForm
     success_message = 'Observation Added'
