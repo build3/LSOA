@@ -80,7 +80,8 @@ class SetupView(LoginRequiredMixin, FormView):
                     sublevel = {
                         'id': lcsl.id,
                         'name': lcsl.name,
-                        'description': lcsl.description
+                        'description': lcsl.description,
+                        'examples': lcsl.examples
                     }
                     level['sublevels'].append(sublevel)
                 construct['levels'].append(level)

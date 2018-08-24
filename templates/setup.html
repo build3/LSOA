@@ -57,6 +57,20 @@
     $("#id_context_tags").select2({
       tokenSeparators: [',', '\n']
     })
+
+
+    $('[data-modal-sublevel]').on('click', function (e) {
+      var exampleId = $(this).data('modal-sublevel');
+      var modal_content = $('#examples-' + exampleId).clone();
+
+      $('#examples-modal .modal-body').html(modal_content);
+
+      var modal = $('#examples-modal');
+      modal.modal({
+        size: 'lg',
+        fade: true
+      });
+    })
   </script>
 {% endblock %}
 
@@ -145,9 +159,28 @@
                               <input name="constructs" class="form-check-input" type="checkbox"
                                      value="{{ sublevel.id }}" id="checkbox-{{ sublevel.id }}"
                                      {% if sublevel.id in form.constructs.value %}checked{% endif %}>
-                              <label class="form-check-label" for="checkbox-{{ sublevel.id }}">
+                              <label class="form-check-label col-11" for="checkbox-{{ sublevel.id }}">
                                 {{ sublevel.name }}) {{ sublevel.description }}
                               </label>
+                              <div class="hidden">
+                                <div id="examples-{{ sublevel.id }}" >
+                                  <h3><b>{{ sublevel.name }}'s</b> examples</h3>
+                                  {% for example in sublevel.examples.all %}
+                                    <hr>
+                                    <p>{{ example.text }}</p>
+                                    {% if example.image %}
+                                      <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
+                                        <img src="{{ example.image.url }}" class-"example-image"/>
+                                      </a>
+                                    {% endif %}
+                                  {% endfor %}
+                                </div>
+                              </div>
+                              {% if sublevel.examples.all|length > 0 %}
+                                <span data-modal-sublevel="{{sublevel.id}}" class="col-1 top">
+                                  <i class="fa fa-question-circle"></i>
+                                </span>
+                              {% endif %}
                             </div>
                           {% endfor %}
                         </div>
@@ -168,6 +201,19 @@
         </div>
 
       </form>
+    </div>
+  </div>
+
+  <div class="modal fade" id="examples-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -195,6 +241,19 @@
       color: #1b9a59;
       margin-right: 5px;
       display: inline-block;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .example-image {
+      max-height: 280px;
+      max-width: 20vw;
+    }
+
+    .top {
+      vertical-align: top
     }
   </style>
 
