@@ -40,19 +40,58 @@
       }
     }
 
-    function registerGroupingListeners(id, func) {
-        var listeners = ['click', 'update', 'change', 'focus', 'unfocus'];
-        listeners.forEach(function(listener) {
-            $(id).on(listener, func);
-        });
+    function updateDefaultCourseVisibility() {
+      var $courseField = $('#id_course');
+      var $setDefaultButton = $('#set_default_course');
+      if ($courseField.val()) {
+        $setDefaultButton.show()
+      } else {
+        $setDefaultButton.hide()
+      }
     }
 
-    registerGroupingListeners('#id_course', updateAddGroupLink);
-    registerGroupingListeners('#id_grouping', updateAddGroupLink);
+    function setDefaultCourse() {
+      var $courseField = $('#id_course');
+      var course = $courseField.val();
+      $.ajax({
+        type: 'POST',
+        url: '{% url "set-default-course" %}',
+        dataType: 'json',
+        data: {
+          'course': course,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function (data) {
+          $("#form-alert").addClass('alert alert-success');
+          $("#form-alert").text('Default course has been set')
+        },
+        error: function (xhr, status, e) {
+          alert('Setting default course failed.')
+        }
+      });
+    }
 
-    registerGroupingListeners('#id_course', updateEditGroupLink);
-    registerGroupingListeners('#id_grouping', updateEditGroupLink);
+    function registerSelectListeners(id, func) {
+      var listeners = ['click', 'update', 'change', 'focus', 'unfocus'];
+      listeners.forEach(function(listener) {
+        $(id).on(listener, func);
+      });
+    }
 
+    function registerSelectListenersWithReady(id, func) {
+      $(document).ready(func);
+      registerSelectListeners(id, func)
+    }
+
+    registerSelectListenersWithReady('#id_course', updateAddGroupLink);
+    registerSelectListenersWithReady('#id_grouping', updateAddGroupLink);
+
+    registerSelectListenersWithReady('#id_course', updateEditGroupLink);
+    registerSelectListenersWithReady('#id_grouping', updateEditGroupLink);
+
+    registerSelectListeners('#id_course', updateDefaultCourseVisibility);
+
+    $('#set_default_course').on('click', setDefaultCourse)
 
     $("#id_context_tags").select2({
       tokenSeparators: [',', '\n']
@@ -68,6 +107,7 @@
   </div>
   <div class="row">
     <div class="col-6 offset-3">
+      <div id="form-alert" role="alert"></div>
       <form action="{% url 'setup' %}" method="post" novalidate>
         {% csrf_token %}
         {{ form.media }}
@@ -89,6 +129,13 @@
                 <label for="{{ field.auto_id }}">{{ field.label }}</label>
               </div>
               {{ field }}
+              {% if field.name == "course" %}
+              <div class="d-flex flex-row-reverse">
+                <a id="set_default_course" class="btn btn-primary btn-sm mt-1 ml-1" href="#">
+                  <i class="fa fa-paperclip"></i> Set as default course
+                </a>
+              </div>
+              {% endif %}
               {% if field.name == "grouping" %}
                   <div class="d-flex flex-row-reverse">
                     <a id="edit_grouping_link" class="btn btn-primary btn-sm mt-1 ml-1">

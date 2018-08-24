@@ -60,6 +60,13 @@ class User(AbstractBaseUser, TimeStampedModel, PermissionsMixin):
             'Unselect this instead of deleting accounts.'
         ),
     )
+    default_course = models.ForeignKey(
+        'lsoa.Course',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
     USERNAME_FIELD = 'email'
     objects = EmailUserManager()
 
