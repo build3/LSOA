@@ -114,6 +114,15 @@ class GroupingView(LoginRequiredMixin, FormView):
 
 
 class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
+    """
+    There are 3 ways of using this view:
+
+    * Get action for observation form
+    * Post action for observation form (saving new object)
+    * Post action for observation form to get last sample. In this case
+      any error should be ignored and form with last sample should be
+      returned
+    """
     template_name = 'observation.html'
     form_class = ObservationForm
     success_message = 'Observation Added'
@@ -174,6 +183,11 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         kwargs['chosen_constructs'] = json.dumps([int(item) for item in self.request.POST.getlist('constructs')])
         kwargs['chosen_tags'] = chosen_tags
         kwargs['recent_observation'] = get_recent_observations(owner=self.request.user).first()
+
+        # Create new instance of observation form to clear error.
+        # use_recent_observation is send for Use Last Sample action.
+        if self.request.POST.get('use_recent_observation'):
+            kwargs['form'] = ObservationForm()
 
         return super().get_context_data(**kwargs)
 
