@@ -11,8 +11,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse, Http404
-from django.shortcuts import render
+from django.http import HttpResponseRedirect, JsonResponse, Http404, \
+    HttpResponseBadRequest
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -41,7 +42,7 @@ class SetupView(LoginRequiredMixin, FormView):
     def get_initial(self):
         initial = super(SetupView, self).get_initial()
         initial.update({
-            'course': self.request.session.get('course'),
+            'course': self.request.user.default_course,
             'grouping': self.request.session.get('grouping'),
             'constructs': self.request.session.get('constructs'),
             'context_tags': self.request.session.get('context_tags'),
@@ -115,6 +116,15 @@ class GroupingView(LoginRequiredMixin, FormView):
 
 
 class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
+    """
+    There are 3 ways of using this view:
+
+    * Get action for observation form
+    * Post action for observation form (saving new object)
+    * Post action for observation form to get last sample. In this case
+      any error should be ignored and form with last sample should be
+      returned
+    """
     template_name = 'observation.html'
     form_class = ObservationForm
     success_message = 'Observation Added'
@@ -176,6 +186,11 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         kwargs['chosen_tags'] = chosen_tags
         kwargs['recent_observation'] = get_recent_observations(owner=self.request.user).first()
 
+        # Create new instance of observation form to clear error.
+        # use_recent_observation is send for Use Last Sample action.
+        if self.request.POST.get('use_recent_observation'):
+            kwargs['form'] = ObservationForm()
+
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
@@ -189,9 +204,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
     template_name = 'observation.html'
     form_class = ObservationForm
     success_message = 'Observation Updated'
-
-    def get_success_url(self):
-        return reverse_lazy('observation_detail_view', kwargs={'pk': self.object.id})
+    success_url = reverse_lazy('observation_view')
 
     def get_context_data(self, **kwargs):
 
@@ -228,6 +241,21 @@ class GroupingRelatedSelectView(RelatedSelectView):
             ajax_list.append({'key': self.to_text(model_instance),
                               'value': self.to_value(model_instance)})
         return JsonResponse(ajax_list, safe=False)
+
+
+class DefaultCourseView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        course_id = request.POST.get('course', '')
+        if not course_id.isdigit():
+            return HttpResponseBadRequest()
+
+        course = get_object_or_404(Course, pk=int(course_id))
+        user = request.user
+        user.default_course = course
+        user.save()
+
+        return JsonResponse({'success': True})
 
 
 @method_decorator(csrf_exempt, name='dispatch')

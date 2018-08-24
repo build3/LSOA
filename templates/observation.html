@@ -235,10 +235,13 @@
         {% if last_observation_url %}
           <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
         {% else %}
-          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">New Observation</a>
+          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">Cancel</a>
         {% endif %}
-        <a href="#" id="submit" class="btn fa fa-3x fa-plus float-right text-dark"
-           onclick="document.getElementById('form').submit()"></a>
+        <a href="#"
+           id="submit"
+           class="btn fa fa-3x {%if view.kwargs.pk %}fa-floppy-o{% else %}fa-plus{% endif %} float-right text-dark"
+           onclick="document.getElementById('form').submit()">
+         </a>
       </div>
     </div>
       {% for hidden in form.hidden_fields %}
@@ -264,6 +267,11 @@
           $('[data-student-id-value="' + studentId + '"]').attr('name', 'students');
         }
       };
+
+      var openCard = function (studentId) {
+        var attr = '[data-student-id-value="' + studentId + '"]';
+        $(attr).closest('.collapse').addClass('show');
+      }
 
       var toggleConstruct = function (constructId) {
         $('[data-construct-id="' + constructId + '"]').toggleClass('bg-success', 'text-white');
@@ -291,6 +299,7 @@
       var markSelectStudents = function() {
         var chosen_students = JSON.parse("{{ chosen_students }}");
         for (var index = 0; index < chosen_students.length; index++) {
+          openCard(chosen_students[index])
           toggleStudent(chosen_students[index]);
         }
       };
