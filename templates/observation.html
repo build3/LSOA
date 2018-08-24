@@ -268,6 +268,11 @@
         }
       };
 
+      var openCard = function (studentId) {
+        var attr = '[data-student-id-value="' + studentId + '"]';
+        $(attr).closest('.collapse').addClass('show');
+      }
+
       var toggleConstruct = function (constructId) {
         $('[data-construct-id="' + constructId + '"]').toggleClass('bg-success', 'text-white');
         if (checkedConstructs.hasOwnProperty(constructId)) {
@@ -294,6 +299,7 @@
       var markSelectStudents = function() {
         var chosen_students = JSON.parse("{{ chosen_students }}");
         for (var index = 0; index < chosen_students.length; index++) {
+          openCard(chosen_students[index])
           toggleStudent(chosen_students[index]);
         }
       };
