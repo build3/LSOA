@@ -202,9 +202,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
     template_name = 'observation.html'
     form_class = ObservationForm
     success_message = 'Observation Updated'
-
-    def get_success_url(self):
-        return reverse_lazy('observation_detail_view', kwargs={'pk': self.object.id})
+    success_url = reverse_lazy('observation_view')
 
     def get_context_data(self, **kwargs):
 
