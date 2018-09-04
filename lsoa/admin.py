@@ -1,11 +1,11 @@
-from django.contrib import admin, messages
 from django import forms
+from django.contrib import admin, messages
 from import_export import resources, fields
 from import_export.admin import ImportExportActionModelAdmin
 
 from lsoa.resources import ACCEPTED_FILE_FORMATS, ClassRoster
 from .models import Course, LearningConstruct, LearningConstructLevel, LearningConstructSublevel, \
-    LearningConstructSublevelExample, Observation, Student, StudentGroup, StudentGrouping
+    LearningConstructSublevelExample, Observation, Student, StudentGroup, StudentGrouping, ContextTag
 
 admin.site.site_header = 'LSOA Settings'
 admin.site.site_title = 'LSOA Admin'
@@ -89,11 +89,11 @@ class CourseAdmin(ImportExportActionModelAdmin):
     resource_class = CourseResource
     preserve_filters = True
     actions = [export_class_roster, ]
-    filter_horizontal = ('students', )
+    filter_horizontal = ('students',)
     list_display = ('name', 'grade_level', 'owner', 'modified',)
-    list_filter = ('grade_level', 'owner', )
-    raw_id_fields = ('owner', )
-    search_fields = ('name', )
+    list_filter = ('grade_level', 'owner',)
+    raw_id_fields = ('owner',)
+    search_fields = ('name',)
     ordering = ('name',)
     fieldsets = (
         (None, {
@@ -118,7 +118,6 @@ class StudentGroupingAdmin(admin.ModelAdmin):
 
 
 class ObservationAdminForm(forms.ModelForm):
-
     class Meta:
         model = Observation
         exclude = []
@@ -142,10 +141,10 @@ class ObservationAdminForm(forms.ModelForm):
 class ObservationAdmin(admin.ModelAdmin):
     form = ObservationAdminForm
     preserve_filters = True
-    filter_horizontal = ('students', 'constructs', 'tags', )
+    filter_horizontal = ('students', 'constructs', 'tags',)
     list_display = ('name', 'owner', 'course', 'created',)
     list_filter = ('course', 'owner',)
-    raw_id_fields = ('owner', 'course', 'parent', 'grouping', )
+    raw_id_fields = ('owner', 'course', 'parent', 'grouping',)
     search_fields = ('name', 'notes')
     ordering = ('name',)
     fieldsets = (
@@ -162,10 +161,10 @@ class ObservationAdmin(admin.ModelAdmin):
             )
         }),
         ('Notes', {
-           'fields': (
-               'notes',
-               'video_notes',
-           )
+            'fields': (
+                'notes',
+                'video_notes',
+            )
         }),
         ('Setup Values', {
             'fields': (
@@ -222,3 +221,12 @@ class LearningConstructSublevelExampleAdmin(admin.ModelAdmin):
 
     def get_sublevel_name(self, obj):
         return obj.sublevel.name
+
+
+@admin.register(ContextTag)
+class ContextTagAdmin(admin.ModelAdmin):
+    list_display = (
+        'text',
+        'owner',
+        'color',
+    )
