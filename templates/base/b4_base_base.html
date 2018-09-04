@@ -11,8 +11,9 @@
   <link href="{% static 'vendor/swiper/swiper.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/select2/select2.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/toastr/toastr.min.css' %}" rel="stylesheet">
   {% block extrastyles %}{% endblock %}
-<script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 </head>
 <body class="h-100">
 {% block base-content %}
@@ -24,7 +25,10 @@
 <script type="text/javascript" src="{% static 'vendor/swiper/swiper.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/select2/select2.min.js' %}"></script>
 <script src='{% static "django-related-select.js" %}'></script>
-<script type="text/javascript" src="{% static 'vendor/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js' %}"></script>
+<script type="text/javascript"
+        src="{% static 'vendor/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/toastr/toastr.min.js' %}"></script>
+{% include "_toastr.html" %}
 {% tz_detect %}
 {% block extrascripts %}{% endblock %}
 </body>

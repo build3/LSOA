@@ -37,7 +37,7 @@ class DenyUserView(RedirectView):
         user.is_pending = False
         user.is_active = False
         user.save()
-        messages.warning(request, 'User Denied')
+        messages.success(request, 'User Denied')
         self.url = request.GET.get('redirect')
         return super().get(request, *args, **kwargs)
 

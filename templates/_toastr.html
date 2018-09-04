@@ -1,11 +1,11 @@
 <script type="text/javascript">
-  $(window).on('load', (function () {
+  $(document).ready(function () {
     toastr.options = {
       "closeButton": false,
       "debug": true,
       "newestOnTop": false,
       "progressBar": false,
-      "positionClass": "toast-bottom-left",
+      "positionClass": "toast-top-right",
       "preventDuplicates": false,
       "onclick": null,
       "showDuration": "1000",
@@ -18,9 +18,10 @@
       "hideMethod": "fadeOut"
     };
     {% for message in messages %}
+      console.log('{{ message }}');
       toastr["{{ message.tags|lower }}"]("{{ message|escapejs|truncatechars:60 }}",
         "{{ message.tags|capfirst }}");
     {% endfor %}
-  }));
+  });
 
 </script>
