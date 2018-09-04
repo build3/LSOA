@@ -1,0 +1,42 @@
+{% load keyvalue %}
+
+{% include "_base_filtering.html" %}
+
+{% for table in dot_plot_tables %}
+  <div style="overflow-x: scroll;width:100%;">
+    <h4 class="text-align-center"  style="margin-bottom: 25px;">{{ table.c_name }}</h4>
+    <table class="table table-bordered">
+      <thead>
+      <tr>
+        {% for csl_id, csl_data in table.construct_map.items %}
+          <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
+            {{ csl_data.name }}
+            {% if csl_data.description|length > 0 %}
+              <span><i class="fa fa-info-circle"></i></span>
+            {% endif %}
+          </th>
+        {% endfor %}
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        {% for csl_id, csl_data in table.construct_map.items %}
+          <td>
+          {% for student_id, construct_data in table.matrix.items %}
+            {% for e in table.matrix|keyvalue:student_id|keyvalue:csl_id %}
+              <div class="row">
+                <span
+                  class="dot"
+                  data-csl-id="{{ csl_id }}"
+                  data-modal-launch-observations="[{{ e }}]"
+                />
+              </div>
+            {% endfor %}
+          {% endfor %}
+          </td>
+        {% endfor %}
+      </tr>
+      </tbody>
+    </table>
+  </div>
+{% endfor %}

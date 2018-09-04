@@ -1,0 +1,31 @@
+<div class="mt-3 mb-3 input-group">
+  <div class="input-group-addon">
+    <label class="mb-0" for="courseSelector">Filter class</label>
+  </div>
+  <select class="form-control" id="courseSelector">
+    {% if not course_id %}
+      <option selected>Choose...</option>
+      {% else %}
+      <option value="">All Students</option>
+    {% endif %}
+    {% for course in courses %}
+      <option value="{{ course.id }}" {% if course.id == course_id|add:0 %}selected{% endif %}>{{ course.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<form action="" method="GET">
+    <div class="row">
+      <div class="col-6">
+          <label>Date from</label>
+          {{ date_form.date_from }}
+      </div>
+      <div class="col-6">
+          <label>Date to</label>
+          {{ date_form.date_to }}
+      </div>
+    </div>
+    <div class="d-flex flex-row-reverse">
+      <input type="submit" class="btn btn-primary">
+    </div>
+</form>
