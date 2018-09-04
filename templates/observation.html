@@ -35,25 +35,25 @@
         <div class="art" style="">
           {# There are many states possible here... #}
           {# 1. New observation, empty image/video #}
-            {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
+          {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
           {# 2. New observation, just took image #}
-            {# "#image.src => in-memory file", button-rows => image_taken() #}
+          {# "#image.src => in-memory file", button-rows => image_taken() #}
           {# 3. New observation, just took image, annotated #}
-            {# "#image.src => in-memory file", button-rows => image_annotated() #}
+          {# "#image.src => in-memory file", button-rows => image_annotated() #}
           {# 4. New observation, just took video #}
-            {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
+          {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
 
           {# 5. Use Last observation, image (fresh) #}
-            {# "#image.src => url", button-rows => image_taken_no_reset() #}
+          {# "#image.src => url", button-rows => image_taken_no_reset() #}
           {# 6. Use Last observation, image, annotated #}
-            {# "#image.src => in-memory file", button-rows => image_annotated_no_reset() #}
+          {# "#image.src => in-memory file", button-rows => image_annotated_no_reset() #}
           {# 7. Use Last observation, video #}
-            {# "#image => hidden", "#video => url", button-rows => none() #}
+          {# "#image => hidden", "#video => url", button-rows => none() #}
 
           {# 8. Edit observation, image (can't replace) #}
-            {# "#image.src => url", button-rows => image_taken_no_reset() #}
+          {# "#image.src => url", button-rows => image_taken_no_reset() #}
           {# 9. Edit observation, video (can't replace) #}
-            {# "#image => hidden", "#video => url", button-rows => none() #}
+          {# "#image => hidden", "#video => url", button-rows => none() #}
 
           <!-- TODO FIX VIDEO -->
           <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;">
@@ -89,14 +89,6 @@
         </div>
 
         {#    Constructs    #}
-        <div class="text-center">
-          {% for tag in tags %}
-              <input type="hidden" value="{{ tag.id }}" data-tag-id-value="{{ tag.id }}">
-              <div class="btn btn-light tag" data-tag-id="{{ tag.id }}" style="padding: 15px 15px;">
-                {{ tag.text }}
-              </div>
-          {% endfor %}
-        </div>
         {% if form.constructs.errors %}
           <div role="alert" class="alert alert-danger">
             {{ form.constructs.errors }}
@@ -150,6 +142,15 @@
           </div>
         {% endif %}
         <div>{{ form.observation_date }}</div>
+        {# TAGS SECTION #}
+        <div class="text-center">
+          {% for tag in tags %}
+            <input type="hidden" value="{{ tag.id }}" data-tag-id-value="{{ tag.id }}">
+            <div class="btn btn-light tag" data-tag-id="{{ tag.id }}" style="padding: 15px 15px;">
+              {{ tag.text }}
+            </div>
+          {% endfor %}
+        </div>
         <h4 style="text-align: center; margin: 0;">Notes</h4>
         <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
         <input name="video_notes" style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
@@ -231,14 +232,14 @@
         {% endif %}
         <a href="#"
            id="submit"
-           class="btn fa fa-3x {%if view.kwargs.pk %}fa-floppy-o{% else %}fa-plus{% endif %} float-right text-dark"
+           class="btn fa fa-3x {% if view.kwargs.pk %}fa-floppy-o{% else %}fa-plus{% endif %} float-right text-dark"
            onclick="document.getElementById('form').submit()">
-         </a>
+        </a>
       </div>
     </div>
-      {% for hidden in form.hidden_fields %}
-        {{ hidden }}
-      {% endfor %}
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
   </form>
   <script>
     $(document).ready(function () {
@@ -288,7 +289,7 @@
         }
       };
 
-      var markSelectStudents = function() {
+      var markSelectStudents = function () {
         var chosen_students = JSON.parse("{{ chosen_students }}");
         for (var index = 0; index < chosen_students.length; index++) {
           openCard(chosen_students[index])
@@ -296,14 +297,14 @@
         }
       };
 
-      var markSelectConstructs = function() {
+      var markSelectConstructs = function () {
         var chosen_constructs = JSON.parse("{{ chosen_constructs }}");
         for (var index = 0; index < chosen_constructs.length; index++) {
           toggleConstruct(chosen_constructs[index]);
         }
       };
 
-      var markSelectTags = function() {
+      var markSelectTags = function () {
         var chosen_tags = JSON.parse("{{ chosen_tags }}");
         for (var index = 0; index < chosen_tags.length; index++) {
           toggleTags(chosen_tags[index]);
@@ -342,26 +343,26 @@
 
       {# There are many states possible here... #}
       {# 1. New observation, empty image/video #}
-        {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
+      {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
       {# 2. New observation, just took image #}
-        {# "#image.src => in-memory file", button-rows => image_taken() #}
+      {# "#image.src => in-memory file", button-rows => image_taken() #}
       {# 3. New observation, just took image, annotated #}
-        {# "#image.src => in-memory file", button-rows => image_annotated() #}
+      {# "#image.src => in-memory file", button-rows => image_annotated() #}
       {# 4. New observation, just took video #}
-        {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
+      {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
 
       {# 5. Use Last observation, image (fresh) #}
-        {# "#image.src => url", button-rows => image_taken_no_reset() #}
+      {# "#image.src => url", button-rows => image_taken_no_reset() #}
       {# 6. Use Last observation, image, annotated #}
-        {# "#image.src => url", button-rows => image_annotated_no_reset() #}
+      {# "#image.src => url", button-rows => image_annotated_no_reset() #}
       {# 7. Use Last observation, video #}
-        {# "#image => hidden", "#video => url", button-rows => none() #}
+      {# "#image => hidden", "#video => url", button-rows => none() #}
       {# TODO need to be able to reset fo 5, 6, 7... #}
 
       {# 8. Edit observation, image (can't replace) #}
-        {# "#image.src => url", button-rows => image_taken_no_reset() #}
+      {# "#image.src => url", button-rows => image_taken_no_reset() #}
       {# 9. Edit observation, video (can't replace) #}
-        {# "#image => hidden", "#video => url", button-rows => none() #}
+      {# "#image => hidden", "#video => url", button-rows => none() #}
 
       {# CAN START IN STATES 1, 5, 7, 8, and 9 #}
 

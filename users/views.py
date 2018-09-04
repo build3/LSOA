@@ -1,17 +1,14 @@
-from allauth.socialaccount.forms import DisconnectForm
-from allauth.socialaccount.views import ConnectionsView
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.http import Http404, HttpResponseNotAllowed
-from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
-from django.views.generic import ListView, RedirectView, UpdateView
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.http import Http404
+from django.views.generic import ListView, RedirectView
 
 from .models import User
 
 
-@method_decorator(staff_member_required, name='dispatch')
-class ApproveUserView(RedirectView):
+class ApproveUserView(PermissionRequiredMixin, RedirectView):
+    permission_required = 'lsoa.can_approve_deny_users'
+
     def get(self, request, *args, **kwargs):
         user_id = kwargs.get('id')
         try:
@@ -26,8 +23,9 @@ class ApproveUserView(RedirectView):
         return super().get(request, *args, **kwargs)
 
 
-@method_decorator(staff_member_required, name='dispatch')
-class DenyUserView(RedirectView):
+class DenyUserView(PermissionRequiredMixin, RedirectView):
+    permission_required = 'lsoa.can_approve_deny_users'
+
     def get(self, request, *args, **kwargs):
         user_id = kwargs.get('id')
         try:
@@ -37,51 +35,30 @@ class DenyUserView(RedirectView):
         user.is_pending = False
         user.is_active = False
         user.save()
-        messages.warning(request, 'User Denied')
+        messages.success(request, 'User Denied')
         self.url = request.GET.get('redirect')
         return super().get(request, *args, **kwargs)
 
 
-@method_decorator(staff_member_required, name='dispatch')
-class PendingUserListView(ListView):
+class PendingUserListView(PermissionRequiredMixin, ListView):
+    permission_required = 'lsoa.can_approve_deny_users'
+
     model = User
     queryset = User.objects.filter(is_pending=True)
     actions = [('approve_user', 'Approve'), ('deny_user', 'Deny')]
 
 
-@method_decorator(staff_member_required, name='dispatch')
-class ApprovedUserListView(ListView):
+class ApprovedUserListView(PermissionRequiredMixin, ListView):
+    permission_required = 'lsoa.can_approve_deny_users'
+
     model = User
     queryset = User.objects.filter(is_pending=False, is_active=True)
     actions = [('deny_user', 'Deny')]
 
 
-@method_decorator(staff_member_required, name='dispatch')
-class DeniedUserListView(ListView):
+class DeniedUserListView(PermissionRequiredMixin, ListView):
+    permission_required = 'lsoa.can_approve_deny_users'
+
     model = User
     queryset = User.objects.filter(is_pending=False, is_active=False)
     actions = [('approve_user', 'Approve')]
-
-
-class UpdateUserView(UpdateView):
-    model = User
-    fields = ['first_name', 'last_name', 'email']
-    success_url = reverse_lazy('account_edit')
-
-    def get_object(self, **kwargs):
-        return self.request.user
-
-    def form_valid(self, form):
-        messages.success(self.request, 'Account updated!')
-        return super().form_valid(form)
-
-    def get_context_data(self, **kwargs):
-        kwargs['connect_form'] = DisconnectForm(request=self.request)
-        return super().get_context_data(**kwargs)
-
-
-class ConnectedAccountsFormView(ConnectionsView):
-    success_url = reverse_lazy('account_edit')
-
-    def get(self, request, *args, **kwargs):
-        raise HttpResponseNotAllowed('Can only POST to this view')

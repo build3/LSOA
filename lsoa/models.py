@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from django_extensions.db.models import TimeStampedModel
 from tinymce.models import HTMLField
 
-from utils.ownership import OwnerMixin
+from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
 
 @deconstructible
@@ -84,7 +84,7 @@ class StudentGrouping(TimeStampedModel):
     groups = models.ManyToManyField('lsoa.StudentGroup', blank=True)
 
     def __str__(self):
-        return '{} [{}]'.format(self.name, self.course)
+        return '{}'.format(self.name)
 
 
 class Observation(TimeStampedModel, OwnerMixin):
@@ -183,7 +183,7 @@ class LearningConstructSublevelExample(TimeStampedModel):
         return '({}) {}'.format(self.sublevel.name, self.text[:50])
 
 
-class ContextTag(TimeStampedModel, OwnerMixin):
+class ContextTag(TimeStampedModel, OptionalOwnerMixin):
     """
     A context tag for tagging observations
     """
@@ -201,3 +201,14 @@ class ContextTag(TimeStampedModel, OwnerMixin):
 
     class Meta:
         ordering = ['-last_used']
+
+
+class AdminPerms(models.Model):
+
+    class Meta:
+
+        managed = False  # No database table creation or deletion operations will be performed for this model
+
+        permissions = (
+            ('can_approve_deny_users', 'Can Approve or Deny Users'),
+        )

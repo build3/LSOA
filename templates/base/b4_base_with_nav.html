@@ -26,9 +26,11 @@
             {% endif %}
           ">Star Charts</a>
         </li>
+      {% if perms.lsoa.can_approve_deny_users %}
         <li class="nav-item {% active_link 'pending_users' %}">
           <a class="nav-link" href="{% url 'pending_users' %}">Pending Users</a>
         </li>
+      {% endif %}
         <li class="nav-item {% active_link 'import_class_roster' %}">
           <a class="nav-link" href="{% url 'import_class_roster' %}">Import Class</a>
         </li>
@@ -37,6 +39,9 @@
         </li>
         <li class="nav-item {% active_link 'admin:index' %}">
           <a class="nav-link" href="{% url 'admin:index' %}">Admin Site</a>
+        </li>
+      <li class="nav-item">
+          <a class="nav-link" href="{% url 'account_logout' %}">Log Out</a>
         </li>
       </ul>
       <ul class="navbar-nav">

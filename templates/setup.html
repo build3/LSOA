@@ -12,12 +12,6 @@
   <script src='{% static "django-related-select.js" %}'></script>
   <script>
 
-    {% for message in messages %}
-      window.myApp.toast.create({
-        text: '{{ message }}'
-      }).open();
-    {% endfor %}
-
     function updateAddGroupLink() {
       var $gLink = $('#grouping_link');
       var $courseField = $('#id_course');
