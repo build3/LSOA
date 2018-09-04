@@ -248,7 +248,7 @@ class DefaultCourseView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         course_id = request.POST.get('course', '')
         if not course_id.isdigit():
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest()  # TODO not sure if this should be bad request or just 204 No Content.
 
         course = get_object_or_404(Course, pk=int(course_id))
         user = request.user
