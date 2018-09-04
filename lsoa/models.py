@@ -201,3 +201,14 @@ class ContextTag(TimeStampedModel, OwnerMixin):
 
     class Meta:
         ordering = ['-last_used']
+
+
+class AdminPerms(models.Model):
+
+    class Meta:
+
+        managed = False  # No database table creation or deletion operations will be performed for this model
+
+        permissions = (
+            ('can_approve_deny_users', 'Can Approve or Deny Users'),
+        )

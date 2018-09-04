@@ -1,18 +1,16 @@
-import io
-import logging
-
 import collections
+import io
 import json
-
+import logging
 from datetime import timedelta
+
 from braces.views import JSONResponseMixin
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse, Http404, \
-    HttpResponseBadRequest
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -207,7 +205,6 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
     success_url = reverse_lazy('observation_view')
 
     def get_context_data(self, **kwargs):
-
         available_tags = self.object.tag_choices
         kwargs['header'] = self.object.name.strip() or 'Observation {}'.format(self.object.id)
         kwargs['created'] = self.object.created
@@ -420,7 +417,7 @@ class ImportClassRoster(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         # clear any residual data
         if self.session_variable in self.request.session.keys():
-            del(self.request.session[self.session_variable])
+            del (self.request.session[self.session_variable])
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -459,7 +456,8 @@ class ImportClassRoster(LoginRequiredMixin, TemplateView):
             return self.handle_error(message)
 
     def handle_error(self, message):
-        messages.error(request=self.request, message=message, fail_silently=True, extra_tags='alert alert-contrast alert-danger')
+        messages.error(request=self.request, message=message, fail_silently=True,
+                       extra_tags='alert alert-contrast alert-danger')
         return HttpResponseRedirect(reverse('import_class_roster'))
 
 
@@ -518,7 +516,7 @@ def export_class_roster(request):
 
 
 def get_constructs(pk_list):
-    return LearningConstructSublevel.objects.filter(pk__in=pk_list).\
+    return LearningConstructSublevel.objects.filter(pk__in=pk_list). \
         select_related('level', 'level__construct').prefetch_related('examples')
 
 
@@ -556,6 +554,7 @@ class EditTag(BaseTagManagement, UpdateView):
 
     def get_queryset(self):
         return ContextTag.objects.filter(owner=self.request.user)
+
 
 class ListTag(BaseTagManagement, ListView):
     title = 'Tags'
