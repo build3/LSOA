@@ -42,6 +42,7 @@ class Student(TimeStampedModel):
     """
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
+    student_id = models.CharField(max_length=30, null=True, unique=True)
     nickname = models.CharField(max_length=255, blank=True, default='')
     grade_level = models.PositiveSmallIntegerField(default=0)
 
