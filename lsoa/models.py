@@ -84,7 +84,7 @@ class StudentGrouping(TimeStampedModel):
     groups = models.ManyToManyField('lsoa.StudentGroup', blank=True)
 
     def __str__(self):
-        return '{} [{}]'.format(self.name, self.course)
+        return '{}'.format(self.name)
 
 
 class Observation(TimeStampedModel, OwnerMixin):
