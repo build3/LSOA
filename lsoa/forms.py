@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.forms.widgets import SelectMultiple
 from django.urls import reverse_lazy
@@ -85,7 +86,7 @@ class SetupForm(forms.Form):
             self.fields['grouping'].init_bound_field(self.data.get('course'))
 
         request = get_current_request()
-        self.fields['context_tags'].queryset = ContextTag.objects.filter(owner=request.user)
+        self.fields['context_tags'].queryset = ContextTag.objects.filter(Q(owner=request.user) | Q(owner__isnull=True))
 
         for field in self.fields:
             self.fields[field].widget.attrs['class'] = 'form-control'

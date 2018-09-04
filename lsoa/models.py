@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from django_extensions.db.models import TimeStampedModel
 from tinymce.models import HTMLField
 
-from utils.ownership import OwnerMixin
+from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
 
 @deconstructible
@@ -183,7 +183,7 @@ class LearningConstructSublevelExample(TimeStampedModel):
         return '({}) {}'.format(self.sublevel.name, self.text[:50])
 
 
-class ContextTag(TimeStampedModel, OwnerMixin):
+class ContextTag(TimeStampedModel, OptionalOwnerMixin):
     """
     A context tag for tagging observations
     """
