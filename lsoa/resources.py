@@ -66,9 +66,9 @@ class ClassRoster(object):
                                                      first_name__iexact=row['Student First Name'],
                                                      grade_level=int(row.get('Grade Level', 0))).first()
                     if student:
-                        row['Student ID'] = student.id
+                        row['Student ID'] = student.student_id
                     else:
-                        row['Student ID'] = 'NEW'
+                        raise AttributeError('Student ID is required for new students')
 
             preview_data = Dataset()
             preview_data.dict = imported_data
@@ -99,15 +99,19 @@ class ClassRoster(object):
 
             row['Course ID'] = course.id
 
-            if row['Student ID'] == 'NEW':
-                student, created = Student.objects.get_or_create(last_name=row['Student Last Name'],
-                                                                 first_name=row['Student First Name'],
-                                                                 grade_level=int(row.get('Grade Level', 0)),
-                                                                 defaults={'nickname': row.get('Student Nickname')})
-            else:
-                student, created = Student.objects.get(id=int(row['Student ID'])), False
+            student_id = row['Student ID']
+            try:
+                student = Student.objects.get(student_id=student_id)
+            except Student.DoesNotExist:
+                student = Student.objects.create(
+                    last_name=row['Student Last Name'],
+                    first_name=row['Student First Name'],
+                    grade_level=int(row.get('Grade Level', 0)),
+                    student_id=row['Student ID'],
+                    nickname=row['Student Nickname']
+                )
 
-            row['Student ID'] = student.id
+            row['Student ID'] = student.student_id
             students.append(student.id)
 
         if students and course:

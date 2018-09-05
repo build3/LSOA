@@ -33,7 +33,7 @@ export_class_roster.short_description = 'Export selected course rosters'
 
 
 class StudentResource(resources.ModelResource):
-    id = fields.Field(column_name='Student ID', attribute='id')
+    id = fields.Field(column_name='Student ID', attribute='student_id')
     first_name = fields.Field(column_name='First Name', attribute='first_name')
     last_name = fields.Field(column_name='Last Name', attribute='last_name')
     nickname = fields.Field(column_name='Nickname', attribute='nickname')
@@ -77,6 +77,7 @@ class StudentAdmin(ImportExportActionModelAdmin):
                 'first_name',
                 'last_name',
                 'nickname',
+                'student_id',
                 'grade_level',
             )
         }),
