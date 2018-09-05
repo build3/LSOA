@@ -179,3 +179,8 @@ class DateFilteringForm(forms.Form):
         widget=DateInput(attrs={'class': 'form-control'}),
         required=False
     )
+    constructs = forms.ModelMultipleChoiceField(
+        widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'}),
+        required=False,
+        queryset=LearningConstructSublevel.objects.all()
+    )

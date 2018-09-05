@@ -372,10 +372,12 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         date_filtering_form = DateFilteringForm(self.request.GET)
         date_from = None
         date_to = None
+        selected_constructs = None
 
         if date_filtering_form.is_valid():
             date_from = date_filtering_form.cleaned_data['date_from']
             date_to = date_filtering_form.cleaned_data['date_to']
+            selected_constructs = date_filtering_form.cleaned_data['constructs']
 
         constructs_to_cover = LearningConstruct.objects.annotate(
             q_count=Count('learningconstructlevel__learningconstructsublevel__observation')
@@ -389,10 +391,12 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         data.update({
             'star_chart_tables': star_chart_tables,
             'dot_plot_tables': tables,
+            'selected_constructs': selected_constructs,
             'top_level_construct_map': top_level_construct_map,
             'courses': Course.objects.all(),
             'course_id': course_id,
-            'date_form': date_filtering_form,
+            'filtering_form': date_filtering_form,
+            'selected_chart': 3
 
         })
         return data

@@ -1,7 +1,7 @@
 {% extends 'base/b4_base_with_nav.html' %}
 
 {% load staticfiles %}
-{% load keyvalue %}
+{% load observations %}
 
 {% block extrastyles %}
   <style>
@@ -115,26 +115,28 @@
       <div class="row">
         <div class="col-12">
 
+          {% include "_base_filtering.html" %}
+
           <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item">
-              <a class="nav-link active" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
+              <a class="nav-link {% if selected_chart == 1 %} active {% endif %}" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" data-toggle="tab" href="#chart_v2">Star Chart v2</a>
+              <a class="nav-link {% if selected_chart == 2 %} active {% endif %}" data-toggle="tab" href="#chart_v2">Star Chart v2</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" data-toggle="tab" href="#chart_v3">Star Chart v3</a>
+              <a class="nav-link {% if selected_chart == 3 %} active {% endif %}" data-toggle="tab" href="#chart_v3">Star Chart v3</a>
             </li>
           </ul>
 
           <div class="tab-content">
-            <div class="tab-pane active" id="chart_v1">
+            <div class="tab-pane {% if selected_chart == 1 %} active {% else %} fade {% endif %}" id="chart_v1">
               {% include "_star_chart_v1.html" %}
             </div>
-            <div class="tab-pane fade" id="chart_v2">
+            <div class="tab-pane {% if selected_chart == 2 %} active {% else %} fade {% endif %}" id="chart_v2">
               {% include "_star_chart_v2.html" %}
             </div>
-            <div class="tab-pane fade" id="chart_v3">
+            <div class="tab-pane {% if selected_chart == 3 %} active {% else %} fade {% endif %}" id="chart_v3">
               {% include "_star_chart_v3.html" %}
             </div>
           </div>
