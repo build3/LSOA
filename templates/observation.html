@@ -477,8 +477,8 @@
         var imageDom = document.getElementById('image')
         var naturalWidth = imageDom.naturalWidth;
         var naturalHeight = imageDom.naturalHeight;
-        var xScale = width/naturalWidth;
-        var yScale = height/naturalHeight;
+        var xScale = width / naturalWidth;
+        var yScale = height / naturalHeight;
 
         var json = scale(ctx, xScale, yScale);
         stage.loadFromJSON(ctx, stage.renderAll.bind(stage));
@@ -552,8 +552,8 @@
           var imageDom = document.getElementById('image')
           var naturalWidth = imageDom.naturalWidth;
           var naturalHeight = imageDom.naturalHeight;
-          var xScale = naturalWidth/width;
-          var yScale = naturalHeight/height;
+          var xScale = naturalWidth / width;
+          var yScale = naturalHeight / height;
 
           var json = scale(stage.toJSON(), xScale, yScale);
           return JSON.stringify(json);

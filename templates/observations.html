@@ -92,7 +92,7 @@
         $('#the-modal .modal-body').html('');
         observationIds.forEach(function (id) {
           $('#the-modal .modal-body').append($('[data-observation-id="' + id + '"]').clone());
-          var $canvas = $('#the-modal .modal-body #'+id);
+          var $canvas = $('#the-modal .modal-body #' + id);
           $canvas.attr('id', 'canvas' + id);
 
           var annotation_data = $('#annotation_data_'+id).html();
@@ -102,21 +102,21 @@
               isDrawingMode: false,
               selection: false
             });
-            var $image = $('#the-modal .modal-body #image-'+id);
+            var $image = $('#the-modal .modal-body #image-' + id);
             var height = $image.height();
             var width = $image.width();
 
             canvas.setHeight(height);
             canvas.setWidth(width);
 
-            var imageDom = document.getElementById("image-"+id)
+            var imageDom = document.getElementById("image-" + id)
             var naturalWidth = 1;
             var naturalHeight = 1;
             naturalWidth = imageDom.naturalWidth;
             naturalHeight = imageDom.naturalHeight;
 
-            var xScale = width/naturalWidth;
-            var yScale = height/naturalHeight;
+            var xScale = width / naturalWidth;
+            var yScale = height / naturalHeight;
 
             if (imageDom != null) {
               naturalWidth = imageDom.naturalWidth;
@@ -138,7 +138,7 @@
             }
 
             if (annotation_data != undefined && annotation_data != "") {
-              var ctx = JSON.parse(annotation_data.replace(/&quot;/g,'"'));
+              var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
               var obj = ctx['objects'];
               for (var i in obj) {
                 obj[i].height = obj[i].width * xScale;
@@ -322,7 +322,7 @@
           <div class="row no-gutters">
             <div class="col-12" style="">
               <div class="art" style="">
-                <canvas id="{{observation.id}}" style="position: absolute;top: -400px;left: 0;bottom: 0;right: 0;"></canvas>
+                <canvas id="{{ observation.id }}" style="position: absolute;top: -400px;left: 0;bottom: 0;right: 0;"></canvas>
                 <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style="width: 100%;"/>
                 <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
                 <div class="d-none" id="url_{{observation.id}}">{{observation.original_image.url}}</div>
