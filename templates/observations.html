@@ -65,9 +65,58 @@
       })
     }
 
+    function loadAllowedConstructs() {
+      if ($("#construct-row").hasClass('d-none')) {
+        return
+      }
+      var date_from = $('#id_date_from').val();
+      var date_to = $('#id_date_to').val();
+      var course = $('#courseSelector').val();
+      if (isNaN(course)) {
+       course = undefined
+      }
+
+      $.ajax({
+        type: 'POST',
+        url: '{% url "observations-ajax" %}',
+        dataType: 'json',
+        data: {
+          'course': course,
+          'date_to': date_to,
+          'date_from': date_from,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function (response) {
+          var data = response['data']
+          var selected = $('#id_constructs').val();
+          $('#id_constructs').empty();
+
+          $.each(data, function(index, option) {
+            $('#id_constructs').append( new Option(option.value, option.id) );
+          });
+          $('#id_constructs').val(selected).trigger('change');
+        },
+        error: function (xhr, status, e) {
+
+        }
+      });
+    }
+
     $( document ).ready(function() {
       initSelect2();
+      loadAllowedConstructs();
     })
+
+    function registerUpdateConstructsListener(id) {
+      var listeners = ['change', 'unfocus'];
+      listeners.forEach(function(listener) {
+        $(id).on(listener, loadAllowedConstructs);
+      });
+    }
+
+    registerUpdateConstructsListener('#id_date_from');
+    registerUpdateConstructsListener('#id_date_to');
+
 
     $(function () {
       // Init tooltips
@@ -115,15 +164,16 @@
       });
 
       $('.nav-link').on('click', function (e) {
-          var chart_href = $(this).attr('href');
-          var chart_id = chart_href.substr(1);
-          $('#filtering-submit').attr('name', chart_id);
-          if (chart_id == "chart_v3") {
-            $("#construct-row").removeClass('d-none')
-            initSelect2();
-          } else {
-            $("#construct-row").addClass('d-none')
-          }
+        var chart_href = $(this).attr('href');
+        var chart_id = chart_href.substr(1);
+        $('#filtering-submit').attr('name', chart_id);
+        if (chart_id == "chart_v3") {
+          $("#construct-row").removeClass('d-none')
+          initSelect2();
+          loadAllowedConstructs();
+        } else {
+          $("#construct-row").addClass('d-none')
+        }
 
       })
 
@@ -157,8 +207,8 @@
               {% include "_star_chart_v1.html" %}
             </div>
             <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="chart_v2">
+              {% include "_star_chart_v2.html" %}
             </div>
-            {% include "_star_chart_v2.html" %}
             <div class="tab-pane {% if selected_chart == "chart_v3" %} active {% else %} fade {% endif %}" id="chart_v3">
               {% include "_star_chart_v3.html" %}
             </div>

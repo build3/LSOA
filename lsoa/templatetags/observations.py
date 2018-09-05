@@ -14,7 +14,7 @@ def selected_custructs(tables, filtered):
     if not filtered:
         return []
     filtered_ids = set(filtered.values_list('id', flat=True))
-    return [table for table in tables if set(table['construct_map']).issuperset(filtered_ids)]
+    return [table for table in tables if any(id in table['construct_map'] for id in filtered_ids)]
 
 
 @register.filter

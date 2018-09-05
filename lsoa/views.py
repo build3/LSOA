@@ -1,4 +1,5 @@
 import collections
+import datetime
 import io
 import json
 import logging
@@ -254,6 +255,50 @@ class DefaultCourseView(LoginRequiredMixin, View):
 
         return JsonResponse({'success': True})
 
+
+class ObservationAjax(LoginRequiredMixin, View):
+
+    def is_valid_date(self, date_string):
+        try:
+            if not date_string:
+                return True
+            datetime.datetime.strptime(date_string, '%Y-%m-%d')
+            return True
+        except ValueError:
+            return False
+
+    def is_valid_request(self, course_id, date_from, date_to):
+        return (
+            course_id.isdigit() or not course_id
+            and self.is_valid_date(date_from)
+            and self.is_valid_date(date_to)
+        )
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        course_id = request.POST.get('course', '')
+        date_from = request.POST.get('date_from', '')
+        date_to = request.POST.get('date_to', '')
+        if self.is_valid_request(course_id, date_from, date_to):
+            observations = Observation.objects.all()
+            if course_id:
+                observations = observations.filter(course=course_id)
+
+            if date_from:
+                observations = observations.filter(observation_date__gte=date_from)
+
+            if date_to:
+                observations = observations.filter(observation_date__lte=date_to)
+
+            constructs = set()
+            for observation in observations:
+                constructs.update(list(observation.constructs.all()))
+
+            constructs_data = [{'id': c.id, 'value': c.name} for c in list(constructs)]
+            return JsonResponse({'success': True, 'data': constructs_data})
+
+
+        return HttpResponseBadRequest()
 
 @method_decorator(csrf_exempt, name='dispatch')
 class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
