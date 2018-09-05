@@ -1,4 +1,5 @@
 import collections
+import datetime
 import io
 import json
 import logging
@@ -206,7 +207,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
 
     def get_context_data(self, **kwargs):
         available_tags = self.object.tag_choices
-        kwargs['header'] = self.object.name.strip() or 'Observation {}'.format(self.object.id)
+        kwargs['is_today'] = self.object.created.day == datetime.date.today().day
         kwargs['created'] = self.object.created
         kwargs['course'] = self.object.course
         kwargs['grouping'] = self.object.grouping
