@@ -1,12 +1,3 @@
-<script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
-<script>
-  $( document ).ready(function() {
-    $("#id_constructs").select2({
-      tokenSeparators: [',', '\n']
-    })
-  })
-</script>
-
 <div class="mt-3 mb-3 input-group">
   <div class="input-group-addon">
     <label class="mb-0" for="courseSelector">Filter class</label>
@@ -34,13 +25,13 @@
           {{ filtering_form.date_to }}
       </div>
     </div>
-    <div class="row">
+    <div id="construct-row" class="row {% if selected_chart != "chart_v3" %} d-none {% endif %}">
       <div class="col-6">
           <label>Constructs</label>
           {{ filtering_form.constructs }}
       </div>
     </div>
     <div class="d-flex flex-row-reverse">
-      <input type="submit" name="v1" class="btn btn-primary">
+      <input id="filtering-submit" type="submit" name="{{selected_chart}}" class="btn btn-primary">
     </div>
 </form>

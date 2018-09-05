@@ -365,6 +365,15 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'IS_OTHER': IS_OTHER
         }
 
+    def selected_chart(self):
+        get = self.request.GET or {}
+        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3']
+        for key in chart_keys:
+            if key in get:
+                return key
+
+        return chart_keys[0]
+
     def get_context_data(self, **kwargs):
         course_id = kwargs.get('course_id')
         all_constructs = LearningConstruct.objects.all()
@@ -396,7 +405,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'courses': Course.objects.all(),
             'course_id': course_id,
             'filtering_form': date_filtering_form,
-            'selected_chart': 3
+            'selected_chart': self.selected_chart()
 
         })
         return data

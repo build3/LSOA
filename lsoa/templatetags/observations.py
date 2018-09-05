@@ -3,9 +3,11 @@ from django import template
 
 register = template.Library()
 
+
 @register.filter
 def keyvalue(dict, key):
     return dict.get(key)
+
 
 @register.filter
 def selected_custructs(tables, filtered):
@@ -13,6 +15,7 @@ def selected_custructs(tables, filtered):
         return []
     filtered_ids = set(filtered.values_list('id', flat=True))
     return [table for table in tables if set(table['construct_map']).issuperset(filtered_ids)]
+
 
 @register.filter
 def selected_subcustructs(constructs, filtered):
