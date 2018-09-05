@@ -56,15 +56,7 @@
           {# "#image => hidden", "#video => url", button-rows => none() #}
 
           <!-- TODO FIX VIDEO -->
-          <img id="image" src="
-              {% if form.original_image.url %}
-                {{ form.original_image.url }}
-              {% elif recent_observation.video %}
-                {% static 'images/photo-placeholder.svg' %}
-              {% else %}
-                {% static 'images/photo-placeholder.svg' %}
-              {% endif %}
-              " style="width: 100%;">
+          <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;">
           <video id="recorded" style="display:none;width: 100%;" controls playsinline></video>
 
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
@@ -420,7 +412,6 @@
         $("#recorded").hide();
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").hide(); // TODO show this and show previous annotation with ability to edit it
-        setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
       }
 
       if ("{% if object.video %}{{ object.video.url }}{% endif %}") {
@@ -445,6 +436,7 @@
         isDrawingMode: false,
         selection: false
       });
+
       var index = parseInt(Math.random() * 100);
       var colors = [
         "#1abc9c", "#2ecc71",
@@ -454,6 +446,19 @@
         "#e67e22", "#f1c40f"
       ];
 
+      function scale(json, xScale, yScale) {
+        var obj = json['objects'];
+        for (var i in obj) {
+          obj[i].height = obj[i].width * xScale;
+          obj[i].width = obj[i].height * yScale;
+          obj[i].left = obj[i].left * yScale;
+          obj[i].top = obj[i].top * xScale;
+        }
+
+        return json
+
+      }
+
       setUpEasel();
 
       function setUpEasel() {
@@ -462,6 +467,21 @@
         initEnableDisable();
         initChangeColorButton();
         updateDrawingColorDisplay();
+        drawAnnotation();
+      }
+
+      function drawAnnotation() {
+        var ctx = JSON.parse("{{ form.annotation_data.value }}".replace(/&quot;/g,'"'));
+        var height = $('#image').height();
+        var width = $('#image').width();
+        var imageDom = document.getElementById('image')
+        var naturalWidth = imageDom.naturalWidth;
+        var naturalHeight = imageDom.naturalHeight;
+        var xScale = width / naturalWidth;
+        var yScale = height / naturalHeight;
+
+        var json = scale(ctx, xScale, yScale);
+        stage.loadFromJSON(ctx, stage.renderAll.bind(stage));
       }
 
       function updateAnnotationJson() {
@@ -511,6 +531,7 @@
             var $image = $("#image");
             stage.setHeight($image.height());
             stage.setWidth($image.width());
+
           }
           else if (enableDisableDraw.classList.contains('disa')) {
             // Disable drawing
@@ -526,7 +547,16 @@
 
       function getEaselData() {
         if (stage) {
-          return JSON.stringify(stage.toJSON());
+          var height = $('#image').height();
+          var width = $('#image').width();
+          var imageDom = document.getElementById('image')
+          var naturalWidth = imageDom.naturalWidth;
+          var naturalHeight = imageDom.naturalHeight;
+          var xScale = naturalWidth / width;
+          var yScale = naturalHeight / height;
+
+          var json = scale(stage.toJSON(), xScale, yScale);
+          return JSON.stringify(json);
         }
         return null;
       }

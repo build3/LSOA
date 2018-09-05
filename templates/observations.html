@@ -4,6 +4,7 @@
 {% load keyvalue %}
 
 {% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
   <style>
     [role="tooltip"] {
       z-index: 9999999;
@@ -57,6 +58,7 @@
 {% endblock %}
 
 {% block extrascripts %}
+  <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
   <script>
     $(function () {
 
@@ -90,6 +92,64 @@
         $('#the-modal .modal-body').html('');
         observationIds.forEach(function (id) {
           $('#the-modal .modal-body').append($('[data-observation-id="' + id + '"]').clone());
+          var $canvas = $('#the-modal .modal-body #' + id);
+          $canvas.attr('id', 'canvas' + id);
+
+          var annotation_data = $('#annotation_data_'+id).html();
+
+          $('#the-modal').on('shown.bs.modal', function() {
+            var canvas = new fabric.Canvas('canvas' + id, {
+              isDrawingMode: false,
+              selection: false
+            });
+            var $image = $('#the-modal .modal-body #image-' + id);
+            var height = $image.height();
+            var width = $image.width();
+
+            canvas.setHeight(height);
+            canvas.setWidth(width);
+
+            var imageDom = document.getElementById("image-" + id)
+            var naturalWidth = 1;
+            var naturalHeight = 1;
+            naturalWidth = imageDom.naturalWidth;
+            naturalHeight = imageDom.naturalHeight;
+
+            var xScale = width / naturalWidth;
+            var yScale = height / naturalHeight;
+
+            if (imageDom != null) {
+              naturalWidth = imageDom.naturalWidth;
+              naturalHeight = imageDom.naturalHeight;
+
+            }
+
+            $image.hide();
+
+            var url = $('#url_'+id).html();
+            if (url != undefined) {
+              canvas.setBackgroundImage(
+                decodeURI(url.replace(/&amp;/g, '&')),
+                canvas.renderAll.bind(canvas), {
+                  scaleX: xScale,
+                  scaleY: yScale
+                }
+              );
+            }
+
+            if (annotation_data != undefined && annotation_data != "") {
+              var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+              var obj = ctx['objects'];
+              for (var i in obj) {
+                obj[i].height = obj[i].width * xScale;
+                obj[i].width = obj[i].height * yScale;
+                obj[i].left = obj[i].left * yScale;
+                obj[i].top = obj[i].top * xScale;
+              }
+              canvas.loadFromJSON(ctx);
+            }
+          })
+
         });
 
         var modal = $('#the-modal');
@@ -259,7 +319,17 @@
           {% endif %}
 
           {% if observation.original_image %}
-            <img src="{{ observation.original_image.url }}" alt="" style="width: 100%; height: auto;"/>
+          <div class="row no-gutters">
+            <div class="col-12" style="">
+              <div class="art" style="">
+                <canvas id="{{ observation.id }}" style="position: absolute;top: -400px;left: 0;bottom: 0;right: 0;"></canvas>
+                <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style="width: 100%;"/>
+                <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
+                <div class="d-none" id="url_{{observation.id}}">{{observation.original_image.url}}</div>
+              </div>
+            </div>
+          </div>
+
           {% endif %}
 
           {% if observation.video %}
