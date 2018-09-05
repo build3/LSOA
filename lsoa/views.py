@@ -429,7 +429,7 @@ class ImportClassRoster(LoginRequiredMixin, TemplateView):
             return self.handle_error(message)
 
         try:
-            fmt = file.name.split('.')[1]
+            fmt = file.name.split('.')[-1]
             if fmt not in ACCEPTED_FILE_EXTENSIONS:
                 message = 'Accepted file types are csv and excel'
                 return self.handle_error(message)
@@ -456,8 +456,7 @@ class ImportClassRoster(LoginRequiredMixin, TemplateView):
             return self.handle_error(message)
 
     def handle_error(self, message):
-        messages.error(request=self.request, message=message, fail_silently=True,
-                       extra_tags='alert alert-contrast alert-danger')
+        messages.error(request=self.request, message=message, fail_silently=True)
         return HttpResponseRedirect(reverse('import_class_roster'))
 
 
@@ -467,14 +466,13 @@ def process_class_roster(request):
         dataset = Dataset()
         dataset.dict = json.loads(request.session[ImportClassRoster.session_variable])
         ClassRoster(user=request.user).process_rows(dataset)
-        messages.success(request, message='File imported successfully', extra_tags='alert alert-contrast alert-success',
-                         fail_silently=True)
+        messages.success(request, message='File imported successfully', fail_silently=True)
         return HttpResponseRedirect(reverse('import_class_roster'))
 
     except Exception as err:
         message = 'An error occurred loading the file'
         logger.exception(err)
-        messages.error(request, message=message, extra_tags='alert alert-contrast alert-danger', fail_silently=True)
+        messages.error(request, message=message, fail_silently=True)
         return HttpResponseRedirect(reverse('import_class_roster'))
 
 
@@ -505,13 +503,13 @@ def export_class_roster(request):
 
     except InvalidFileFormatError as err:
         message = str(err)
-        messages.error(request, message=message, extra_tags='alert alert-contrast alert-danger', fail_silently=True)
+        messages.error(request, message=message, fail_silently=True)
         return HttpResponseRedirect(reverse('import_class_roster'))
 
     except Exception as err:
         message = 'An error occurred exporting the file'
         logger.exception(err)
-        messages.error(request, message=message, extra_tags='alert alert-contrast alert-danger', fail_silently=True)
+        messages.error(request, message=message, fail_silently=True)
         return HttpResponseRedirect(reverse('import_class_roster'))
 
 
