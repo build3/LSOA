@@ -1,12 +1,12 @@
 {% load observations %}
 
-{% for table in dot_plot_tables|selected_custructs:selected_constructs %}
+{% for table in dot_plot_tables|selected_constructs:selected_constructs %}
   <div style="overflow-x: scroll;width:100%;">
     <h4 class="text-align-center"  style="margin-bottom: 25px;">{{ table.c_name }}</h4>
     <table class="table table-bordered">
       <thead>
       <tr>
-        {% for csl_id, csl_data in table.construct_map.items|selected_subcustructs:selected_constructs %}
+        {% for csl_id, csl_data in table.construct_map.items|selected_subconstructs:selected_constructs %}
           <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
             {{ csl_data.name }}
             {% if csl_data.description|length > 0 %}
@@ -18,7 +18,7 @@
       </thead>
       <tbody>
       <tr>
-        {% for csl_id, csl_data in table.construct_map.items|selected_subcustructs:selected_constructs %}
+        {% for csl_id, csl_data in table.construct_map.items|selected_subconstructs:selected_constructs %}
           <td>
           {% for student_id, construct_data in table.matrix.items %}
             {% for e in table.matrix|keyvalue:student_id|keyvalue:csl_id %}

@@ -10,7 +10,7 @@ def keyvalue(dict, key):
 
 
 @register.filter
-def selected_custructs(tables, filtered):
+def selected_constructs(tables, filtered):
     if not filtered:
         return []
     filtered_ids = set(filtered.values_list('id', flat=True))
@@ -18,7 +18,7 @@ def selected_custructs(tables, filtered):
 
 
 @register.filter
-def selected_subcustructs(constructs, filtered):
+def selected_subconstructs(constructs, filtered):
     if not filtered:
         return []
     filtered_ids = set(filtered.values_list('id', flat=True))
