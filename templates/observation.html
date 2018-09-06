@@ -18,8 +18,14 @@
 
 {% block extranav %}
   <li class="nav-item text-info" data-toggle="tooltip" data-html="true" title="{{ header }}">
-    {{ header|truncatechars:20 }}{% if created %}&nbsp;
-      <span class="text-info float-right">({{ created|localtime|date:"n-j-y g:i A" }})</span>{% endif %}
+      {{ header|truncatechars:20 }}
+      {% if created %}
+        {% if is_today %}
+          <span class="text-info float-right">{{ created|localtime|date:"g:i A" }}</span>
+        {% else %}
+          <span class="text-info float-right">{{ created|localtime|date:"n-j-y g:i A" }}</span>
+        {% endif %}
+      {% endif %}
   </li>
 {% endblock %}
 {% block content %}
