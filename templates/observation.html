@@ -375,8 +375,6 @@
         $("#buttons-draw-or-reset").show();
 
         enableDisableDraw.classList.remove('disabled');
-        setTimeout(initStage, 100); // I hate this hack, but otherwise the new sized image hasn't loaded
-        // TODO maybe replace with "on image changed"?
       });
 
       {# THIS HANDLES STATE 1 TO STATE 4 #}
@@ -405,7 +403,7 @@
       });
 
       {# THIS HANDLES ENTRY INTO STATE 8 OR 9 #}
-      {# FROM HERE YOU CAN'T MOVE STATES #}
+      {# FROM HERE YOU CANT MOVE STATES #}
       if ("{% if object.original_image %}{{ object.original_image.url }}{% endif %}") {
         {# this if block is goofy but otherwise it throws an error #}
         $("#image").attr("src", '{% if object.original_image %}{{ object.original_image.url|safe }}{% endif %}').show();
@@ -446,20 +444,8 @@
         "#e67e22", "#f1c40f"
       ];
 
-      function scale(json, xScale, yScale) {
-        var obj = json['objects'];
-        for (var i in obj) {
-          obj[i].height = obj[i].width * xScale;
-          obj[i].width = obj[i].height * yScale;
-          obj[i].left = obj[i].left * yScale;
-          obj[i].top = obj[i].top * xScale;
-        }
-
-        return json
-
-      }
-
-      setUpEasel();
+      var image = document.getElementById('image');
+      image.onload = setUpEasel;
 
       function setUpEasel() {
         color = colors[(index++) % colors.length];
@@ -472,16 +458,21 @@
 
       function drawAnnotation() {
         var ctx = JSON.parse("{{ form.annotation_data.value }}".replace(/&quot;/g,'"'));
+        var originalHeight = parseFloat(ctx['originalHeight']);
         var height = $('#image').height();
-        var width = $('#image').width();
-        var imageDom = document.getElementById('image')
-        var naturalWidth = imageDom.naturalWidth;
-        var naturalHeight = imageDom.naturalHeight;
-        var xScale = width / naturalWidth;
-        var yScale = height / naturalHeight;
+        var scale = height / originalHeight;
+        var positionScale = height / originalHeight;
 
-        var json = scale(ctx, xScale, yScale);
-        stage.loadFromJSON(ctx, stage.renderAll.bind(stage));
+        stage.setHeight($('#image').height());
+        stage.setWidth($('#image').width());
+
+        stage.loadFromJSON(ctx);
+        stage.forEachObject(function (object) {
+            object = object.scale(scale);
+            object.left = object.left * scale;
+            object.top = object.top * scale;
+        })
+        stage.renderAll()
       }
 
       function updateAnnotationJson() {
@@ -547,20 +538,12 @@
 
       function getEaselData() {
         if (stage) {
-          var height = $('#image').height();
-          var width = $('#image').width();
-          var imageDom = document.getElementById('image')
-          var naturalWidth = imageDom.naturalWidth;
-          var naturalHeight = imageDom.naturalHeight;
-          var xScale = naturalWidth / width;
-          var yScale = naturalHeight / height;
-
-          var json = scale(stage.toJSON(), xScale, yScale);
+          var json = stage.toJSON();
+          json['originalHeight'] = $('#image').height();
           return JSON.stringify(json);
         }
         return null;
       }
-
 
     });
 
