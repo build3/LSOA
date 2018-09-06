@@ -458,8 +458,12 @@
 
       function drawAnnotation() {
         var ctx = JSON.parse("{{ form.annotation_data.value }}".replace(/&quot;/g,'"'));
-        var originalHeight = parseFloat(ctx['originalHeight']);
         var height = $('#image').height();
+        var originalHeight = parseFloat(ctx['originalHeight']);
+        if (isNaN(originalHeight)) {
+          // Assume that original height was the same
+          originalHeight = height;
+        }
         var scale = height / originalHeight;
         var positionScale = height / originalHeight;
 

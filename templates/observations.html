@@ -127,8 +127,9 @@
 
             var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
             var originalHeight = parseFloat(ctx['originalHeight']);
-            if (!originalHeight) {
-                originalHeight = height;
+            if (isNaN(originalHeight)) {
+              // Assume that original height was the same - scale it for 60% like in html
+              originalHeight = height / 0.6;
             }
             var scale = height / originalHeight;
 
