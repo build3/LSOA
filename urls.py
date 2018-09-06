@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^observations/$', lsoa.views.ObservationAdminView.as_view(), name='observations_all'),
     url(r'^observations/(?P<course_id>\d+)/$', lsoa.views.ObservationAdminView.as_view(),
         name='observations_specific'),
+    url(r'^observations-ajax/$', lsoa.views.ObservationAjax.as_view(), name='observations-ajax'),
 
     # pending/approved/denied users (for admins only)
     url(r'^users/', include('users.urls')),

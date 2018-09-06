@@ -11,6 +11,11 @@
 
   <script src='{% static "django-related-select.js" %}'></script>
   <script>
+    $( document ).ready(function() {
+      $("#id_context_tags").select2({
+        tokenSeparators: [',', '\n']
+      })
+    })
 
     function updateAddGroupLink() {
       var $gLink = $('#grouping_link');
@@ -86,11 +91,6 @@
     registerSelectListeners('#id_course', updateDefaultCourseVisibility);
 
     $('#set_default_course').on('click', setDefaultCourse)
-
-    $("#id_context_tags").select2({
-      tokenSeparators: [',', '\n']
-    })
-
 
     $('[data-modal-sublevel]').on('click', function (e) {
       var exampleId = $(this).data('modal-sublevel');

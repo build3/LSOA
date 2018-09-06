@@ -1,0 +1,41 @@
+{% load observations %}
+
+{% for table in star_chart_tables %}
+  <div style="overflow-x: scroll;width:100%;">
+    <h4 class="text-align-center" style="margin-bottom: 25px;">{{ table.c_name }}</h4>
+    <table class="table table-bordered">
+      <thead>
+      <tr>
+        <th scope="col">&nbsp;</th>
+        {% for csl_id, csl_data in table.construct_map.items %}
+          <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
+            {{ csl_data.name }}
+            {% if csl_data.description|length > 0 %}
+              <span><i class="fa fa-info-circle"></i></span>
+            {% endif %}
+          </th>
+        {% endfor %}
+      </tr>
+      </thead>
+      <tbody>
+
+      {% for student_id, construct_data in table.matrix.items %}
+        <tr>
+          <th scope="row">{{ table.student_map | keyvalue:student_id }}</th>
+          {% for csl_id, csl_data in table.construct_map.items %}
+            {% with exists=table.matrix|keyvalue:student_id|keyvalue:csl_id %}
+              <td data-csl-id="{{ csl_id }}" class="text-center"
+                  {% if exists %}data-modal-launch-observations="[{{ exists|join:',' }}]">
+                    <i data-toggle="tooltip" title=""
+                       class="fa fa-star"></i>{% if exists|length > 1 %}
+                    <span class="star-number">({{ exists|length }})</span>{% endif %}
+                  {% else %}>&nbsp;{% endif %}</td>
+            {% endwith %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% endfor %}
