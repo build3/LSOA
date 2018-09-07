@@ -152,7 +152,7 @@
         <div class="text-center">
           {% for tag in tags %}
             <input type="hidden" value="{{ tag.id }}" data-tag-id-value="{{ tag.id }}">
-            <div class="btn btn-light tag" data-tag-id="{{ tag.id }}" style="padding: 15px 15px;">
+            <div class="btn btn-light tag" data-color="{{ tag.color }}" data-tag-id="{{ tag.id }}" style="padding: 15px 15px;">
               {{ tag.text }}
             </div>
           {% endfor %}
@@ -285,13 +285,19 @@
       };
 
       var toggleTags = function (tagId) {
-        $('[data-tag-id="' + tagId + '"]').toggleClass('bg-success', 'text-white');
+        var $tagNode = $('[data-tag-id="' + tagId + '"]');
+        var tagColor = $tagNode.data('color');
+
         if (checkedTags.hasOwnProperty(tagId)) {
           delete checkedTags[tagId];
           $('[data-tag-id-value="' + tagId + '"]').removeAttr('name');
+          $tagNode.css({'background-color': ''})
+          $tagNode.removeClass('tag-btn')
         } else {
           checkedTags[tagId] = true;
           $('[data-tag-id-value="' + tagId + '"]').attr('name', 'tags');
+          $tagNode.css({'background-color': tagColor})
+          $tagNode.addClass('tag-btn')
         }
       };
 
