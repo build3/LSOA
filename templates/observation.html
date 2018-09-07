@@ -291,13 +291,11 @@
         if (checkedTags.hasOwnProperty(tagId)) {
           delete checkedTags[tagId];
           $('[data-tag-id-value="' + tagId + '"]').removeAttr('name');
-          $tagNode.css({'background-color': ''})
-          $tagNode.removeClass('tag-btn')
+          $tagNode.css({'background-color': ''});
         } else {
           checkedTags[tagId] = true;
           $('[data-tag-id-value="' + tagId + '"]').attr('name', 'tags');
-          $tagNode.css({'background-color': tagColor})
-          $tagNode.addClass('tag-btn')
+          $tagNode.css({'background-color': tagColor});
         }
       };
 
