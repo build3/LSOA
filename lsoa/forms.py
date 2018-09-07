@@ -37,14 +37,6 @@ class TagField(forms.ModelMultipleChoiceField):
         return tags
 
 
-class DateInput(forms.widgets.DateInput):
-    """
-    Widgets to set input type to date - required for default datepicker.
-    By defaulty Date Input has input type set to text.
-    """
-    input_type = 'date'
-
-
 class ConstructModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def __init__(self, queryset, **kwargs):
         super(ConstructModelMultipleChoiceField, self).__init__(queryset, **kwargs)
@@ -110,7 +102,7 @@ class ObservationForm(forms.ModelForm):
             'construct_choices': forms.HiddenInput(),
             'tag_choices': forms.HiddenInput(),
             'notes': forms.Textarea(attrs={'class': 'notes-container'}),
-            'observation_date': DateInput,
+            'observation_date': forms.DateInput(attrs={'class': 'datepicker form-control'}),
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
@@ -125,9 +117,6 @@ class ObservationForm(forms.ModelForm):
                          initial=initial, error_class=error_class, label_suffix=label_suffix,
                          empty_permitted=empty_permitted, instance=instance,
                          use_required_attribute=use_required_attribute)
-
-        self.fields['observation_date'].widget.attrs['class'] = 'form-control'
-        self.fields['observation_date'].required = True
 
     def clean(self):
         super().clean()
@@ -172,11 +161,11 @@ class ContextTagForm(forms.ModelForm):
 
 class DateFilteringForm(forms.Form):
     date_from = forms.DateField(
-        widget=DateInput(attrs={'class': 'form-control'}),
+        widget=forms.DateInput(attrs={'class': 'datepicker form-control'}),
         required=False
     )
     date_to = forms.DateField(
-        widget=DateInput(attrs={'class': 'form-control'}),
+        widget=forms.DateInput(attrs={'class': 'datepicker form-control'}),
         required=False
     )
     constructs = forms.ModelMultipleChoiceField(

@@ -12,6 +12,8 @@
   <link href="{% static 'vendor/select2/select2.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/toastr/toastr.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/datepicker/css/gijgo.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/common/css/common.css' %}" rel="stylesheet">
   {% block extrastyles %}{% endblock %}
   <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 </head>
@@ -28,6 +30,16 @@
 <script type="text/javascript"
         src="{% static 'vendor/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/toastr/toastr.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'vendor/datepicker/js/gijgo.min.js' %}"></script>
+<script>
+  $( document ).ready(function() {
+      $('.datepicker').each(function (i, picker) {
+        $(picker).datepicker({
+          uiLibrary: 'bootstrap4'
+        });
+      });
+  });
+</script>
 {% include "_toastr.html" %}
 {% tz_detect %}
 {% block extrascripts %}{% endblock %}
