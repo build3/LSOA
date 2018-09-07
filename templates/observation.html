@@ -61,9 +61,16 @@
           {# 9. Edit observation, video (can't replace) #}
           {# "#image => hidden", "#video => url", button-rows => none() #}
 
-          <!-- TODO FIX VIDEO -->
-          <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;">
-          <video id="recorded" style="display:none;width: 100%;" controls playsinline></video>
+          {% if recent_observation.original_image and use_last_sample %}
+              <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%;"/>
+              <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+          {% elif recent_observation.video and use_last_sample %}
+              <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
+              <video id="recorded" style="width: 100%;" src="{{ recent_observation.video.url }}" controls playsinline/>
+          {% else %}
+              <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;"/>
+              <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+          {% endif %}
 
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
           <input type="hidden" id="annotated-image" name="annotation_data" value="">
@@ -375,7 +382,8 @@
       {# THIS HANDLES STATE 1 TO STATE 2 #}
       $("#photoUpload").on("change", function (e) {
         $("#image").attr("src", URL.createObjectURL(this.files[0])).show();
-        $("#video").hide();
+        $("#recorded").hide();
+        $("#videoUpload").val('');
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -389,6 +397,7 @@
       $("#videoUpload").on("change", function (e) {
         $("#recorded").attr("src", URL.createObjectURL(this.files[0])).show();
         $("#image").hide();
+        $("#photoUpload").val('');
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -400,6 +409,7 @@
         $("#buttons-draw-or-reset").hide();
         $("#image").attr("src", '{% static "images/photo-placeholder.svg" %}').show();
         $("#recorded").hide();
+        $("#videoUpload").val('');
 
         enableDisableDraw.classList.add('disabled');
         hideStage();
@@ -411,7 +421,7 @@
       });
 
       {# THIS HANDLES ENTRY INTO STATE 8 OR 9 #}
-      {# FROM HERE YOU CAN'T MOVE STATES #}
+      {# FROM HERE YOU CANT MOVE STATES #}
       if ("{% if object.original_image %}{{ object.original_image.url }}{% endif %}") {
         {# this if block is goofy but otherwise it throws an error #}
         $("#image").attr("src", '{% if object.original_image %}{{ object.original_image.url|safe }}{% endif %}').show();
@@ -424,6 +434,7 @@
         {# this if block is goofy but otherwise it throws an error #}
         $("#recorded").attr("src", '{% if object.video %}{{ object.video.url|safe }}{% endif %}').show();
         $("#image").hide();
+        $("#photoUpload").val('');
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").hide();
         setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
