@@ -98,15 +98,15 @@
           var annotation_data = $('#annotation_data_'+id).html();
 
           $('#the-modal').on('shown.bs.modal', function() {
-            var imageDom = document.getElementById("image-" + id)
-            if (!imageDom) {
-              return
+            var $image = $('#the-modal .modal-body #image-' + id);
+            if ($image.length == 0) {
+                return
             }
 
-            var $image = $('#the-modal .modal-body #image-' + id);
             var height = $image.height();
             var width = $image.width();
-            var naturalWidth = imageDom.naturalWidth;
+            var naturalWidth = $image.get(0).naturalWidth;
+            $image.hide();
             var imageScale = width/naturalWidth
 
             var canvas = new fabric.Canvas('canvas' + id, {
@@ -125,7 +125,10 @@
               }
             );
 
-            var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+            var ctx = {}
+            if (annotation_data !== "") {
+              var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+            }
             var originalHeight = parseFloat(ctx['originalHeight']);
             if (isNaN(originalHeight)) {
               // Assume that original height was the same - scale it for 60% like in html
@@ -140,7 +143,6 @@
               object.top = object.top * scale;
             })
             canvas.renderAll()
-            $image.hide();
           })
         });
 
@@ -318,7 +320,7 @@
                   <canvas id="{{ observation.id }}"></canvas>
                 </div>
                 <div style="display: flex; justify-content: center;">
-                  <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style=" width: 60%;"/>
+                  <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style=" width: 60%; height: 60%"/>
                 </div>
                 <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
                 <div class="d-none" id="url_{{observation.id}}">{{observation.original_image.url}}</div>
@@ -347,7 +349,7 @@
           {% if observation.students.all|length > 1 %}
             <small style="display: block;">Other students included: {{ observation.students.all|join:', ' }}</small>
           {% endif %}
-          <div class="hr" style="height: 0;width: 100%;border-bottom: 2px solid #AAA; margin-bottom: 20px;"></div>
+          <div class="hr" style="height: 0;width: 100%;border-bottom: 2px solid #AAA; margin-bottom: 20px; margin-top: 20px"></div>
         </div>
       {% endfor %}
     {% endfor %}
