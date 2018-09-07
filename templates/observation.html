@@ -62,14 +62,14 @@
           {# "#image => hidden", "#video => url", button-rows => none() #}
 
           {% if recent_observation.original_image and use_last_sample %}
-              <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%;"/>
-              <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+            <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%;"/>
+            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
           {% elif recent_observation.video and use_last_sample %}
-              <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
-              <video id="recorded" style="width: 100%;" src="{{ recent_observation.video.url }}" controls playsinline/>
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
+            <video id="recorded" style="width: 100%;" src="{{ recent_observation.video.url }}" controls playsinline/>
           {% else %}
-              <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;"/>
-              <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;"/>
+            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
           {% endif %}
 
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
