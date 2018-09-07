@@ -340,6 +340,7 @@
 
       var recordedVideoNote = document.querySelector('video#recordedNote'); // TODO change to jquery
       $("#videoNoteUpload").on("change", function (e) {
+        $('#id_notes').hide()
         recordedVideoNote.src = URL.createObjectURL(this.files[0]);
         recordedVideoNote.style.display = '';
         $('#videoNoteUploadVerb').text('Replace')
