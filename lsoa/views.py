@@ -138,11 +138,6 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
 
     def post(self, request, *args, **kwargs):
         if self.request.POST.get('use_recent_observation'):
-            kwargs['use_recent_observation'] = True
-            recent_observation = get_recent_observations(self.request.user).first()
-            if recent_observation:
-                self.initial['original_image'] = recent_observation.original_image
-                self.initial['video'] = recent_observation.video
             return self.get(request, *args, **kwargs)
         else:
             return super().post(request, *args, **kwargs)
@@ -188,7 +183,8 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         # Create new instance of observation form to clear error.
         # use_recent_observation is send for Use Last Sample action.
         if self.request.POST.get('use_recent_observation'):
-            kwargs['form'] = ObservationForm()
+            kwargs['use_last_sample'] = True
+            kwargs['form'] = ObservationForm(initial=self.initial)
 
         return super().get_context_data(**kwargs)
 
