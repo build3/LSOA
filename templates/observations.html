@@ -107,6 +107,9 @@
     $( document ).ready(function() {
       initSelect2();
       loadAllowedConstructs();
+      $('.datepicker').datepicker({
+          uiLibrary: 'bootstrap4'
+      });
     })
 
     function registerUpdateConstructsListener(id) {
