@@ -581,7 +581,7 @@ def get_recent_observations(owner, age=None):
 class BaseTagManagement(LoginRequiredMixin):
     model = ContextTag
     form_class = ContextTagForm
-    success_url = reverse_lazy('setup')
+    success_url = reverse_lazy('tag_list')
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

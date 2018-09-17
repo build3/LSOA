@@ -177,12 +177,19 @@
             <div class="examples-block">
               <div id="example-carousel-items">
                 <div class="carousel-inner">
-                  <div class="carousel-item active">
-                    <p>
-                      Once you select a learning construct using the toggle buttons to the left,
-                      different examples of the learning constructs will be shown here.
-                    </p>
-                  </div>
+                  {% for sublevel in construct_choices %}
+                    {% for example in sublevel.examples.all %}
+                      <div class="carousel-item {% if forloop.parentloop.first and forloop.first %} active {% endif %}" style="text-align: center;">
+                        <h4>{{ sublevel.name }}</h4>
+                        <p>{{ example.text }}</p>
+                        {% if example.image %}
+                          <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
+                            <img src="{{ example.image.url }}" style="max-height: 280px; max-width: 20vw;"/>
+                          </a>
+                        {% endif %}
+                      </div>
+                    {% endfor %}
+                  {% endfor %}
                 </div>
               </div>
             </div>
@@ -332,7 +339,6 @@
       $('.construct').on('click', function (e) {
         toggleConstruct($(this).data('construct-id'));
         $('#sublevel-description').html($(this).find('.sublevel-desc').html());
-        $('#example-carousel-items').html($(this).find('.sublevel-example').html());
       });
 
       $('.student').on('click', function (e) {

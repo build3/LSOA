@@ -189,7 +189,7 @@ class ContextTag(TimeStampedModel, OptionalOwnerMixin):
     A context tag for tagging observations
     """
     text = models.CharField(max_length=255)
-    color = models.CharField(max_length=7, default='#000000')
+    color = models.CharField(max_length=7, default='#17a2b8')
     last_used = models.DateTimeField(auto_now=True)
 
     def __str__(self):
