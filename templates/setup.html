@@ -1,0 +1,309 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'setup-form.css' %}">
+{% endblock %}
+
+{% block extrascripts %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+
+  <script src='{% static "django-related-select.js" %}'></script>
+  <script>
+    $( document ).ready(function() {
+      $("#id_context_tags").select2({
+        tokenSeparators: [',', '\n']
+      })
+    })
+
+    function updateAddGroupLink() {
+      var $gLink = $('#grouping_link');
+      var $courseField = $('#id_course');
+      if ($courseField.val()) {
+        $gLink.attr('href', '/grouping/?course=' + $courseField.val());
+      } else {
+        $gLink.removeAttr('href');
+      }
+    }
+
+    function updateEditGroupLink() {
+      var $gLink = $('#edit_grouping_link');
+      var $courseField = $('#id_course');
+      var $groupField = $('#id_grouping');
+      // handle unresolved backend problem for grouping selecting for selected course
+      if ($courseField.val() && $groupField.val() && $groupField.val() !== 'error') {
+        $gLink.attr('href', '/grouping/?course=' + $courseField.val() + '&grouping=' + $groupField.val());
+      } else {
+        $gLink.removeAttr('href');
+      }
+    }
+
+    function updateDefaultCourseVisibility() {
+      var $courseField = $('#id_course');
+      var $setDefaultButton = $('#set_default_course');
+      if ($courseField.val()) {
+        $setDefaultButton.show()
+      } else {
+        $setDefaultButton.hide()
+      }
+    }
+
+    function setDefaultCourse() {
+      var $courseField = $('#id_course');
+      var course = $courseField.val();
+      $.ajax({
+        type: 'POST',
+        url: '{% url "set-default-course" %}',
+        dataType: 'json',
+        data: {
+          'course': course,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function (data) {
+          $("#form-alert").addClass('alert alert-success');
+          $("#form-alert").text('Default course has been set')
+        },
+        error: function (xhr, status, e) {
+          alert('Setting default course failed.')
+        }
+      });
+    }
+
+    function registerSelectListeners(id, func) {
+      var listeners = ['click', 'update', 'change', 'focus', 'unfocus'];
+      listeners.forEach(function(listener) {
+        $(id).on(listener, func);
+      });
+    }
+
+    function registerSelectListenersWithReady(id, func) {
+      $(document).ready(func);
+      registerSelectListeners(id, func)
+    }
+
+    registerSelectListenersWithReady('#id_course', updateAddGroupLink);
+    registerSelectListenersWithReady('#id_grouping', updateAddGroupLink);
+
+    registerSelectListenersWithReady('#id_course', updateEditGroupLink);
+    registerSelectListenersWithReady('#id_grouping', updateEditGroupLink);
+
+    registerSelectListeners('#id_course', updateDefaultCourseVisibility);
+
+    $('#set_default_course').on('click', setDefaultCourse)
+
+    $('[data-modal-sublevel]').on('click', function (e) {
+      var exampleId = $(this).data('modal-sublevel');
+      var modal_content = $('#examples-' + exampleId).clone();
+
+      $('#examples-modal .modal-body').html(modal_content);
+
+      var modal = $('#examples-modal');
+      modal.modal({
+        size: 'lg',
+        fade: true
+      });
+    })
+
+    function forceTagsReset() {
+      $('#id_context_tags').val('').trigger('change')
+    }
+
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-6 offset-3">
+      <h1>{% block title %}LSOA: Setup{% endblock %}</h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6 offset-3">
+      <div id="form-alert" role="alert"></div>
+      <form action="{% url 'setup' %}" method="post" novalidate>
+        {% csrf_token %}
+        {{ form.media }}
+
+        {% if form.non_field_errors %}
+          {% for error in form.non_field_errors %}
+            <div class="item-content small color-red">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {% for field in form %}
+          {% if field.name == 'constructs' %}
+            {# pass, because we'll manually render that field later #}
+
+          {% else %}
+
+            <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
+              <div data-form-label="{{ field.auto_id }}">
+                <label for="{{ field.auto_id }}">{{ field.label }}</label>
+              </div>
+              {{ field }}
+              {% if field.name == "course" %}
+              <div class="d-flex flex-row-reverse">
+                <a id="set_default_course" class="btn btn-primary btn-sm mt-1 ml-1" href="#">
+                  <i class="fa fa-paperclip"></i> Set as default course
+                </a>
+              </div>
+              {% endif %}
+              {% if field.name == "grouping" %}
+                  <div class="d-flex flex-row-reverse">
+                    <a id="edit_grouping_link" class="btn btn-primary btn-sm mt-1 ml-1">
+                      <i class="fa fa-edit"></i> Edit Grouping
+                    </a>
+                    <a id="grouping_link" class="btn btn-primary btn-sm mt-1">
+                      <i class="fa fa-plus"></i> Add New Grouping
+                    </a>
+                </div>
+              {% endif %}
+
+              {% if field.name == "context_tags" %}
+                  <a id="add_tag" href="/tag/">+ Add New Tag</a>
+              {% endif %}
+            </div>
+            {% if field.errors %}
+              {% for error in field.errors %}
+                <div class="item-content small" style="color: red;">{{ error }}</div>
+              {% endfor %}
+            {% endif %}
+          {% endif %}
+
+        {% endfor %}
+
+
+        <div class="item-content">
+          <div class="item-title  {% if form.constructs.errors %}text-danger{% endif %}">Select Learning Constructs
+          </div>
+        </div>
+        {% if form.constructs.errors %}
+          {% for error in form.constructs.errors %}
+            <div class="item-content small text-danger">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+        <div id="accordion">
+          {% for construct in constructs %}
+            <div class="card">
+              <a class="card-header mb-0 d-inline" href="#"
+                 data-toggle="collapse" data-target="#{{ construct.name|cut:' ' }}">
+                {{ construct.name }}
+              </a>
+              <div class="collapse" id="{{ construct.name|cut:' ' }}">
+                <div class="card-body">
+                  {% for level in construct.levels %}
+                    <div class="card">
+                      <a class="card-header mb-0 d-inline" href="#"
+                         data-toggle="collapse" data-target="#level-{{ level.id }}">
+                        {{ level.name }}
+                      </a>
+                      <div class="collapse" id="level-{{ level.id }}">
+                        <div class="card-body">
+                          {% for sublevel in level.sublevels %}
+                            <div class="form-check">
+                              <input name="constructs" class="form-check-input" type="checkbox"
+                                     value="{{ sublevel.id }}" id="checkbox-{{ sublevel.id }}"
+                                     {% if sublevel.id in form.constructs.value %}checked{% endif %}>
+                              <label class="form-check-label col-11" for="checkbox-{{ sublevel.id }}">
+                                {{ sublevel.name }}) {{ sublevel.description }}
+                              </label>
+                              <div class="hidden">
+                                <div id="examples-{{ sublevel.id }}" >
+                                  <h3><b>{{ sublevel.name }}'s</b> examples</h3>
+                                  {% for example in sublevel.examples.all %}
+                                    <hr>
+                                    <p>{{ example.text }}</p>
+                                    {% if example.image %}
+                                      <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
+                                        <img src="{{ example.image.url }}" class-"example-image"/>
+                                      </a>
+                                    {% endif %}
+                                  {% endfor %}
+                                </div>
+                              </div>
+                              {% if sublevel.examples.all|length > 0 %}
+                                <span data-modal-sublevel="{{sublevel.id}}" class="col-1 top">
+                                  <i class="fa fa-question-circle"></i>
+                                </span>
+                              {% endif %}
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+
+        <div class="row" style="margin-top: 30px;">
+          <div class="col-6">
+              <input onclick="forceTagsReset()"class="btn btn-primary col" type="reset" value="Reset"/>
+          </div>
+          <div class="col-6">
+            <input class="btn btn-primary col" type="submit" value="Submit"/>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <div class="modal fade" id="examples-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css">
+  <style>
+    .select2-container.select2-container--default.select2-container--open {
+      z-index: 99999999;
+    }
+
+    [value="make-new-grouping"] ~ .item-inner .item-title {
+      position: relative;
+      top: -2px;
+      color: #1b9a59;
+    }
+
+    [value="make-new-grouping"] ~ .icon.icon-radio {
+      display: none;
+    }
+
+    [value="make-new-grouping"] ~ .item-inner .item-title:before {
+      content: '+';
+      position: relative;
+      top: -2px;
+      color: #1b9a59;
+      margin-right: 5px;
+      display: inline-block;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .example-image {
+      max-height: 280px;
+      max-width: 20vw;
+    }
+
+    .top {
+      vertical-align: top
+    }
+  </style>
+
+{% endblock %}

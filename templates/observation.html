@@ -1,0 +1,578 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles tz %}
+
+{% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'observation.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
+{% endblock %}
+{% block extrascripts %}
+  <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
+  <script src="{% static 'vendor/lightbox2/js/lightbox-plus-jquery.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gijgo@1.9.10/js/gijgo.min.js" type="text/javascript"></script>
+  <script>
+    lightbox.option({
+      'albumLabel': ''
+    })
+  </script>
+{% endblock %}
+
+{% block extranav %}
+  <li class="nav-item text-info" data-toggle="tooltip" data-html="true" title="{{ header }}">
+      {{ header|truncatechars:20 }}
+      {% if created %}
+        {% if is_today %}
+          <span class="text-info float-right">{{ created|localtime|date:"g:i A" }}</span>
+        {% else %}
+          <span class="text-info float-right">{{ created|localtime|date:"n-j-y g:i A" }}</span>
+        {% endif %}
+      {% endif %}
+  </li>
+{% endblock %}
+{% block content %}
+  {% if form.non_field_errors %}
+    <div role="alert" class="alert alert-danger">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+  <form id="form" action="" method="POST" enctype='multipart/form-data'>
+    {% csrf_token %}
+    <div class="row no-gutters">
+      <div class="col-6" style="">
+        <div class="art" style="">
+          {# There are many states possible here... #}
+          {# 1. New observation, empty image/video #}
+          {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
+          {# 2. New observation, just took image #}
+          {# "#image.src => in-memory file", button-rows => image_taken() #}
+          {# 3. New observation, just took image, annotated #}
+          {# "#image.src => in-memory file", button-rows => image_annotated() #}
+          {# 4. New observation, just took video #}
+          {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
+
+          {# 5. Use Last observation, image (fresh) #}
+          {# "#image.src => url", button-rows => image_taken_no_reset() #}
+          {# 6. Use Last observation, image, annotated #}
+          {# "#image.src => in-memory file", button-rows => image_annotated_no_reset() #}
+          {# 7. Use Last observation, video #}
+          {# "#image => hidden", "#video => url", button-rows => none() #}
+
+          {# 8. Edit observation, image (can't replace) #}
+          {# "#image.src => url", button-rows => image_taken_no_reset() #}
+          {# 9. Edit observation, video (can't replace) #}
+          {# "#image => hidden", "#video => url", button-rows => none() #}
+
+          {% if recent_observation.original_image and use_last_sample %}
+            <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%;"/>
+            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+          {% elif recent_observation.video and use_last_sample %}
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
+            <video id="recorded" style="width: 100%;" src="{{ recent_observation.video.url }}" controls playsinline/>
+          {% else %}
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;"/>
+            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+          {% endif %}
+
+          <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
+          <input type="hidden" id="annotated-image" name="annotation_data" value="">
+        </div>
+
+        <div class="btn-group-lg text-center mt-1" id="buttons-capture">
+          <label class="btn btn-primary mb-0" for="photoUpload">Take photo
+            <input name="original_image" hidden
+                   type="file" accept="image/*"
+                   id="photoUpload"></label>
+          <label class="btn btn-primary mb-0" for="videoUpload">Take video
+            <input name="video" style="display:none;" type="file"
+                   accept="video/*"
+                   id="videoUpload"></label>
+          {% if recent_observation and not view.kwargs.pk %}
+            <button class="btn btn-primary mb-0"
+                    type="submit"
+                    name="use_recent_observation" value="True">Use Last Sample
+            </button>
+          {% endif %}
+        </div>
+        <div class="btn-group-lg text-center mt-1" id="buttons-draw-or-reset" style="display:none;">
+          <a id="reset" class="btn btn-primary mb-0 text-white">Reset</a>
+          <a id="enable-draw" class="btn btn-primary mb-0 enab disabled text-white">
+            <span class="enab">Enable</span>
+            <span class="disa">Clear</span> Drawing</a>
+          <a id="drawing-color-button" class="disabled btn btn-primary mb-0 text-white">Change Color <span
+            id="drawing-color"></span></a>
+        </div>
+
+        {#    Constructs    #}
+        {% if form.constructs.errors %}
+          <div role="alert" class="alert alert-danger">
+            {{ form.constructs.errors }}
+          </div>
+        {% endif %}
+        <div class="text-center mt-2">
+          {% for sublevel in construct_choices %}
+            <input type="hidden" value="{{ sublevel.id }}" data-construct-id-value="{{ sublevel.id }}">
+            <div class="btn btn-light construct" data-construct-id="{{ sublevel.id }}" style="padding: 15px 15px;">
+              {{ sublevel.name }}
+              <div class="sublevel-desc" style="display: none;">
+                <h4>{{ sublevel.name }}</h4>
+                <p>{{ sublevel.description }}</p>
+              </div>
+              <div class="sublevel-example" style="display: none;">
+                <div class="carousel-inner">
+                  {% for example in sublevel.examples.all %}
+                    <div class="carousel-item {% if forloop.first %} active {% endif %}" style="text-align: center;">
+                      <h4>{{ sublevel.name }}</h4>
+                      <p>{{ example.text }}</p>
+                      {% if example.image %}
+                        <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
+                          <img src="{{ example.image.url }}" style="max-height: 280px; max-width: 20vw;"/>
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% empty %}
+                    <div class="carousel-item active" style="text-align: center;">
+                      <p>Sublevel has no available examples</p>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        {#    End Constructs    #}
+        <hr/>
+
+        <div id="sublevel-description" style="width: 100%; height:100px; overflow-y: scroll;">
+          <h4>Learning Construct Details</h4>
+          <p>Once you select a learning construct using the toggle buttons above, the description will
+            be displayed here.</p>
+        </div>
+      </div>
+      <div class="col-3">
+        <h4 style="text-align: center; margin: 0;">Observation date</h4>
+        {% if form.observation_date.errors %}
+          <div role="alert" class="alert alert-danger">
+            {{ form.observation_date.errors }}
+          </div>
+        {% endif %}
+        <div>{{ form.observation_date }}</div>
+        {# TAGS SECTION #}
+        <div class="text-center">
+          {% for tag in tags %}
+            <input type="hidden" value="{{ tag.id }}" data-tag-id-value="{{ tag.id }}">
+            <div class="btn btn-light tag" data-color="{{ tag.color }}" data-tag-id="{{ tag.id }}" style="padding: 15px 15px;">
+              {{ tag.text }}
+            </div>
+          {% endfor %}
+        </div>
+        <h4 style="text-align: center; margin: 0;">Notes</h4>
+        <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
+        <input name="video_notes" style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
+        <label class="btn btn-primary w-100" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio
+          note</label>
+        <div>{{ form.notes }}</div>
+        <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
+        <div id="sublevel-examples" style="height: 150px">
+          <div id="sublevelExampleControls" class="carousel slide carousel-fade" data-ride="carousel">
+            <div class="examples-block">
+              <div id="example-carousel-items">
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <p>
+                      Once you select a learning construct using the toggle buttons to the left,
+                      different examples of the learning constructs will be shown here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a class="carousel-control-prev" href="#sublevelExampleControls" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#sublevelExampleControls" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="col-3">
+        <h4 class="text-center">Students</h4>
+        {% if form.students.errors %}
+          <div role="alert" class="alert alert-danger">
+            {{ form.students.errors }}
+          </div>
+        {% endif %}
+        {% if grouping %}
+          {% for group in grouping.groups.all %}
+            <div class="card">
+              <div class="card-header">
+                <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                        data-target="#{{ group | slugify }}">
+                  {{ group }}
+                </button>
+              </div>
+              <div id="{{ group | slugify }}" class="collapse">
+                <div class="card-body">
+                  {% for student in group.students.all %}
+                    <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
+                    <button type="button" class="btn btn-link w-100 text-left student"
+                            data-student-id="{{ student.id }}">
+                      &nbsp;{{ student }}
+                    </button>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          {% for student in course.students.all %}
+            <input type="hidden" value="{{ student.id }}" data-student-id-value="{{ student.id }}">
+            <button type="button" class="btn btn-link w-100 text-left student"
+                    data-student-id="{{ student.id }}">
+              &nbsp;{{ student }}
+            </button>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        {% if last_observation_url %}
+          <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
+        {% else %}
+          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">Cancel</a>
+        {% endif %}
+        <a href="#"
+           id="submit"
+           class="btn fa fa-3x {% if view.kwargs.pk %}fa-floppy-o{% else %}fa-plus{% endif %} float-right text-dark"
+           onclick="document.getElementById('form').submit()">
+        </a>
+      </div>
+    </div>
+    {% for hidden in form.hidden_fields %}
+      {{ hidden }}
+    {% endfor %}
+  </form>
+  <script>
+    $(document).ready(function () {
+      {# THIS SECTION HANDLES THE STUDENT/CONSTRUCT TOGGLING #}
+
+      var checkedStudents = {};
+      var checkedConstructs = {};
+      var checkedTags = {};
+
+      var toggleStudent = function (studentId) {
+        $('[data-student-id="' + studentId + '"]').toggleClass('bg-warning');
+        if (checkedStudents.hasOwnProperty(studentId)) {
+          // Remove
+          delete checkedStudents[studentId];
+          $('[data-student-id-value="' + studentId + '"]').removeAttr('name');
+        } else {
+          checkedStudents[studentId] = true;
+          $('[data-student-id-value="' + studentId + '"]').attr('name', 'students');
+        }
+      };
+
+      var openCard = function (studentId) {
+        var attr = '[data-student-id-value="' + studentId + '"]';
+        $(attr).closest('.collapse').addClass('show');
+      }
+
+      var toggleConstruct = function (constructId) {
+        $('[data-construct-id="' + constructId + '"]').toggleClass('bg-success', 'text-white');
+        if (checkedConstructs.hasOwnProperty(constructId)) {
+          // Remove
+          delete checkedConstructs[constructId];
+          $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
+        } else {
+          checkedConstructs[constructId] = true;
+          $('[data-construct-id-value="' + constructId + '"]').attr('name', 'constructs');
+        }
+      };
+
+      var toggleTags = function (tagId) {
+        var $tagNode = $('[data-tag-id="' + tagId + '"]');
+        var tagColor = $tagNode.data('color');
+
+        if (checkedTags.hasOwnProperty(tagId)) {
+          delete checkedTags[tagId];
+          $('[data-tag-id-value="' + tagId + '"]').removeAttr('name');
+          $tagNode.css({'background-color': ''});
+        } else {
+          checkedTags[tagId] = true;
+          $('[data-tag-id-value="' + tagId + '"]').attr('name', 'tags');
+          $tagNode.css({'background-color': tagColor});
+        }
+      };
+
+      var markSelectStudents = function () {
+        var chosen_students = JSON.parse("{{ chosen_students }}");
+        for (var index = 0; index < chosen_students.length; index++) {
+          openCard(chosen_students[index])
+          toggleStudent(chosen_students[index]);
+        }
+      };
+
+      var markSelectConstructs = function () {
+        var chosen_constructs = JSON.parse("{{ chosen_constructs }}");
+        for (var index = 0; index < chosen_constructs.length; index++) {
+          toggleConstruct(chosen_constructs[index]);
+        }
+      };
+
+      var markSelectTags = function () {
+        var chosen_tags = JSON.parse("{{ chosen_tags }}");
+        for (var index = 0; index < chosen_tags.length; index++) {
+          toggleTags(chosen_tags[index]);
+        }
+      };
+
+      $('.construct').on('click', function (e) {
+        toggleConstruct($(this).data('construct-id'));
+        $('#sublevel-description').html($(this).find('.sublevel-desc').html());
+        $('#example-carousel-items').html($(this).find('.sublevel-example').html());
+      });
+
+      $('.student').on('click', function (e) {
+        toggleStudent($(this).data('student-id'));
+      });
+
+      $('.tag').on('click', function (e) {
+        toggleTags($(this).data('tag-id'));
+      });
+
+      // INITIALIZE STUDENTS/CONSTRUCTS IF "View/Edit Observation" PAGE
+      markSelectStudents();
+      markSelectConstructs();
+      markSelectTags();
+
+      {# THIS SECTION IS THE VIDEO NOTE CODE #}
+
+      var recordedVideoNote = document.querySelector('video#recordedNote'); // TODO change to jquery
+      $('#videoNoteUpload').on('change', function (e) {
+        $('#id_notes').hide()
+        recordedVideoNote.src = URL.createObjectURL(this.files[0]);
+        recordedVideoNote.style.display = '';
+        $('#videoNoteUploadVerb').text('Replace')
+      });
+
+      {# THIS SECTION IS THE IMAGE/VIDEO SAMPLE CODE #}
+
+      {# There are many states possible here... #}
+      {# 1. New observation, empty image/video #}
+      {# "#image.src => images.photo-placeholder.svg", button-rows => reset() #}
+      {# 2. New observation, just took image #}
+      {# "#image.src => in-memory file", button-rows => image_taken() #}
+      {# 3. New observation, just took image, annotated #}
+      {# "#image.src => in-memory file", button-rows => image_annotated() #}
+      {# 4. New observation, just took video #}
+      {# "#image => hidden", "#video => in-memory file", button-rows => video_taken() #}
+
+      {# 5. Use Last observation, image (fresh) #}
+      {# "#image.src => url", button-rows => image_taken_no_reset() #}
+      {# 6. Use Last observation, image, annotated #}
+      {# "#image.src => url", button-rows => image_annotated_no_reset() #}
+      {# 7. Use Last observation, video #}
+      {# "#image => hidden", "#video => url", button-rows => none() #}
+      {# TODO need to be able to reset fo 5, 6, 7... #}
+
+      {# 8. Edit observation, image (can't replace) #}
+      {# "#image.src => url", button-rows => image_taken_no_reset() #}
+      {# 9. Edit observation, video (can't replace) #}
+      {# "#image => hidden", "#video => url", button-rows => none() #}
+
+      {# CAN START IN STATES 1, 5, 7, 8, and 9 #}
+
+      {# THIS HANDLES STATE 1 TO STATE 2 #}
+      $("#photoUpload").on("change", function (e) {
+        $("#image").attr("src", URL.createObjectURL(this.files[0])).show();
+        $("#recorded").hide();
+        $("#videoUpload").val('');
+
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").show();
+
+        enableDisableDraw.classList.remove('disabled');
+      });
+
+      {# THIS HANDLES STATE 1 TO STATE 4 #}
+      $("#videoUpload").on("change", function (e) {
+        $("#recorded").attr("src", URL.createObjectURL(this.files[0])).show();
+        $("#image").hide();
+        $("#photoUpload").val('');
+
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").show();
+      });
+
+      {# THIS HANDLES STATES {2, 3, 4} TO STATE 1 #}
+      $("#reset").on("click", function (e) {
+        $("#buttons-capture").show();
+        $("#buttons-draw-or-reset").hide();
+        $("#image").attr("src", '{% static "images/photo-placeholder.svg" %}').show();
+        $("#recorded").hide();
+        $("#videoUpload").val('');
+
+        enableDisableDraw.classList.add('disabled');
+        hideStage();
+        stage.clear();
+
+        $("#photoUpload").val('');
+        $("#videoUpload").val('');
+        $("#useMostRecentMedia").prop('checked', false);
+      });
+
+      {# THIS HANDLES ENTRY INTO STATE 8 OR 9 #}
+      {# FROM HERE YOU CANT MOVE STATES #}
+      if ("{% if object.original_image %}{{ object.original_image.url }}{% endif %}") {
+        {# this if block is goofy but otherwise it throws an error #}
+        $("#image").attr("src", '{% if object.original_image %}{{ object.original_image.url|safe }}{% endif %}').show();
+        $("#recorded").hide();
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").hide(); // TODO show this and show previous annotation with ability to edit it
+      }
+
+      if ("{% if object.video %}{{ object.video.url }}{% endif %}") {
+        {# this if block is goofy but otherwise it throws an error #}
+        $("#recorded").attr("src", '{% if object.video %}{{ object.video.url|safe }}{% endif %}').show();
+        $("#image").hide();
+        $("#photoUpload").val('');
+        $("#buttons-capture").hide();
+        $("#buttons-draw-or-reset").hide();
+        setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
+      }
+
+
+      {# THIS SECTION IS THE IMAGE ANNOTATION CODE #}
+
+      var annotationInput = document.querySelector('#annotated-image');
+
+      var enableDisableDraw = document.querySelector('a#enable-draw');
+      var drawingColorButton = document.querySelector('a#drawing-color-button');
+      var drawingColorDisplay = document.querySelector('#drawing-color');
+      var color;
+      var stage = new fabric.Canvas('easel-canvas', {
+        isDrawingMode: false,
+        selection: false
+      });
+
+      var index = parseInt(Math.random() * 100);
+      var colors = [
+        "#1abc9c", "#2ecc71",
+        "#3498db", "#9b59b6",
+        "#34495e", "#ecf0f1",
+        "#e74c3c", "#95a5a6",
+        "#e67e22", "#f1c40f"
+      ];
+
+      var image = document.getElementById('image');
+      image.onload = setUpEasel;
+
+      function setUpEasel() {
+        color = colors[(index++) % colors.length];
+        initStage();
+        initEnableDisable();
+        initChangeColorButton();
+        updateDrawingColorDisplay();
+        drawAnnotation();
+      }
+
+      function drawAnnotation() {
+        var ctx = JSON.parse("{{ form.annotation_data.value }}".replace(/&quot;/g,'"'));
+        var height = $('#image').height();
+        var originalHeight = parseFloat(ctx['originalHeight']);
+        if (isNaN(originalHeight)) {
+          // Assume that original height was the same
+          originalHeight = height;
+        }
+        var scale = height / originalHeight;
+        var positionScale = height / originalHeight;
+
+        stage.setHeight($('#image').height());
+        stage.setWidth($('#image').width());
+
+        stage.loadFromJSON(ctx);
+        stage.forEachObject(function (object) {
+            object = object.scale(scale);
+            object.left = object.left * scale;
+            object.top = object.top * scale;
+        })
+        stage.renderAll()
+      }
+
+      function updateAnnotationJson() {
+        annotationInput.value = getEaselData();
+      }
+
+      function hideStage() {
+        stage.setHeight(0);
+        stage.setWidth(0);
+      }
+
+      function initStage() {
+        stage.on('object:added', updateAnnotationJson);
+        stage.on('object:removed', updateAnnotationJson);
+        stage.on('object:modified', updateAnnotationJson);
+
+        var $image = $("#image");
+        stage.setHeight($image.height());
+        stage.setWidth($image.width());
+
+
+        updateDrawingColorDisplay();
+        stage.freeDrawingBrush = new fabric['PencilBrush'](stage);
+        stage.freeDrawingBrush.width = 10;
+      }
+
+      function updateDrawingColorDisplay() {
+        stage.freeDrawingBrush.color = color;
+        drawingColorDisplay.style.backgroundColor = color;
+      }
+
+      function initChangeColorButton() {
+        drawingColorButton.onclick = function () {
+          color = colors[(index++) % colors.length];
+          updateDrawingColorDisplay();
+        }
+      }
+
+      function initEnableDisable() {
+        enableDisableDraw.onclick = function () {
+          if (enableDisableDraw.classList.contains('enab')) {
+            // Enable drawing
+            enableDisableDraw.classList.remove('enab');
+            enableDisableDraw.classList.add('disa');
+            drawingColorButton.classList.remove('disabled');
+
+            var $image = $("#image");
+            stage.setHeight($image.height());
+            stage.setWidth($image.width());
+
+          }
+          else if (enableDisableDraw.classList.contains('disa')) {
+            // Disable drawing
+            enableDisableDraw.classList.add('enab');
+            enableDisableDraw.classList.remove('disa');
+            drawingColorButton.classList.add('disabled');
+            stage.clear();
+          }
+          updateAnnotationJson();
+          stage.isDrawingMode = !stage.isDrawingMode;
+        }
+      }
+
+      function getEaselData() {
+        if (stage) {
+          var json = stage.toJSON();
+          json['originalHeight'] = $('#image').height();
+          return JSON.stringify(json);
+        }
+        return null;
+      }
+
+    });
+
+  </script>
+{% endblock %}

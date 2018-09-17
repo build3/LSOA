@@ -1,35 +1,50 @@
 import collections
+import datetime
+import io
 import json
+import logging
 from datetime import timedelta
-from urllib.parse import urlencode
 
 from braces.views import JSONResponseMixin
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, View
+from django.views.generic import FormView, View, TemplateView, UpdateView, \
+    CreateView, ListView
 from related_select.views import RelatedSelectView
+from tablib import Dataset
 
-from lsoa.forms import ObservationForm, SetupForm, GroupingForm, NewCourseForm
-from lsoa.models import Course, StudentGrouping, LearningConstructSublevel, LearningConstruct, StudentGroup, Student, \
-    Observation
-from utils.pagelets import PageletMixin
+from lsoa.exceptions import InvalidFileFormatError
+from lsoa.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
+    DateFilteringForm
+from lsoa.models import (
+    ContextTag, Course, StudentGrouping, LearningConstructSublevel,
+    LearningConstruct, StudentGroup, Student, Observation
+)
+from lsoa.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
+
+logger = logging.getLogger(__name__)
 
 
 class SetupView(LoginRequiredMixin, FormView):
-    template_name = 'b4_setup.html'
+    template_name = 'setup.html'
     form_class = SetupForm
 
     def get_initial(self):
         initial = super(SetupView, self).get_initial()
         initial.update({
-            'course': self.request.session.get('course'),
+            'course': self.request.user.default_course,
             'grouping': self.request.session.get('grouping'),
+            'constructs': self.request.session.get('constructs'),
+            'context_tags': self.request.session.get('context_tags'),
             'request': self.request
         })
         return initial
@@ -40,18 +55,11 @@ class SetupView(LoginRequiredMixin, FormView):
         course = d['course']
         constructs = d['constructs']
         tags = d['context_tags']
-        params = {
-            'course': course.id,
-            'constructs': [c.id for c in constructs],
-            'context_tags': [ct.id for ct in tags]
-        }
-        if grouping:
-            params['grouping'] = grouping
         self.request.session['course'] = course.id
         self.request.session['grouping'] = grouping
         self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
-        return HttpResponseRedirect(reverse_lazy('observation_view') + '?' + urlencode(params, doseq=True))
+        return HttpResponseRedirect(reverse_lazy('observation_view'))
 
     def get_context_data(self, **kwargs):
         r = super(SetupView, self).get_context_data(**kwargs)
@@ -72,7 +80,8 @@ class SetupView(LoginRequiredMixin, FormView):
                     sublevel = {
                         'id': lcsl.id,
                         'name': lcsl.name,
-                        'description': lcsl.description
+                        'description': lcsl.description,
+                        'examples': lcsl.examples
                     }
                     level['sublevels'].append(sublevel)
                 construct['levels'].append(level)
@@ -80,17 +89,18 @@ class SetupView(LoginRequiredMixin, FormView):
         return r
 
 
-class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
-    pagelet_name = 'pagelet_grouping.html'
+class GroupingView(LoginRequiredMixin, FormView):
+    template_name = 'grouping.html'
     form_class = GroupingForm
 
     def get(self, request, *args, **kwargs):
         if not self.request.GET.get('course'):
-            return HttpResponseRedirect(reverse('observation_setup_view'))
+            return HttpResponseRedirect(reverse('setup'))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).prefetch_related('students').first()
+        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).prefetch_related(
+            'students').first()
         if self.request.GET.get('grouping'):
             kwargs['grouping'] = StudentGrouping.objects.get(id=self.request.GET.get('grouping'))
         else:
@@ -104,53 +114,106 @@ class GroupingView(LoginRequiredMixin, PageletMixin, FormView):
         return super().get_context_data(**kwargs)
 
 
-class ObservationView(LoginRequiredMixin, PageletMixin, FormView):
-    pagelet_name = 'pagelet_observation.html'
+class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
+    """
+    There are 3 ways of using this view:
+
+    * Get action for observation form
+    * Post action for observation form (saving new object)
+    * Post action for observation form to get last sample. In this case
+      any error should be ignored and form with last sample should be
+      returned
+    """
+    template_name = 'observation.html'
     form_class = ObservationForm
+    success_message = 'Observation Added'
 
     def get_success_url(self):
-        return self.request.build_absolute_uri()
+        return reverse_lazy('observation_view')
 
     def get(self, request, *args, **kwargs):
-        if not self.request.GET.get('course'):
-            return HttpResponseRedirect(reverse('observation_setup_view'))
+        if not self.request.session.get('course'):
+            return HttpResponseRedirect(reverse('setup'))
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if self.request.POST.get('use_recent_observation'):
-            kwargs['use_recent_observation'] = True
             return self.get(request, *args, **kwargs)
         else:
             return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        if self.request.GET.get('grouping'):
-            kwargs['grouping'] = StudentGrouping.objects.filter(pk=int(self.request.GET.get('grouping'))).first()
-        kwargs['course'] = Course.objects.filter(pk=self.request.GET.get('course')).first()
-        kwargs['constructs'] = LearningConstructSublevel.objects.filter(pk__in=self.request.GET.getlist('constructs')) \
-            .select_related('level', 'level__construct').prefetch_related('examples')
+        session_course = self.request.session.get('course')
+        session_grouping = self.request.session.get('grouping')
+        session_construct_choices = self.request.session.get('constructs') or []
+        session_tags = self.request.session.get('context_tags') or []
+        last_observation_id = self.request.session.get('last_observation_id')
 
-        within_timeframe = timezone.now() - timedelta(hours=2)
-        kwargs['recent_observation_exists'] = Observation.objects \
-            .filter(owner=self.request.user, created__gte=within_timeframe) \
-            .order_by('-created').exists()
+        course = Course.objects.filter(pk=session_course).first()
+        grouping = None
+        if session_grouping:
+            grouping = StudentGrouping.objects.filter(pk=session_grouping).first()
 
-        if kwargs.get('use_recent_observation'):
-            kwargs['recent_observation'] = Observation.objects \
-                .filter(owner=self.request.user, created__gte=within_timeframe) \
-                .order_by('-created').first()
+        self.initial.update({
+            'name': '{} Observed'.format(course.name),
+            'course': course, 'grouping': grouping, 'tag_choices': session_tags,
+            'construct_choices': session_construct_choices, 'owner': self.request.user,
+        })
+        if last_observation_id:
+            kwargs['last_observation_url'] = reverse_lazy('observation_detail_view', kwargs={'pk': last_observation_id})
+
+        available_tags = ContextTag.objects.filter(pk__in=session_tags)
+
+        if self.request.POST:
+            chosen_tags = [int(item) for item in self.request.POST.getlist('tags')]
+        else:
+            # select all tags by default
+            chosen_tags = [tag.id for tag in available_tags]
+
+        kwargs['header'] = 'New Observation'
+        kwargs['course'] = course
+        kwargs['grouping'] = grouping
+        kwargs['tags'] = available_tags
+        kwargs['construct_choices'] = get_constructs(pk_list=session_construct_choices)
+        kwargs['chosen_students'] = json.dumps([int(item) for item in self.request.POST.getlist('students')])
+        kwargs['chosen_constructs'] = json.dumps([int(item) for item in self.request.POST.getlist('constructs')])
+        kwargs['chosen_tags'] = chosen_tags
+        kwargs['recent_observation'] = get_recent_observations(owner=self.request.user).first()
+
+        # Create new instance of observation form to clear error.
+        # use_recent_observation is send for Use Last Sample action.
+        if self.request.POST.get('use_recent_observation'):
+            kwargs['use_last_sample'] = True
+            kwargs['form'] = ObservationForm(initial=self.initial)
 
         return super().get_context_data(**kwargs)
 
-    def get_form_kwargs(self):
-        data = super().get_form_kwargs()
-        data['request'] = self.request
-        return data
-
     def form_valid(self, form):
-        form.save()
-        messages.success(self.request, 'Observation added')
+        obj = form.save()
+        self.request.session['last_observation_id'] = obj.id
         return super().form_valid(form)
+
+
+class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):
+    model = Observation
+    template_name = 'observation.html'
+    form_class = ObservationForm
+    success_message = 'Observation Updated'
+    success_url = reverse_lazy('observation_view')
+
+    def get_context_data(self, **kwargs):
+        available_tags = self.object.tag_choices
+        kwargs['is_today'] = self.object.created.day == datetime.date.today().day
+        kwargs['created'] = self.object.created
+        kwargs['course'] = self.object.course
+        kwargs['grouping'] = self.object.grouping
+        kwargs['tags'] = ContextTag.objects.filter(owner=self.request.user, pk__in=available_tags)
+        kwargs['construct_choices'] = get_constructs(pk_list=self.object.construct_choices)
+        kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
+        kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
+        kwargs['chosen_tags'] = list(self.object.tags.all().values_list('id', flat=True))
+
+        return super().get_context_data(**kwargs)
 
 
 class GroupingRelatedSelectView(RelatedSelectView):
@@ -173,6 +236,65 @@ class GroupingRelatedSelectView(RelatedSelectView):
                               'value': self.to_value(model_instance)})
         return JsonResponse(ajax_list, safe=False)
 
+
+class DefaultCourseView(LoginRequiredMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        course_id = request.POST.get('course', '')
+        if not course_id.isdigit():
+            return HttpResponseBadRequest()  # TODO not sure if this should be bad request or just 204 No Content.
+
+        course = get_object_or_404(Course, pk=int(course_id))
+        user = request.user
+        user.default_course = course
+        user.save()
+
+        return JsonResponse({'success': True})
+
+
+class ObservationAjax(LoginRequiredMixin, View):
+
+    def is_valid_date(self, date_string):
+        try:
+            if not date_string:
+                return True
+            datetime.datetime.strptime(date_string, '%Y-%m-%d')
+            return True
+        except ValueError:
+            return False
+
+    def is_valid_request(self, course_id, date_from, date_to):
+        return (
+            course_id.isdigit() or not course_id
+            and self.is_valid_date(date_from)
+            and self.is_valid_date(date_to)
+        )
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        course_id = request.POST.get('course', '')
+        date_from = request.POST.get('date_from', '')
+        date_to = request.POST.get('date_to', '')
+        if self.is_valid_request(course_id, date_from, date_to):
+            observations = Observation.objects.all()
+            if course_id:
+                observations = observations.filter(course=course_id)
+
+            if date_from:
+                observations = observations.filter(observation_date__gte=date_from)
+
+            if date_to:
+                observations = observations.filter(observation_date__lte=date_to)
+
+            constructs = set()
+            for observation in observations:
+                constructs.update(list(observation.constructs.all()))
+
+            constructs_data = [{'id': c.id, 'value': c.name} for c in list(constructs)]
+            return JsonResponse({'success': True, 'data': constructs_data})
+
+
+        return HttpResponseBadRequest()
 
 @method_decorator(csrf_exempt, name='dispatch')
 class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
@@ -222,17 +344,29 @@ class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
         return self.render_json_response(return_data)
 
 
-class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
+class ObservationAdminView(LoginRequiredMixin, TemplateView):
     """
     View the matrix of stars for users
     """
-    pagelet_name = 'pagelet_view_observations.html'
+    template_name = 'observations.html'
 
-    def get_data_for_construct_id(self, construct_id):
+    def get_data_for_construct_id(self, construct_id, course_id, date_from, date_to):
         IS_OTHER = False
-        all_students = Student.objects.all()
+        if course_id:
+            all_students = Student.objects.filter(course=course_id)
+        else:
+            all_students = Student.objects.all()
         all_observations = Observation.objects.prefetch_related('students').filter(
-            constructs__level__construct_id=construct_id)
+            constructs__level__construct_id=construct_id,
+            students__in=all_students
+        )
+
+        if date_from:
+            all_observations = all_observations.filter(observation_date__gte=date_from)
+
+        if date_to:
+            all_observations = all_observations.filter(observation_date__lte=date_to)
+
         all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
         c_name = LearningConstruct.objects.filter(id=construct_id).first()
         if c_name:
@@ -256,10 +390,10 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
         for observation in all_observations:
             if observation.constructs.count():
                 for obs_construct in observation.constructs.all():
-                    for obs_student in observation.students.all():
+                    for obs_student in observation.students.filter(id__in=all_students):
                         matrix[obs_student.id][obs_construct.id].add(observation.id)
             else:
-                for obs_student in observation.students.all():
+                for obs_student in observation.students.filter(id__in=all_students):
                     matrix[obs_student.id]['other'].add(observation.id)
 
         return {
@@ -272,24 +406,48 @@ class ObservationAdminView(LoginRequiredMixin, PageletMixin, View):
             'IS_OTHER': IS_OTHER
         }
 
+    def selected_chart(self):
+        get = self.request.GET or {}
+        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3']
+        for key in chart_keys:
+            if key in get:
+                return key
+
+        return chart_keys[0]
+
     def get_context_data(self, **kwargs):
-        construct_id = kwargs.get('construct_id')
+        course_id = kwargs.get('course_id')
         all_constructs = LearningConstruct.objects.all()
         top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
+        date_filtering_form = DateFilteringForm(self.request.GET)
+        date_from = None
+        date_to = None
+        selected_constructs = None
+
+        if date_filtering_form.is_valid():
+            date_from = date_filtering_form.cleaned_data['date_from']
+            date_to = date_filtering_form.cleaned_data['date_to']
+            selected_constructs = date_filtering_form.cleaned_data['constructs']
 
         constructs_to_cover = LearningConstruct.objects.annotate(
-            q_count=Count('learningconstructlevel__learningconstructsublevel__observation')).order_by('-q_count')
+            q_count=Count('learningconstructlevel__learningconstructsublevel__observation')
+        ).order_by('-q_count')
 
-        if construct_id:
-            constructs_to_cover = constructs_to_cover.filter(id=construct_id)
-
-        tables = [self.get_data_for_construct_id(cid) for cid in constructs_to_cover.values_list('id', flat=True)]
-        tables.append(self.get_data_for_construct_id(None))
+        tables = [self.get_data_for_construct_id(cid, course_id, date_from, date_to) for cid in
+                  constructs_to_cover.values_list('id', flat=True)]
+        star_chart_tables = tables + [self.get_data_for_construct_id(None, course_id, date_from, date_to)]
 
         data = super().get_context_data(**kwargs)
         data.update({
-            'tables': tables,
+            'star_chart_tables': star_chart_tables,
+            'dot_plot_tables': tables,
+            'selected_constructs': selected_constructs,
             'top_level_construct_map': top_level_construct_map,
+            'courses': Course.objects.all(),
+            'course_id': course_id,
+            'filtering_form': date_filtering_form,
+            'selected_chart': self.selected_chart()
+
         })
         return data
 
@@ -306,9 +464,153 @@ def current_observation(request):
     return HttpResponseRedirect(url)
 
 
-class NewCourseView(LoginRequiredMixin, FormView):
-    form_class = NewCourseForm
+class ImportClassRoster(LoginRequiredMixin, TemplateView):
+    template_name = 'import_class_roster.html'
+    session_variable = 'class_roster_preview_data'
+
+    def get(self, request, *args, **kwargs):
+        # clear any residual data
+        if self.session_variable in self.request.session.keys():
+            del (self.request.session[self.session_variable])
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        file = request.FILES.get('uploadedFile')
+
+        if not file:
+            message = 'Please click "Choose File" below and select a file'
+            return self.handle_error(message)
+
+        try:
+            fmt = file.name.split('.')[-1]
+            if fmt not in ACCEPTED_FILE_EXTENSIONS:
+                message = 'Accepted file types are csv and excel'
+                return self.handle_error(message)
+
+        except Exception as err:
+            message = 'Cannot determine file type.  Please make sure the file name ends with .csv, .xlsx or .xls'
+            logger.exception('{}: {}'.format(message, err))
+            return self.handle_error(message)
+
+        try:
+            # in memory file is in bytes, tablib wants csv data to be a string...
+            if fmt == 'csv':
+                file = io.TextIOWrapper(file, encoding='utf-8')
+
+            file_data = Dataset().load(file.read())
+            preview_data = ClassRoster(user=request.user).preview_rows(file_data)
+            context = {'preview_data': preview_data.html}
+            self.request.session[self.session_variable] = preview_data.json
+            return render(request=request, template_name=self.template_name, context=context)
+
+        except Exception as err:
+            message = 'An error occurred preparing data for preview.'
+            logger.exception(err)
+            return self.handle_error(message)
+
+    def handle_error(self, message):
+        messages.error(request=self.request, message=message, fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+
+@login_required
+def process_class_roster(request):
+    try:
+        dataset = Dataset()
+        dataset.dict = json.loads(request.session[ImportClassRoster.session_variable])
+        ClassRoster(user=request.user).process_rows(dataset)
+        messages.success(request, message='File imported successfully', fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+    except Exception as err:
+        message = 'An error occurred loading the file'
+        logger.exception(err)
+        messages.error(request, message=message, fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+
+@login_required
+def export_class_roster(request):
+    """
+    Export course/student roster
+    You can supply in the querystring:
+    :fmt: defaults to xlsx.  determines file format to use
+    :id: list of course ids, this filter overrides
+    :user_id: can take a list of user_id which will be used to filter class owners
+    """
+    try:
+        course_ids = request.GET.getlist('id')
+        class_owners = [int(user) for user in request.GET.getlist('user_id')]
+        fmt = request.GET.get('fmt') or 'xlsx'
+        if fmt not in ACCEPTED_FILE_EXTENSIONS:
+            raise InvalidFileFormatError('{} is not an acceptable export file format'.format(fmt))
+
+        if course_ids:
+            courses = Course.objects.filter(id__in=int(course_ids)).order_by('name')
+        elif class_owners:
+            courses = Course.objects.filter(owner_id__in=class_owners).order_by('name')
+        else:
+            courses = []
+
+        return ClassRoster.export(user=request.user, queryset=courses, fmt=fmt)
+
+    except InvalidFileFormatError as err:
+        message = str(err)
+        messages.error(request, message=message, fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+    except Exception as err:
+        message = 'An error occurred exporting the file'
+        logger.exception(err)
+        messages.error(request, message=message, fail_silently=True)
+        return HttpResponseRedirect(reverse('import_class_roster'))
+
+
+def get_constructs(pk_list):
+    return LearningConstructSublevel.objects.filter(pk__in=pk_list). \
+        select_related('level', 'level__construct').prefetch_related('examples')
+
+
+def get_recent_observations(owner, age=None):
+    age = age or timedelta(hours=2)
+    within_timeframe = timezone.now() - age
+    return Observation.objects.filter(owner=owner, created__gte=within_timeframe).order_by('-created')
+
+
+class BaseTagManagement(LoginRequiredMixin):
+    model = ContextTag
+    form_class = ContextTagForm
+    success_url = reverse_lazy('setup')
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['title'] = self.title
+        return context
+
+
+class CreateTag(BaseTagManagement, CreateView):
+    template_name = 'context_tag.html'
+    title = 'Create Tag'
 
     def form_valid(self, form):
-        # TODO parse csv, save course
-        self.request.session['course'] = course.id
+        self.object = form.save(commit=False)
+        self.object.owner = self.request.user
+        self.object.save()
+        return super().form_valid(form)
+
+
+class EditTag(BaseTagManagement, UpdateView):
+    template_name = 'context_tag.html'
+    title = 'Edit Tag'
+
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user)
+
+
+class ListTag(BaseTagManagement, ListView):
+    title = 'Tags'
+    template_name = 'context_tag_list.html'
+
+    def get_queryset(self):
+        return ContextTag.objects.filter(owner=self.request.user).order_by('id')

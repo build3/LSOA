@@ -1,13 +1,15 @@
 import os
 from uuid import uuid4
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
+from django.utils.timezone import now
 from django_extensions.db.models import TimeStampedModel
 from tinymce.models import HTMLField
 
-from utils.ownership import OwnerMixin
+from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
 
 @deconstructible
@@ -27,6 +29,7 @@ class UploadToPathAndRename(object):
 class Course(TimeStampedModel, OwnerMixin):
     name = models.CharField(max_length=255)
     students = models.ManyToManyField('lsoa.Student', blank=True)
+    grade_level = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -39,11 +42,22 @@ class Student(TimeStampedModel):
     """
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
+    student_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
     nickname = models.CharField(max_length=255, blank=True, default='')
+    grade_level = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return '{} {} '.format(self.nickname, self.last_name[0]) if self.nickname else \
             '{} {}'.format(self.first_name, self.last_name[0])
+
+    def advance_grade_level(self):
+        self.grade_level += 1
+        self.save()
+
+    def save(self, **kwargs):
+        # this keeps excel import from bombing on nulls
+        self.nickname = self.nickname or ''
+        return super().save(**kwargs)
 
 
 class StudentGroup(TimeStampedModel):
@@ -71,7 +85,7 @@ class StudentGrouping(TimeStampedModel):
     groups = models.ManyToManyField('lsoa.StudentGroup', blank=True)
 
     def __str__(self):
-        return '{} [{}]'.format(self.name, self.course)
+        return '{}'.format(self.name)
 
 
 class Observation(TimeStampedModel, OwnerMixin):
@@ -81,7 +95,13 @@ class Observation(TimeStampedModel, OwnerMixin):
     visual evidence (picture or video).
     """
     # if an observation is checked with "use previous observation", use this to denote which one
+    name = models.CharField(max_length=75, blank=True, default='')
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.PROTECT)
+
+    course = models.ForeignKey('lsoa.Course', blank=True, null=True, on_delete=models.PROTECT)
+    grouping = models.ForeignKey('lsoa.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
+    construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
+    tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
 
     # regardless of how they're grouped, just save the raw students to the observation
     students = models.ManyToManyField('lsoa.Student', blank=True)
@@ -98,8 +118,11 @@ class Observation(TimeStampedModel, OwnerMixin):
     notes = models.TextField(blank=True)
     video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
 
+    observation_date = models.DateField(default=now)
+
     def __str__(self):
-        return 'Observation at {}'.format(self.created)
+        _display = self.name or 'Observation at {}'.format(self.created)
+        return _display
 
 
 class LearningConstruct(TimeStampedModel):
@@ -161,12 +184,16 @@ class LearningConstructSublevelExample(TimeStampedModel):
         return '({}) {}'.format(self.sublevel.name, self.text[:50])
 
 
-class ContextTag(TimeStampedModel, OwnerMixin):
+class ContextTag(TimeStampedModel, OptionalOwnerMixin):
     """
     A context tag for tagging observations
     """
     text = models.CharField(max_length=255)
+    color = models.CharField(max_length=7, default='#000000')
     last_used = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.text
 
     def use(self):
         self.last_used = timezone.now()
@@ -175,3 +202,14 @@ class ContextTag(TimeStampedModel, OwnerMixin):
 
     class Meta:
         ordering = ['-last_used']
+
+
+class AdminPerms(models.Model):
+
+    class Meta:
+
+        managed = False  # No database table creation or deletion operations will be performed for this model
+
+        permissions = (
+            ('can_approve_deny_users', 'Can Approve or Deny Users'),
+        )

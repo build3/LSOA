@@ -1,13 +1,13 @@
 from collections import defaultdict
 
 from django import forms
+from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.forms.widgets import SelectMultiple
 from django.urls import reverse_lazy
-from threadlocals.threadlocals import get_current_request
 from related_select.fields import RelatedChoiceField
+from threadlocals.threadlocals import get_current_request
 
-from lsoa.fields import RelatedChoiceFieldWithAfter
 from lsoa.models import Course, LearningConstructSublevel, ContextTag, Observation
 
 
@@ -76,7 +76,7 @@ class SetupForm(forms.Form):
             self.fields['grouping'].init_bound_field(self.data.get('course'))
 
         request = get_current_request()
-        self.fields['context_tags'].queryset = ContextTag.objects.filter(owner=request.user)
+        self.fields['context_tags'].queryset = ContextTag.objects.filter(Q(owner=request.user) | Q(owner__isnull=True))
 
         for field in self.fields:
             self.fields[field].widget.attrs['class'] = 'form-control'
@@ -89,16 +89,30 @@ class ObservationForm(forms.ModelForm):
     visual evidence (picture or video).
     """
 
+    class Meta:
+        model = Observation
+        fields = ['students', 'constructs', 'tag_choices', 'tags', 'annotation_data', 'original_image', 'video',
+                  'observation_date',
+                  'notes', 'video_notes', 'parent', 'owner', 'name', 'course', 'grouping', 'construct_choices', ]
+        widgets = {
+            'course': forms.HiddenInput(),
+            'grouping': forms.HiddenInput(),
+            'owner': forms.HiddenInput(),
+            'name': forms.HiddenInput(),
+            'construct_choices': forms.HiddenInput(),
+            'tag_choices': forms.HiddenInput(),
+            'notes': forms.Textarea(attrs={'class': 'notes-container'}),
+            'observation_date': forms.DateInput(attrs={'class': 'datepicker form-control'}),
+        }
+
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=None,
-                 empty_permitted=False, instance=None, use_required_attribute=None, request=None):
+                 empty_permitted=False, instance=None, use_required_attribute=None):
         if data:
             data = data.copy()
-            data['owner'] = request.user.id
             if not data.get('useMostRecentMedia'):
                 data['parent'] = None
 
-        self.request = request
         super().__init__(data=data, files=files, auto_id=auto_id, prefix=prefix,
                          initial=initial, error_class=error_class, label_suffix=label_suffix,
                          empty_permitted=empty_permitted, instance=instance,
@@ -108,19 +122,17 @@ class ObservationForm(forms.ModelForm):
         super().clean()
         if self.cleaned_data.get('annotation_data') or self.cleaned_data['original_image']:
             if self.cleaned_data['video']:
-                raise forms.ValidationError(
-                    'Technical Error: Video was uploaded alongside an image. Something\'s wrong')
+                self.add_error(field=None,
+                               error='Technical Error: Video was uploaded alongside an image. Something\'s wrong')
 
-        get_args = self.request.GET
-        if get_args.get('context_tags'):
-            context_tags_ids = get_args.getlist('context_tags', [])
-            self.cleaned_data['tags'] = context_tags_ids
+        if not self.cleaned_data['students']:
+            self.add_error(field='students', error='You must choose at least one student for the observation')
+
+        if not self.cleaned_data['constructs']:
+            self.add_error(field='constructs',
+                           error='You must choose at least one learning construct for the observation')
+
         return self.cleaned_data
-
-    class Meta:
-        model = Observation
-        fields = ['students', 'constructs', 'tags', 'annotation_data', 'original_image', 'video',
-                  'notes', 'video_notes', 'parent', 'owner']
 
 
 class GroupingForm(forms.Form):
@@ -133,3 +145,31 @@ class NewCourseForm(forms.Form):
 
     def clean_student_csv(self):
         pass
+
+
+class ContextTagForm(forms.ModelForm):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
+
+    class Meta:
+        model = ContextTag
+        fields = ['text', 'color']
+
+
+class DateFilteringForm(forms.Form):
+    date_from = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'datepicker form-control'}),
+        required=False
+    )
+    date_to = forms.DateField(
+        widget=forms.DateInput(attrs={'class': 'datepicker form-control'}),
+        required=False
+    )
+    constructs = forms.ModelMultipleChoiceField(
+        widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'}),
+        required=False,
+        queryset=LearningConstructSublevel.objects.all()
+    )

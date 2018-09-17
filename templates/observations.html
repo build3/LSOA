@@ -1,0 +1,347 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+{% load observations %}
+
+{% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
+  <style>
+    [role="tooltip"] {
+      z-index: 9999999;
+    }
+
+    table, .ios .page {
+      background-color: #fff !important;
+    }
+
+    .modal.show {
+      z-index: 5010;
+    }
+
+    [data-modal-launch-observations] {
+      cursor: pointer;
+    }
+
+    [data-modal-launch-observations] i {
+      color: goldenrod;
+    }
+
+    [data-modal-launch-observations]:hover i {
+      color: darkgoldenrod;
+    }
+
+    .star-number {
+      font-size: 12px;
+    }
+
+    .dot {
+      height: 25px;
+      width: 25px;
+      background-color: #f2a287;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 3px auto;
+    }
+
+    .dot:hover {
+      background-color: #cb6634;
+    }
+
+    /*
+     * Height of date input is broken if there is no value. It have been
+     * solved in higher version of bootstrap.
+     */
+    input[type="date"] {
+	     height: 2.375rem;
+    }
+  </style>
+{% endblock %}
+
+{% block extrascripts %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+  <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
+  <script>
+    function initSelect2() {
+      $("#id_constructs").select2({
+        tokenSeparators: [',', '\n']
+      })
+    }
+
+    function loadAllowedConstructs() {
+      if ($("#construct-row").hasClass('d-none')) {
+        return
+      }
+      var date_from = $('#id_date_from').val();
+      var date_to = $('#id_date_to').val();
+      var course = $('#courseSelector').val();
+      if (isNaN(course)) {
+       course = undefined
+      }
+
+      $.ajax({
+        type: 'POST',
+        url: '{% url "observations-ajax" %}',
+        dataType: 'json',
+        data: {
+          'course': course,
+          'date_to': date_to,
+          'date_from': date_from,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function (response) {
+          var data = response['data']
+          var selected = $('#id_constructs').val();
+          $('#id_constructs').empty();
+
+          $.each(data, function(index, option) {
+            $('#id_constructs').append( new Option(option.value, option.id) );
+          });
+          $('#id_constructs').val(selected).trigger('change');
+        },
+        error: function (xhr, status, e) {
+
+        }
+      });
+    }
+
+    $( document ).ready(function() {
+      initSelect2();
+      loadAllowedConstructs();
+      $('.datepicker').datepicker({
+          uiLibrary: 'bootstrap4'
+      });
+    })
+
+    function registerUpdateConstructsListener(id) {
+      var listeners = ['change', 'unfocus'];
+      listeners.forEach(function(listener) {
+        $(id).on(listener, loadAllowedConstructs);
+      });
+    }
+
+    registerUpdateConstructsListener('#id_date_from');
+    registerUpdateConstructsListener('#id_date_to');
+
+
+    $(function () {
+      // Init tooltips
+      var is_touch_device = (
+          ("ontouchstart" in window)
+          || window.DocumentTouch
+          && document instanceof DocumentTouch
+      );
+
+      if (is_touch_device) {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'click'});
+      } else {
+        $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'});
+      }
+
+      // Remove duplicate modals
+      var seen = {};
+      $('.observation-body[data-observation-id]').each(function () {
+        var id = $(this).data('observation-id');
+        if (seen[id])
+          $(this).remove();
+        else
+          seen[id] = true;
+      });
+
+      // Launch modals
+      $('[data-modal-launch-observations]').on('click', function (e) {
+        var observationIds = $(this).data('modal-launch-observations');
+
+        $('#the-modal .modal-body').html('');
+        observationIds.forEach(function (id) {
+          $('#the-modal .modal-body').append($('[data-observation-id="' + id + '"]').clone());
+          var $canvas = $('#the-modal .modal-body #' + id);
+          $canvas.attr('id', 'canvas' + id);
+
+          var annotation_data = $('#annotation_data_'+id).html();
+
+          $('#the-modal').on('shown.bs.modal', function() {
+            var $image = $('#the-modal .modal-body #image-' + id);
+            if ($image.length == 0) {
+                return
+            }
+
+            var height = $image.height();
+            var width = $image.width();
+            var naturalWidth = $image.get(0).naturalWidth;
+            $image.hide();
+            var imageScale = width/naturalWidth
+
+            var canvas = new fabric.Canvas('canvas' + id, {
+              isDrawingMode: false,
+              selection: false
+            });
+            canvas.setHeight(height);
+            canvas.setWidth(width);
+
+            var url = $('#url_'+id).html();
+            canvas.setBackgroundImage(
+              decodeURI(url.replace(/&amp;/g, '&')),
+              canvas.renderAll.bind(canvas), {
+                scaleX: imageScale,
+                scaleY:  imageScale
+              }
+            );
+
+            var ctx = {}
+            if (annotation_data !== "") {
+              var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+            }
+            var originalHeight = parseFloat(ctx['originalHeight']);
+            if (isNaN(originalHeight)) {
+              // Assume that original height was the same - scale it for 60% like in html
+              originalHeight = height / 0.6;
+            }
+            var scale = height / originalHeight;
+
+            canvas.loadFromJSON(ctx);
+            canvas.forEachObject(function (object) {
+              object = object.scale(scale);
+              object.left = object.left * scale;
+              object.top = object.top * scale;
+            })
+            canvas.renderAll()
+          })
+        });
+
+        var modal = $('#the-modal');
+        modal.modal({
+          size: 'lg',
+          fade: true
+        });
+      })
+
+      $('#courseSelector').on('change', function(e) {
+        var course_id = this.value;
+        window.location = '{% url "observations_all" %}' + course_id
+      });
+
+      $('.nav-link').on('click', function (e) {
+        var chart_href = $(this).attr('href');
+        var chart_id = chart_href.substr(1);
+        $('#filtering-submit').attr('name', chart_id);
+        if (chart_id == "chart_v3") {
+          $("#construct-row").removeClass('d-none')
+          initSelect2();
+          loadAllowedConstructs();
+        } else {
+          $("#construct-row").addClass('d-none')
+        }
+
+      })
+
+    });
+  </script>
+{% endblock %}
+
+
+{% block content %}
+  <div class="container-fluid">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-12">
+
+          {% include "_base_filtering.html" %}
+
+          <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link {% if selected_chart == "chart_v1" %} active {% endif %}" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if selected_chart == "chart_v2" %} active {% endif %}" data-toggle="tab" href="#chart_v2">Star Chart v2</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if selected_chart == "chart_v3" %} active {% endif %}" data-toggle="tab" href="#chart_v3">Star Chart v3</a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <div class="tab-pane {% if selected_chart == "chart_v1" %} active {% else %} fade {% endif %}" id="chart_v1">
+              {% include "_star_chart_v1.html" %}
+            </div>
+            <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="chart_v2">
+              {% include "_star_chart_v2.html" %}
+            </div>
+            <div class="tab-pane {% if selected_chart == "chart_v3" %} active {% else %} fade {% endif %}" id="chart_v3">
+              {% include "_star_chart_v3.html" %}
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+
+  {# MODALS #}
+  <div class="d-none">
+    {% for table in star_chart_tables %}
+      {% for observation in table.all_observations %}
+        <div class="observation-body" data-observation-id="{{ observation.id }}">
+          <h3><a href="{% url 'observation_detail_view' pk=observation.id %}">{% if observation.name %}{{ observation.name }}{% else %}Observation #{{ observation.id }}{% endif %}</a></h3>
+          <small style="display: block;">Constructs: {{ observation.constructs.all|join:', ' }}</small>
+          <small style="display: block;">Recorded on: {{ observation.created }}</small>
+          {% if observation.tags.count %}
+            <b style="display: block;">Tags:</b>
+            {% for tag in observation.tags.all %}
+              <span class="chip">{{ tag.text }}</span>
+            {% endfor %}
+          {% endif %}
+
+          {% if observation.original_image %}
+          <div class="row no-gutters">
+            <div class="col-12" style="">
+              <div class="art" style="">
+                <div style="display: flex; justify-content: center;">
+                  <canvas id="{{ observation.id }}"></canvas>
+                </div>
+                <div style="display: flex; justify-content: center;">
+                  <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style=" width: 60%; height: 60%"/>
+                </div>
+                <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
+                <div class="d-none" id="url_{{observation.id}}">{{observation.original_image.url}}</div>
+              </div>
+            </div>
+          </div>
+
+          {% endif %}
+
+          {% if observation.video %}
+            <div style="display: flex; justify-content: center;">
+              <video src="{{ observation.video.url }}" alt="" style="width: 60%; height: auto;"></video>
+            </div>
+          {% endif %}
+
+          {% if observation.notes %}
+            <b style="display: block;">Note:</b>
+            <p>{{ observation.notes }}</p>
+          {% endif %}
+
+          {% if observation.video_notes %}
+            <b style="display: block;">Video Note:</b>
+            <video src="{{ observation.video_notes.url }}" style="width: 100%; height: auto;"></video>
+          {% endif %}
+
+          {% if observation.students.all|length > 1 %}
+            <small style="display: block;">Other students included: {{ observation.students.all|join:', ' }}</small>
+          {% endif %}
+          <div class="hr" style="height: 0;width: 100%;border-bottom: 2px solid #AAA; margin-bottom: 20px; margin-top: 20px"></div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="the-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
