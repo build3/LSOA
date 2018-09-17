@@ -161,7 +161,7 @@
               {% endif %}
 
               {% if field.name == "context_tags" %}
-                  <a id="add_tag" href="/tag/">+ Add New Tag</a>
+                  <a id="add_tag" href="{% url 'create_tag' %}">+ Add New Tag</a>
               {% endif %}
             </div>
             {% if field.errors %}
