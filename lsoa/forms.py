@@ -24,16 +24,11 @@ class TagField(forms.ModelMultipleChoiceField):
     def clean(self, value):
         assert type(value) == list
         tags = []
-        request = get_current_request()
-
-        for tag_text in value:
-            if type(tag_text) == str:
-                try:
-                    tags.append(ContextTag.objects.get(id=tag_text, owner=request.user))
-                except Exception:
-                    ct = ContextTag(text=tag_text, owner=request.user)
-                    ct.save()
-                    tags.append(ct)
+        print(value)
+        for tag_id in value:
+            tag = ContextTag.objects.filter(id=tag_id).first()
+            if tag:
+                tags.append(tag)
         return tags
 
 
