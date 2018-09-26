@@ -106,7 +106,8 @@
     })
 
     function forceTagsReset() {
-      $('#id_context_tags').val('').trigger('change')
+      $('#id_context_tags').val('').trigger('change');
+      $('.form-check-input').attr("checked", false).trigger("change");
     }
 
   </script>
@@ -242,7 +243,7 @@
 
         <div class="row" style="margin-top: 30px;">
           <div class="col-6">
-              <input onclick="forceTagsReset()"class="btn btn-primary col" type="reset" value="Reset"/>
+              <input onclick="forceTagsReset()" class="btn btn-primary col" type="reset" value="Reset"/>
           </div>
           <div class="col-6">
             <input class="btn btn-primary col" type="submit" value="Submit"/>

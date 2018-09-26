@@ -63,13 +63,13 @@
           {# "#image => hidden", "#video => url", button-rows => none() #}
 
           {% if recent_observation.original_image and use_last_sample %}
-            <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%;"/>
+            <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
             <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
           {% elif recent_observation.video and use_last_sample %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
             <video id="recorded" style="width: 100%;" src="{{ recent_observation.video.url }}" controls playsinline/>
           {% else %}
-            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%;"/>
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%; height: 332px; object-fit: contain;"/>
             <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
           {% endif %}
 
