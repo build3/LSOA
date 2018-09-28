@@ -332,7 +332,7 @@ class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
             group.students.clear()
 
             for student_id in group_data.get('studentIds', []):
-                student = Student.objects.get(id=student_id)
+                student = Student.objects.get(id=student_id, status=Student.ACTIVE)
                 group.students.add(student)
 
             grouping.groups.add(group)
@@ -355,9 +355,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
     def get_data_for_construct_id(self, construct_id, course_id, date_from, date_to):
         IS_OTHER = False
         if course_id:
-            all_students = Student.objects.filter(course=course_id)
+            all_students = Student.objects.filter(course=course_id, status=Student.ACTIVE)
         else:
-            all_students = Student.objects.all()
+            all_students = Student.objects.filter(status=Student.ACTIVE)
         all_observations = Observation.objects.prefetch_related('students').filter(
             constructs__level__construct_id=construct_id,
             students__in=all_students
@@ -623,7 +623,7 @@ class FloatingStudents(ListView):
     template_name = 'floating_report.html'
 
     def get_queryset(self):
-        return Student.objects.filter(course__isnull=True)
+        return Student.objects.filter(course__isnull=True).order_by('pk')
 
 
 class DoubledStudents(ListView):
@@ -631,7 +631,8 @@ class DoubledStudents(ListView):
     template_name = 'doubled_report.html'
 
     def get_queryset(self):
-        return Student.objects.annotate(count=Count('course')).filter(count__gte=2)
+        return Student.objects.annotate(count=Count('course')). \
+            filter(count__gte=2).order_by('pk')
 
 
 class HomonymStudents(ListView):
@@ -662,3 +663,36 @@ class HomonymStudents(ListView):
                 grouped_data[name] = [object]
         data['object_list'] = grouped_data
         return data
+
+
+class StudentReportAjax(View):
+
+    def validate_floating(self, student_id, action):
+        try:
+            student = Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            return False, None
+
+        if action not in ['active', 'inactive']:
+            return False, None
+
+        return True, student
+
+
+    def post(self, request):
+        self.request = request
+        report = request.POST.get('report', '')
+
+        if report == 'floating':
+            student_id = request.POST.get('student_id', '')
+            action = request.POST.get('action', '')
+            is_valid, student = self.validate_floating(student_id, action)
+            if is_valid:
+                student.status = action
+                student.save()
+                return JsonResponse({
+                    'success': True,
+                    'status': student.status
+                })
+
+        return HttpResponseBadRequest()

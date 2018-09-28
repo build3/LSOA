@@ -64,6 +64,7 @@ class ClassRoster(object):
                 if not row.get('Student ID'):
                     student = Student.objects.filter(last_name__iexact=row['Student Last Name'],
                                                      first_name__iexact=row['Student First Name'],
+                                                     status=Student.ACTIVE,
                                                      grade_level=int(row.get('Grade Level', 0))).first()
                     if student:
                         row['Student ID'] = student.student_id

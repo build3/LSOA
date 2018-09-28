@@ -52,5 +52,6 @@ urlpatterns = [
     path('report/floating', lsoa.views.FloatingStudents.as_view(), name='floating_students'),
     path('report/doubled', lsoa.views.DoubledStudents.as_view(), name='doubled_students'),
     path('report/homonym', lsoa.views.HomonymStudents.as_view(), name='homonym_students'),
+    path('report/ajax', lsoa.views.StudentReportAjax.as_view(), name='report_ajax'),
 
 ]
