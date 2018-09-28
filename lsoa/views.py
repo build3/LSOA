@@ -2,15 +2,17 @@ import collections
 import datetime
 import io
 import json
+import operator
 import logging
 from datetime import timedelta
+from functools import reduce
 
 from braces.views import JSONResponseMixin
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
@@ -614,3 +616,49 @@ class ListTag(BaseTagManagement, ListView):
 
     def get_queryset(self):
         return ContextTag.objects.filter(owner=self.request.user).order_by('id')
+
+
+class FloatingStudents(ListView):
+    model = Student
+    template_name = 'floating_report.html'
+
+    def get_queryset(self):
+        return Student.objects.filter(course__isnull=True)
+
+
+class DoubledStudents(ListView):
+    model = Student
+    template_name = 'doubled_report.html'
+
+    def get_queryset(self):
+        return Student.objects.annotate(count=Count('course')).filter(count__gte=2)
+
+
+class HomonymStudents(ListView):
+    model = Student
+    template_name = 'homonym_report.html'
+
+    def get_queryset(self):
+        student_names = Student.objects \
+            .order_by('last_name', 'first_name') \
+            .values('last_name', 'first_name') \
+            .annotate(count=Count('id')) \
+            .filter(count__gte=2)
+
+        name_tuples = [(s['first_name'], s['last_name']) for s in student_names]
+        query = reduce(operator.or_, (Q(first_name=f, last_name=l) for f, l in name_tuples))
+
+        return Student.objects.filter(query)
+
+    def get_context_data(self):
+        data = super().get_context_data()
+        objects = data['object_list']
+        grouped_data = dict()
+        for object in objects:
+            name = ' '.join([object.first_name, object.last_name])
+            if name in grouped_data:
+                grouped_data[name].append(object)
+            else:
+                grouped_data[name] = [object]
+        data['object_list'] = grouped_data
+        return data

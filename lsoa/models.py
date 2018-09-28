@@ -40,11 +40,17 @@ class Student(TimeStampedModel):
     A Student has associated data, however on the Student record itself, simply
     record their name.
     """
+    STUDENT_STATUSES = (
+        ('active', 'active'),
+        ('inactive', 'inactive')
+    )
+
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     student_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
     nickname = models.CharField(max_length=255, blank=True, default='')
     grade_level = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=30, choices=STUDENT_STATUSES, default='inactive')
 
     def __str__(self):
         return '{} {} '.format(self.nickname, self.last_name[0]) if self.nickname else \

@@ -34,13 +34,28 @@
         <li class="nav-item {% active_link 'import_class_roster' %}">
           <a class="nav-link" href="{% url 'import_class_roster' %}">Import Class</a>
         </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle"
+            href="#"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false">
+            Reports
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item" href="{% url 'floating_students'%}">Floating Studens</a>
+            <a class="dropdown-item" href="{% url 'doubled_students'%}">Doubled Students</a>
+            <a class="dropdown-item" href="{% url 'homonym_students'%}">Homonym Students</a>
+          </div>
+      </li>
         <li class="nav-item {% active_link 'tag_list' %}">
           <a class="nav-link" href="{% url 'tag_list' %}">Tags</a>
         </li>
         <li class="nav-item {% active_link 'admin:index' %}">
           <a class="nav-link" href="{% url 'admin:index' %}">Admin Site</a>
         </li>
-      <li class="nav-item">
+        <li class="nav-item">
           <a class="nav-link" href="{% url 'account_logout' %}">Log Out</a>
         </li>
       </ul>

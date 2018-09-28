@@ -1,0 +1,48 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div>
+      <h4 class="text-align-center" style="margin-bottom: 25px;">Student without any class</h4>
+      <table class="table table-bordered">
+        <thead>
+        <tr>
+          <th>Student Id</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Observations</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for student in object_list %}
+          <tr>
+            <th>{{ student.id }}{{student.observation_set.all.count}}</th>
+            <th>{{ student.first_name }}</th>
+            <th>{{ student.last_name }}</th>
+            <th>
+                {% for observation in student.observation_set.all %}
+                    <div class="row">
+                        <a href="{% url 'observation_detail_view' observation.id %}">
+                            {{ observation }}
+                        </a>
+                    </div>
+                {% endfor %}
+            </th>
+            <th>Disable</th>
+
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+
+{% endblock %}

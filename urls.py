@@ -47,4 +47,10 @@ urlpatterns = [
     path('class-roster/import/', lsoa.views.ImportClassRoster.as_view(), name='import_class_roster'),
     path('class-roster/process-import/', lsoa.views.process_class_roster, name='process_import_class_roster'),
     path('class-roster/export/', lsoa.views.export_class_roster, name='export_class_roster'),
+
+    # reports
+    path('report/floating', lsoa.views.FloatingStudents.as_view(), name='floating_students'),
+    path('report/doubled', lsoa.views.DoubledStudents.as_view(), name='doubled_students'),
+    path('report/homonym', lsoa.views.HomonymStudents.as_view(), name='homonym_students'),
+
 ]
