@@ -17,6 +17,7 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadReque
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View, TemplateView, UpdateView, \
@@ -647,6 +648,9 @@ class HomonymStudents(ListView):
             .filter(count__gte=2)
 
         name_tuples = [(s['first_name'], s['last_name']) for s in student_names]
+        if not name_tuples:
+            return Student.objects.none()
+
         query = reduce(operator.or_, (Q(first_name=f, last_name=l) for f, l in name_tuples))
 
         return Student.objects.filter(query)
@@ -678,6 +682,20 @@ class StudentReportAjax(View):
 
         return True, student
 
+    def validate_homonym(self, student_ids, name, action):
+        students = Student.objects.filter(pk__in=student_ids)
+        is_valid = True
+
+        if not (student_ids and name and action):
+            is_valid = False
+
+        elif any(slugify(student.name) != name for student in students):
+            is_valid = False
+
+        elif action not in ['merge']:
+            is_valid = False
+
+        return is_valid, list(students)
 
     def post(self, request):
         self.request = request
@@ -693,6 +711,29 @@ class StudentReportAjax(View):
                 return JsonResponse({
                     'success': True,
                     'status': student.status
+                })
+
+        elif report == 'homonym':
+            student_ids = request.POST.getlist('student_ids[]', [])
+            name = request.POST.get('name', '')
+            action = request.POST.get('action', '')
+
+            is_valid, students = self.validate_homonym(student_ids, name, action)
+            if is_valid and students:
+                # Select student with the higher grade level
+                selected = students[0]
+                for student in students:
+                    if student.grade_level > selected.grade_level:
+                        selected = student
+
+                for student in students:
+                    if student != selected:
+                        selected.reassign(student)
+                        student.delete()
+
+                return JsonResponse({
+                    'success': True,
+                    'root_student_id': selected.pk
                 })
 
         return HttpResponseBadRequest()

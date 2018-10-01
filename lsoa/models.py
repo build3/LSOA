@@ -2,7 +2,7 @@ import os
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from django.utils.timezone import now
@@ -55,17 +55,37 @@ class Student(TimeStampedModel):
     status = models.CharField(max_length=30, choices=STUDENT_STATUSES, default=ACTIVE)
 
     def __str__(self):
-        return '{} {} '.format(self.nickname, self.last_name[0]) if self.nickname else \
-            '{} {}'.format(self.first_name, self.last_name[0])
+        return '{} {}'.format(self.nickname or self.first_name, self.last_name[0])
 
     def advance_grade_level(self):
         self.grade_level += 1
         self.save()
 
+    @property
+    def name(self):
+        return self.first_name + ' ' + self.last_name
+
     def save(self, **kwargs):
         # this keeps excel import from bombing on nulls
         self.nickname = self.nickname or ''
         return super().save(**kwargs)
+
+    @transaction.atomic
+    def reassign(self, other):
+        """
+        Reasign related entry with other studet to self.
+        """
+        if self == other:
+            return
+
+        models = [Course, Observation, StudentGroup]
+
+        for model in models:
+            entries = model.objects.filter(students__in=[other])
+            for entry in entries:
+                entry.students.remove(other)
+                if not self in entry.students.all():
+                    entry.students.add(self)
 
 
 class StudentGroup(TimeStampedModel):
