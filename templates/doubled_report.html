@@ -4,8 +4,157 @@
 
 {% block content %}
 
+<div class="container-fluid">
+    <h4 class="text-align-center" style="margin-bottom: 25px;">Students assigned to many classes</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Student Id</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Classes</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for student in object_list %}
+            <tr id="row-{{ student.id }}">
+                <th>{{ student.id }}</th>
+                <th>{{ student.first_name }}</th>
+                <th>{{ student.last_name }}</th>
+                <th>
+                    <div id="course-student-{{ student.id }}">
+                        {% for course in student.course_set.all %}
+                        <div class="course-{{course.id}}">
+                            <a href="{% url 'admin:lsoa_course_change' course.id %}"> {{ course }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </th>
+                <th>
+                    <button
+                        type="button"
+                        class="btn btn-primary split"
+                        name="{{ student.id }}">
+                        Split
+                    </button>
+                </th>
+            </tr>
+        {% endfor %}
+        </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select courses of student with the same name</h3>
+            </div>
+            <div class="modal-body">
+                <div id="modal-checkboxes">
+                </div>
+                New students will be create and assign to select course.
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-btn" type="button" class="btn btn-primary">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}
 
 {% block extrascripts %}
+<script>
+$(document).ready(function() {
+
+    var studentClasses = {}
+    {% for student in object_list %}
+        var courses = {}
+        {% for course in student.course_set.all %}
+            courses['{{ course.id }}'] = '{{ course.name }}'
+        {% endfor %}
+        studentClasses['{{ student.id }}'] = courses
+    {% endfor %}
+
+    $('#confirm-btn').on('click', function(event) {
+        var id = event.target.name;
+        var checkboxes = $('#modal-checkboxes').find('input:checked');
+        var courses = [];
+
+        for (var i=0; i < checkboxes.length; i++) {
+            courses.push(checkboxes[i].id);
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '{% url "report_ajax" %}',
+            dataType: 'json',
+            data: {
+                'student_ids': id,
+                'action': 'split',
+                'course_ids': courses,
+                'report': 'doubled',
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function (response) {
+                var cell = $('#course-student-' + id)
+                for (var i=0; i < courses.length; i++) {
+                    cell.find('.course-' + courses[i]).remove()
+                    delete studentClasses[id][courses[i]];
+                }
+
+                $('#modal').modal('hide');
+
+                //remove row if there is no option to split student
+                var keys = Object.keys(studentClasses[id]);
+                if (keys.length < 2) {
+                    $('#row-' + id).remove();
+                }
+                var alertProperies = {
+                    'role': 'alert',
+                    'class': 'alert alert-success',
+                    'text': 'Students have been splited'
+                };
+                $('.alert-container').append(
+                    $('<div />', alertProperies).delay(3000).fadeOut(1000)
+                );
+
+            }
+        });
+    });
+
+    $('.split').on('click', function (event) {
+        $('#modal').modal('show');
+
+        var id = event.target.name;
+        var $container = $('#modal-checkboxes')
+        $container.html('');
+        for (course in studentClasses[id]) {
+            var div = $('<div />', {css: 'row'});
+            $('<input />', {
+                type: 'checkbox',
+                id: course,
+                value: studentClasses[id][course]
+            }).appendTo(div);
+
+            $('<label />', {
+                'for': course,
+                text: studentClasses[id][course]
+            }).appendTo(div);
+
+            div.appendTo($container)
+        }
+
+        $('#confirm-btn').attr('name', id);
+
+    })
+
+})
+</script>
 
 {% endblock %}
