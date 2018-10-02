@@ -682,6 +682,21 @@ class StudentReportAjax(View):
 
         return True, student
 
+    def validate_doubled(self, student_id, action, course_ids):
+        try:
+            student = Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            return False, None
+
+        if action not in ['split']:
+            return False, None
+
+        count = Course.objects.filter(pk__in=course_ids, students__in=[student_id]).count()
+        if count != len(course_ids):
+            return False, None
+
+        return True, student
+
     def validate_homonym(self, student_ids, name, action):
         students = Student.objects.filter(pk__in=student_ids)
         is_valid = True
@@ -712,6 +727,30 @@ class StudentReportAjax(View):
                     'success': True,
                     'status': student.status
                 })
+
+        elif report == 'doubled':
+            student_id = request.POST.get('student_id', '')
+            action = request.POST.get('action', '')
+            course_ids = request.POST.getlist('course_ids[]', [])
+
+            is_valid, student = self.validate_doubled(student_id, action, course_ids)
+
+            if is_valid and student:
+                all_courses = Course.objects.filter(students__in=[student])
+                # If user select all courses to split choose one base.
+                base_course_pk = None
+
+                if len(course_ids) == all_courses.count():
+                    base_course_pk = all_courses.first().pk
+
+                courses_to_split = Course.objects. \
+                    filter(pk__in=course_ids, students__in=[student]). \
+                    exclude(pk=base_course_pk)
+
+                for course in courses_to_split:
+                    student.split_to_new(course)
+
+                return JsonResponse({'success': True})
 
         elif report == 'homonym':
             student_ids = request.POST.getlist('student_ids[]', [])

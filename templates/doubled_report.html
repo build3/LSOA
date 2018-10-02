@@ -95,7 +95,7 @@ $(document).ready(function() {
             url: '{% url "report_ajax" %}',
             dataType: 'json',
             data: {
-                'student_ids': id,
+                'student_id': id,
                 'action': 'split',
                 'course_ids': courses,
                 'report': 'doubled',

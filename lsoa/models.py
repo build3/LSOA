@@ -87,6 +87,32 @@ class Student(TimeStampedModel):
                 if not self in entry.students.all():
                     entry.students.add(self)
 
+    @transaction.atomic
+    def split_to_new(self, course):
+        # Create copy of student, but don't copy nickname and student_id.
+        new_student = Student.objects.create(
+            first_name=self.first_name,
+            last_name=self.last_name,
+            grade_level=self.grade_level,
+            status=self.ACTIVE
+        )
+
+        course.students.remove(self)
+        course.students.add(new_student)
+
+        observations = Observation.objects.filter(students__in=[self], course=course)
+        for observation in observations:
+            observation.students.remove(self)
+            observation.students.add(new_student)
+
+        groups = StudentGroup.objects.filter(students__in=[self], course=course)
+        for group in groups:
+            group.students.remove(self)
+            group.students.add(new_student)
+
+        return new_student
+
+
 
 class StudentGroup(TimeStampedModel):
     """
