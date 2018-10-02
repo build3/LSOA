@@ -113,7 +113,6 @@ class Student(TimeStampedModel):
         return new_student
 
 
-
 class StudentGroup(TimeStampedModel):
     """
     A StudentGroup is a container model for students of a course in a group. A

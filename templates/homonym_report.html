@@ -27,17 +27,17 @@
                     <tr id="student-{{ student.id }}">
                         <th><input type="checkbox" class="merge-cb" name="{{ student.id }}"></th>
                         {% if student.student_id %}
-                            <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.student_id }}</a></th>
+                            <th><a class="url" href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.student_id }}</a></th>
                         {% else %}
                             <th>-</th>
                         {% endif %}
-                        <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.last_name }}</a></th>
+                        <th ><a class="url" href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.last_name }}</a></th>
                         <th>{{ student.first_name }}</th>
                         <th>{{ student.grade_level }}</th>
-                        <th>
+                        <th class="courses">
                             {% for course in student.course_set.all %}
                             <div class="course-{{course.id}}">
-                                <a href="{% url 'admin:lsoa_course_change' course.id %}"> {{ course }}
+                                <a href="{% url 'admin:lsoa_course_change' course.id %}"> {{ course }} </a>
                             </div>
                             {% empty %}
                             -
@@ -112,11 +112,17 @@ $(document).ready(function() {
                 if (all_inputs.length == checked.length) {
                     $('#' + name + '-table').remove();
                 } else {
-                    ids.pop(student_id)
+                    $currentRow = $('#student-' + student_id);
+                    $currentCourses = $currentRow.find('.courses');
                     for (var i=0; i < ids.length; i++) {
-                        $row = $('#student-' + ids[i]);
-                        $row.remove();
+                        if (ids[i] != student_id) {
+                            $row = $('#student-' + ids[i]);
+                            var courses = $row.find('.courses').children();
+                            $currentCourses.append(courses);
+                            $row.remove();
+                        }
                     }
+
                 }
                 var alertProperies = {
                     'role': 'alert',
@@ -126,6 +132,8 @@ $(document).ready(function() {
                 $('.alert-container').append(
                     $('<div />', alertProperies).delay(3000).fadeOut(1000)
                 );
+
+                $('#modal').modal('hide');
 
             }
         });
