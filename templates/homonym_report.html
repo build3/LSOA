@@ -1,0 +1,172 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="alert-container"></div>
+
+    <h4 class="text-align-center mb-4">Students with repeating names</h4>
+    {% for name, students in object_list.items %}
+    <div id="{{ name|slugify }}-table">
+            <h5> {{ name }} </h5>
+            <table id="{{ name|slugify }}" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Student Id</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Grade Level</th>
+                        <th>Classes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for student in students %}
+                    <tr id="student-{{ student.id }}">
+                        <th><input type="checkbox" class="merge-cb" name="{{ student.id }}"></th>
+                        {% if student.student_id %}
+                            <th><a class="url" href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.student_id }}</a></th>
+                        {% else %}
+                            <th>-</th>
+                        {% endif %}
+                        <th ><a class="url" href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.last_name }}</a></th>
+                        <th>{{ student.first_name }}</th>
+                        <th>{{ student.grade_level }}</th>
+                        <th class="courses">
+                            {% for course in student.course_set.all %}
+                            <div class="course-{{course.id}}">
+                                <a href="{% url 'admin:lsoa_course_change' course.id %}"> {{ course }} </a>
+                            </div>
+                            {% empty %}
+                            -
+                            {% endfor %}
+                        </th>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <button type="button" name="{{ name|slugify }}" class="btn btn-primary merge-btn">Merge selected</button>
+    <hr>
+    </div>
+    {% empty %}
+    <p> No students found </p>
+    {% endfor %}
+</div>
+
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Merge students</h3>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-btn" type="button" class="btn btn-primary">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block extrascripts %}
+<script>
+
+$(document).ready(function() {
+
+    var submitMerge = function(name) {
+        var $table = $('#' + name);
+        var checked = $table.find('input:checked')
+        var ids = []
+
+        for (var i=0; i < checked.length; i++) {
+            var input = checked[i]
+            ids.push(input.name);
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '{% url "report_ajax" %}',
+            dataType: 'json',
+            data: {
+                'student_ids': ids,
+                'action': 'merge',
+                'name': name,
+                'report': 'homonym',
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function (response) {
+                var student_id = response['root_student_id']
+
+                // Romove rows with merged students. If there is only one
+                // student with this name remove whole table.
+                var all_inputs = $table.find('input')
+                if (all_inputs.length == checked.length) {
+                    $('#' + name + '-table').remove();
+                } else {
+                    $currentRow = $('#student-' + student_id);
+                    $currentCourses = $currentRow.find('.courses');
+                    for (var i=0; i < ids.length; i++) {
+                        if (ids[i] != student_id) {
+                            $row = $('#student-' + ids[i]);
+                            var courses = $row.find('.courses').children();
+                            $currentCourses.append(courses);
+                            $row.remove();
+                        }
+                    }
+
+                }
+                var alertProperies = {
+                    'role': 'alert',
+                    'class': 'alert alert-success',
+                    'text': 'Students have been merged'
+                };
+                $('.alert-container').append(
+                    $('<div />', alertProperies).delay(3000).fadeOut(1000)
+                );
+
+                $('#modal').modal('hide');
+
+            }
+        });
+    };
+
+    $('.merge-btn').on('click', function(event) {
+        var name = event.target.name;
+        var $table = $('#' + name);
+
+        var $modal = $("#modal")
+        var $body = $modal.find('.modal-body')
+        var $confirmBtn = $modal.find('#confirm')
+
+        $modal.modal('show');
+        var checked = $table.find('input:checked')
+        var msg = '';
+        if (checked.length == 0) {
+            msg = 'You have to select students first.'
+            $confirmBtn.hide()
+        } else if (checked.length == 1) {
+            msg = 'You have to select at least 2 students.'
+            $confirmBtn.hide()
+        } else {
+            msg = 'Are you sure you want to merge selected students?'
+            $confirmBtn.show()
+        }
+
+        $body.html(msg);
+        $('#confirm-btn').unbind();
+
+        $("#confirm-btn").on('click', function() { submitMerge(name) });
+    })
+});
+
+</script>
+{% endblock %}

@@ -2,7 +2,7 @@ import os
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from django.utils.timezone import now
@@ -40,24 +40,77 @@ class Student(TimeStampedModel):
     A Student has associated data, however on the Student record itself, simply
     record their name.
     """
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+    STUDENT_STATUSES = (
+        (ACTIVE, 'active'),
+        (INACTIVE, 'inactive')
+    )
+
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     student_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
     nickname = models.CharField(max_length=255, blank=True, default='')
     grade_level = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=30, choices=STUDENT_STATUSES, default=ACTIVE)
 
     def __str__(self):
-        return '{} {} '.format(self.nickname, self.last_name[0]) if self.nickname else \
-            '{} {}'.format(self.first_name, self.last_name[0])
+        return '{} {}'.format(self.nickname or self.first_name, self.last_name[0])
 
     def advance_grade_level(self):
         self.grade_level += 1
         self.save()
 
+    @property
+    def name(self):
+        return self.first_name + ' ' + self.last_name
+
     def save(self, **kwargs):
         # this keeps excel import from bombing on nulls
         self.nickname = self.nickname or ''
         return super().save(**kwargs)
+
+    @transaction.atomic
+    def reassign(self, other):
+        """
+        Reasign related entry with other studet to self.
+        """
+        if self == other:
+            return
+
+        models = [Course, Observation, StudentGroup]
+
+        for model in models:
+            entries = model.objects.filter(students__in=[other])
+            for entry in entries:
+                entry.students.remove(other)
+                if not self in entry.students.all():
+                    entry.students.add(self)
+
+    @transaction.atomic
+    def split_to_new(self, course):
+        # Create copy of student, but don't copy nickname and student_id.
+        new_student = Student.objects.create(
+            first_name=self.first_name,
+            last_name=self.last_name,
+            grade_level=self.grade_level,
+            status=self.ACTIVE
+        )
+
+        course.students.remove(self)
+        course.students.add(new_student)
+
+        observations = Observation.objects.filter(students__in=[self], course=course)
+        for observation in observations:
+            observation.students.remove(self)
+            observation.students.add(new_student)
+
+        groups = StudentGroup.objects.filter(students__in=[self], course=course)
+        for group in groups:
+            group.students.remove(self)
+            group.students.add(new_student)
+
+        return new_student
 
 
 class StudentGroup(TimeStampedModel):

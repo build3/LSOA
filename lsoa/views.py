@@ -2,19 +2,22 @@ import collections
 import datetime
 import io
 import json
+import operator
 import logging
 from datetime import timedelta
+from functools import reduce
 
 from braces.views import JSONResponseMixin
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View, TemplateView, UpdateView, \
@@ -330,7 +333,7 @@ class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
             group.students.clear()
 
             for student_id in group_data.get('studentIds', []):
-                student = Student.objects.get(id=student_id)
+                student = Student.objects.get(id=student_id, status=Student.ACTIVE)
                 group.students.add(student)
 
             grouping.groups.add(group)
@@ -353,9 +356,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
     def get_data_for_construct_id(self, construct_id, course_id, date_from, date_to):
         IS_OTHER = False
         if course_id:
-            all_students = Student.objects.filter(course=course_id)
+            all_students = Student.objects.filter(course=course_id, status=Student.ACTIVE)
         else:
-            all_students = Student.objects.all()
+            all_students = Student.objects.filter(status=Student.ACTIVE)
         all_observations = Observation.objects.prefetch_related('students').filter(
             constructs__level__construct_id=construct_id,
             students__in=all_students
@@ -614,3 +617,162 @@ class ListTag(BaseTagManagement, ListView):
 
     def get_queryset(self):
         return ContextTag.objects.filter(owner=self.request.user).order_by('id')
+
+
+class FloatingStudents(ListView):
+    model = Student
+    template_name = 'floating_report.html'
+
+    def get_queryset(self):
+        return Student.objects.filter(course__isnull=True).order_by('pk')
+
+
+class DoubledStudents(ListView):
+    model = Student
+    template_name = 'doubled_report.html'
+
+    def get_queryset(self):
+        return Student.objects.annotate(count=Count('course')) \
+            .filter(count__gte=2).order_by('pk')
+
+
+class HomonymStudents(ListView):
+    model = Student
+    template_name = 'homonym_report.html'
+
+    def get_queryset(self):
+        student_names = Student.objects \
+            .order_by('last_name', 'first_name') \
+            .values('last_name', 'first_name') \
+            .annotate(count=Count('id')) \
+            .filter(count__gte=2)
+
+        name_tuples = [(s['first_name'], s['last_name']) for s in student_names]
+        if not name_tuples:
+            return Student.objects.none()
+
+        query = reduce(operator.or_, (Q(first_name=f, last_name=l) for f, l in name_tuples))
+
+        return Student.objects.filter(query)
+
+    def get_context_data(self):
+        data = super().get_context_data()
+        objects = data['object_list']
+        grouped_data = dict()
+        for object in objects:
+            name = '{} {}'.format(object.first_name, object.last_name)
+            if name in grouped_data:
+                grouped_data[name].append(object)
+            else:
+                grouped_data[name] = [object]
+        data['object_list'] = grouped_data
+        return data
+
+
+class StudentReportAjax(View):
+
+    def validate_floating(self, student_id, action):
+        try:
+            student = Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            return False, None
+
+        if action not in ['active', 'inactive']:
+            return False, None
+
+        return True, student
+
+    def validate_doubled(self, student_id, action, course_ids):
+        try:
+            student = Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            return False, None
+
+        if action not in ['split']:
+            return False, None
+
+        count = Course.objects.filter(pk__in=course_ids, students__in=[student_id]).count()
+        if count != len(course_ids):
+            return False, None
+
+        return True, student
+
+    def validate_homonym(self, student_ids, name, action):
+        students = Student.objects.filter(pk__in=student_ids)
+        is_valid = True
+
+        if not (student_ids and name and action):
+            is_valid = False
+
+        elif any(slugify(student.name) != name for student in students):
+            is_valid = False
+
+        elif action not in ['merge']:
+            is_valid = False
+
+        return is_valid, list(students)
+
+    def post(self, request):
+        self.request = request
+        report = request.POST.get('report', '')
+
+        if report == 'floating':
+            student_id = request.POST.get('student_id', '')
+            action = request.POST.get('action', '')
+            is_valid, student = self.validate_floating(student_id, action)
+            if is_valid:
+                student.status = action
+                student.save()
+                return JsonResponse({
+                    'success': True,
+                    'status': student.status
+                })
+
+        elif report == 'doubled':
+            student_id = request.POST.get('student_id', '')
+            action = request.POST.get('action', '')
+            course_ids = request.POST.getlist('course_ids[]', [])
+
+            is_valid, student = self.validate_doubled(student_id, action, course_ids)
+
+            if is_valid and student:
+                all_courses = Course.objects.filter(students__pk=student.pk)
+                # If user select all courses to split choose one base.
+                base_course_pk = None
+
+                if len(course_ids) == all_courses.count():
+                    base_course_pk = all_courses.first().pk
+
+                courses_to_split = Course.objects \
+                    .filter(pk__in=course_ids, students__pk=student.pk) \
+                    .exclude(pk=base_course_pk)
+
+                for course in courses_to_split:
+                    student.split_to_new(course)
+
+                return JsonResponse({'success': True})
+
+        elif report == 'homonym':
+            student_ids = request.POST.getlist('student_ids[]', [])
+            name = request.POST.get('name', '')
+            action = request.POST.get('action', '')
+
+            is_valid, students = self.validate_homonym(student_ids, name, action)
+            if is_valid and students:
+                # Select student with the higher grade level
+                selected = students[0]
+                for student in students:
+                    if student.grade_level > selected.grade_level:
+                        selected = student
+
+                for student in students:
+                    if student != selected:
+                        selected.reassign(student)
+                        student.delete()
+
+                return JsonResponse({
+                    'success': True,
+                    'root_student_id': selected.pk
+                })
+
+        return HttpResponseBadRequest()
