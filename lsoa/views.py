@@ -632,8 +632,8 @@ class DoubledStudents(ListView):
     template_name = 'doubled_report.html'
 
     def get_queryset(self):
-        return Student.objects.annotate(count=Count('course')). \
-            filter(count__gte=2).order_by('pk')
+        return Student.objects.annotate(count=Count('course')) \
+            .filter(count__gte=2).order_by('pk')
 
 
 class HomonymStudents(ListView):
@@ -660,7 +660,7 @@ class HomonymStudents(ListView):
         objects = data['object_list']
         grouped_data = dict()
         for object in objects:
-            name = ' '.join([object.first_name, object.last_name])
+            name = '{} {}'.format(object.first_name, object.last_name)
             if name in grouped_data:
                 grouped_data[name].append(object)
             else:
@@ -736,16 +736,16 @@ class StudentReportAjax(View):
             is_valid, student = self.validate_doubled(student_id, action, course_ids)
 
             if is_valid and student:
-                all_courses = Course.objects.filter(students__in=[student])
+                all_courses = Course.objects.filter(students__pk=student.pk)
                 # If user select all courses to split choose one base.
                 base_course_pk = None
 
                 if len(course_ids) == all_courses.count():
                     base_course_pk = all_courses.first().pk
 
-                courses_to_split = Course.objects. \
-                    filter(pk__in=course_ids, students__in=[student]). \
-                    exclude(pk=base_course_pk)
+                courses_to_split = Course.objects \
+                    .filter(pk__in=course_ids, students__pk=student.pk) \
+                    .exclude(pk=base_course_pk)
 
                 for course in courses_to_split:
                     student.split_to_new(course)

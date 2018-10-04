@@ -7,7 +7,7 @@
 <div class="container-fluid">
     <div class="alert-container"></div>
 
-    <h4 class="text-align-center" style="margin-bottom: 25px;">Students with repeating names</h4>
+    <h4 class="text-align-center mb-4">Students with repeating names</h4>
     {% for name, students in object_list.items %}
     <div id="{{ name|slugify }}-table">
             <h5> {{ name }} </h5>
