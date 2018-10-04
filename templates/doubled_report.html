@@ -31,7 +31,7 @@
                 <th>
                     <div id="course-student-{{ student.id }}">
                         {% for course in student.course_set.all %}
-                        <div class="course-{{course.id}}">
+                        <div class="course-{{ course.id }}">
                             <a href="{% url 'admin:lsoa_course_change' course.id %}"> {{ course }}
                         </div>
                         {% endfor %}
