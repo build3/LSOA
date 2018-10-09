@@ -1,0 +1,107 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div>
+      <h4 class="text-align-center mb-4">Student without any class</h4>
+      <table class="table table-bordered">
+        <thead>
+        <tr>
+          <th>Student Id</th>
+          <th>Last Name</th>
+          <th>First Name</th>
+          <th>Status</th>
+          <th>Observations</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for student in object_list %}
+         <tr>
+            {% if student.student_id %}
+                <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.student_id }}</a></th>
+            {% else %}
+                <th>-</th>
+            {% endif %}
+            <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.last_name }}</a></th>
+            <th>{{ student.first_name }}</th>
+            <th id="status-{{ student.id }}">{{ student.get_status_display }}</th>
+            <th>
+                {% for observation in student.observation_set.all %}
+                    <div class="row">
+                        <a href="{% url 'observation_detail_view' observation.id %}">
+                            {{ observation }}
+                        </a>
+                    </div>
+                {% endfor %}
+            </th>
+            <th>
+                <button
+                    type="button"
+                    class="btn btn-primary {{ student.status }} action"
+                    name="{{ student.id }}">
+                    {% if student.status == 'active' %} Disable {% else %} Enable {% endif %}
+                </button>
+            </th>
+
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.action').on('click', function (e) {
+        var button = e.currentTarget;
+        var $button = $(button)
+        var id = button.name;
+        var action = '';
+        if ($button.hasClass('active')) {
+            action = 'inactive';
+        } else if ($button.hasClass('inactive')) {
+            action = 'active';
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '{% url "report_ajax" %}',
+            dataType: 'json',
+            data: {
+                'student_id': id,
+                'action': action,
+                'report': 'floating',
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function (response) {
+                var responseStatus = response['status'];
+                var $statusCell = $('#status-' + id)
+                if (responseStatus == 'inactive') {
+                    $button.removeClass('active');
+                    $button.addClass('inactive');
+                    $button.html('Enable')
+                    $statusCell.html('inactive')
+
+                } else if (responseStatus =='active') {
+                    $button.removeClass('inactive');
+                    $button.addClass('active');
+                    $button.html('Disable')
+                    $statusCell.html('active')
+                }
+            },
+            error: function (xhr, status, e) {
+
+            }
+        });
+    });
+})
+</script>
+{% endblock %}

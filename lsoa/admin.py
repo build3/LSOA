@@ -66,7 +66,7 @@ class StudentAdmin(ImportExportActionModelAdmin):
     formats = ACCEPTED_FILE_FORMATS
     actions = [advance_grade, ]
     resource_class = StudentResource
-    list_display = ('first_name', 'nickname', 'last_name', 'grade_level', 'modified')
+    list_display = ('first_name', 'nickname', 'last_name', 'grade_level', 'status', 'modified')
     list_filter = ('grade_level',)
     preserve_filters = True
     search_fields = ('last_name', 'first_name', 'nickname',)
@@ -79,6 +79,7 @@ class StudentAdmin(ImportExportActionModelAdmin):
                 'nickname',
                 'student_id',
                 'grade_level',
+                'status',
             )
         }),
     )
