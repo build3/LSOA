@@ -163,6 +163,11 @@ class DateFilteringForm(forms.Form):
         widget=forms.DateInput(attrs={'class': 'datepicker form-control'}),
         required=False
     )
+    tags = forms.ModelMultipleChoiceField(
+        widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'}),
+        required=False,
+        queryset=ContextTag.objects.all()
+    )
     constructs = forms.ModelMultipleChoiceField(
         widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'}),
         required=False,
