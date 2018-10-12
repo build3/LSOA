@@ -100,6 +100,28 @@
             <span class="disa">Clear</span> Drawing</a>
           <a id="drawing-color-button" class="disabled btn btn-primary mb-0 text-white">Change Color <span
             id="drawing-color"></span></a>
+          <a>
+          <div class="dropdown show" style="padding-top: 2px">
+            <a id="brush-size-button"
+               class="btn btn-primary mb-0 text-white"
+               href="#"
+               role="button"
+               id="dropdownMenuLink"
+               data-toggle="dropdown"
+               aria-haspopup="true"
+               aria-expanded="true">
+               Select Brush Size
+            </a>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+              <a value="2" class="dropdown-item brush-size" href="#">2</a>
+              <a value="5" class="dropdown-item brush-size" href="#">5</a>
+              <a value="7" class="dropdown-item brush-size" href="#">7</a>
+              <a value="10" class="dropdown-item brush-size active" href="#">10</a>
+              <a value="12" class="dropdown-item brush-size" href="#">12</a>
+              <a value="15" class="dropdown-item brush-size" href="#">15</a>
+            </div>
+          </div>
+          </a>
         </div>
 
         {#    Constructs    #}
@@ -452,6 +474,15 @@
 
 
       {# THIS SECTION IS THE IMAGE ANNOTATION CODE #}
+
+      $('.brush-size').on('click', function(e) {
+        var $currentSize = $('.brush-size.active');
+        $currentSize.removeClass('active');
+        var $newSize = $(e.target)
+        $newSize.addClass('active');
+        stage.freeDrawingBrush = new fabric['PencilBrush'](stage);
+        stage.freeDrawingBrush.width = parseInt($newSize.attr('value'));
+      })
 
       var annotationInput = document.querySelector('#annotated-image');
 
