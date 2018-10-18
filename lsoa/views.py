@@ -353,7 +353,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
     """
     template_name = 'observations.html'
 
-    def get_data_for_construct_id(self, construct_id, course_id, date_from, date_to):
+    def get_data_for_construct_id(self, construct_id, course_id, date_from, date_to, tags):
         IS_OTHER = False
         if course_id:
             all_students = Student.objects.filter(course=course_id, status=Student.ACTIVE)
@@ -369,6 +369,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         if date_to:
             all_observations = all_observations.filter(observation_date__lte=date_to)
+
+        if tags:
+            tag_ids = [tag.id for tag in tags]
+            all_observations = all_observations.filter(tags__in=tag_ids)
 
         all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
         c_name = LearningConstruct.objects.filter(id=construct_id).first()
@@ -431,14 +435,15 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             date_from = date_filtering_form.cleaned_data['date_from']
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
+            tags = date_filtering_form.cleaned_data['tags']
 
         constructs_to_cover = LearningConstruct.objects.annotate(
             q_count=Count('learningconstructlevel__learningconstructsublevel__observation')
         ).order_by('-q_count')
 
-        tables = [self.get_data_for_construct_id(cid, course_id, date_from, date_to) for cid in
+        tables = [self.get_data_for_construct_id(cid, course_id, date_from, date_to, tags) for cid in
                   constructs_to_cover.values_list('id', flat=True)]
-        star_chart_tables = tables + [self.get_data_for_construct_id(None, course_id, date_from, date_to)]
+        star_chart_tables = tables + [self.get_data_for_construct_id(None, course_id, date_from, date_to, tags)]
 
         data = super().get_context_data(**kwargs)
         data.update({
