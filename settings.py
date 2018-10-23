@@ -3,7 +3,7 @@ import os
 import dj_database_url
 from django.urls import reverse_lazy
 
-APP_NAME = 'lsoa'
+APP_NAME = 'kidviz'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # BASIC DJANGO SETTINGS
@@ -30,7 +30,7 @@ ANYMAIL = {
     'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
     "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_DOMAIN'),
 }
-DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@lsoa.local')
+DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@kidviz.local')
 
 # APP AND MIDDLEWARE SETTINGS
 
@@ -63,7 +63,7 @@ FRONTEND_THIRD_PARTY_APPS = [
 ]
 LOCAL_APPS = [
     'users',
-    'lsoa',
+    'kidviz',
 ]
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + BACKEND_THIRD_PARTY_APPS + FRONTEND_THIRD_PARTY_APPS
 
@@ -83,8 +83,8 @@ MIDDLEWARE = [
 # DATABASES AND CACHING
 
 DATABASES = {}
-DATABASES['default'] = dj_database_url.config(conn_max_age=600,
-                                              default='postgres://localhost:5432/{}'.format(APP_NAME))
+# local database uses old name for now
+DATABASES['default'] = dj_database_url.config(conn_max_age=600, default='postgres://localhost:5432/lsoa')
 
 # TEMPLATES AND STATIC FILES
 
@@ -110,7 +110,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
-                'lsoa.context_processors.has_current_observation',
+                'kidviz.context_processors.has_current_observation',
             ],
         },
     },

@@ -61,7 +61,7 @@ class User(AbstractBaseUser, TimeStampedModel, PermissionsMixin):
         ),
     )
     default_course = models.ForeignKey(
-        'lsoa.Course',
+        'kidviz.Course',
         null=True,
         blank=True,
         on_delete=models.SET_NULL

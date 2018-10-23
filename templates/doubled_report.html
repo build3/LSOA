@@ -22,17 +22,17 @@
         {% for student in object_list %}
             <tr id="row-{{ student.id }}">
                 {% if student.student_id %}
-                    <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.student_id }}</a></th>
+                    <th><a href="{% url 'admin:kidviz_student_change' student.id %}">{{ student.student_id }}</a></th>
                 {% else %}
                     <th>-</th>
                 {% endif %}
-                <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.last_name }}</a></th>
+                <th><a href="{% url 'admin:kidviz_student_change' student.id %}">{{ student.last_name }}</a></th>
                 <th>{{ student.first_name }}</th>
                 <th>
                     <div id="course-student-{{ student.id }}">
                         {% for course in student.course_set.all %}
                         <div class="course-{{ course.id }}">
-                            <a href="{% url 'admin:lsoa_course_change' course.id %}"> {{ course }}
+                            <a href="{% url 'admin:kidviz_course_change' course.id %}"> {{ course }}
                         </div>
                         {% endfor %}
                     </div>

@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('lsoa', '0020_auto_20180809_0826'),
+        ('kidviz', '0020_auto_20180809_0826'),
         ('users', '0002_auto_20180108_0002'),
     ]
 
@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='default_course',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='lsoa.Course'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='kidviz.Course'),
         ),
     ]

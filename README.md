@@ -1,4 +1,4 @@
-# LSOA
+# KidViz
 Learning Sciences Observation App - Vanderbilt University
 
 ## Running Locally
@@ -27,14 +27,14 @@ to let homebrew automatically manage its lifecycle for you (it will always just 
 (hint: you can also install the GUI program PSequel via `brew cask install psequel` to use a GUI to browse around
 your data. I use Postico, but it's a paid program).
 
-Once all this is done, you'll want to type the command `createdb lsoa` to instruct postgres to make a new database
-called "lsoa". When this runs successfully, you're ready to dive into the project itself.
+Once all this is done, you'll want to type the command `createdb kidviz` to instruct postgres to make a new database
+called "kidviz". When this runs successfully, you're ready to dive into the project itself.
 
-Clone the repository to a folder (mine is just ~/Desktop/LSOA). `cd` into the folder, then run `mkvirtualenv LSOA`
-to tell Python3 to make a virtual environment specifically for this project called LSOA. Once that's done, you 
+Clone the repository to a folder (mine is just ~/Desktop/KidViz). `cd` into the folder, then run `mkvirtualenv KidViz`
+to tell Python3 to make a virtual environment specifically for this project called KidViz. Once that's done, you 
 should do a `which python` command, which should give you output similar to 
-`/Users/yourusername/.virtualenvs/LSOA/bin/python`. This indicates you're correctly in the virtual environment
-for this project. While still in the LSOA folder, type `pip install -r requirements.txt` to install into your local
+`/Users/yourusername/.virtualenvs/KidViz/bin/python`. This indicates you're correctly in the virtual environment
+for this project. While still in the KidViz folder, type `pip install -r requirements.txt` to install into your local
 environment all of the dependencies that this project has. This should run without any problems but might take a
 minute or two.
 

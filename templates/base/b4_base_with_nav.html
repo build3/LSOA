@@ -3,7 +3,7 @@
 
 {% block base-content %}
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a class="navbar-brand" href="#">LSOA</a>
+    <a class="navbar-brand" href="#">KidViz</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -26,7 +26,7 @@
             {% endif %}
           ">Star Charts</a>
         </li>
-      {% if perms.lsoa.can_approve_deny_users %}
+      {% if perms.kidviz.can_approve_deny_users %}
         <li class="nav-item {% active_link 'pending_users' %}">
           <a class="nav-link" href="{% url 'pending_users' %}">Pending Users</a>
         </li>
