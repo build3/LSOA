@@ -23,11 +23,11 @@
         {% for student in object_list %}
          <tr>
             {% if student.student_id %}
-                <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.student_id }}</a></th>
+                <th><a href="{% url 'admin:kidviz_student_change' student.id %}">{{ student.student_id }}</a></th>
             {% else %}
                 <th>-</th>
             {% endif %}
-            <th><a href="{% url 'admin:lsoa_student_change' student.id %}">{{ student.last_name }}</a></th>
+            <th><a href="{% url 'admin:kidviz_student_change' student.id %}">{{ student.last_name }}</a></th>
             <th>{{ student.first_name }}</th>
             <th id="status-{{ student.id }}">{{ student.get_status_display }}</th>
             <th>

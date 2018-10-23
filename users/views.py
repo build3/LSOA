@@ -7,7 +7,7 @@ from .models import User
 
 
 class ApproveUserView(PermissionRequiredMixin, RedirectView):
-    permission_required = 'lsoa.can_approve_deny_users'
+    permission_required = 'kidviz.can_approve_deny_users'
 
     def get(self, request, *args, **kwargs):
         user_id = kwargs.get('id')
@@ -24,7 +24,7 @@ class ApproveUserView(PermissionRequiredMixin, RedirectView):
 
 
 class DenyUserView(PermissionRequiredMixin, RedirectView):
-    permission_required = 'lsoa.can_approve_deny_users'
+    permission_required = 'kidviz.can_approve_deny_users'
 
     def get(self, request, *args, **kwargs):
         user_id = kwargs.get('id')
@@ -41,7 +41,7 @@ class DenyUserView(PermissionRequiredMixin, RedirectView):
 
 
 class PendingUserListView(PermissionRequiredMixin, ListView):
-    permission_required = 'lsoa.can_approve_deny_users'
+    permission_required = 'kidviz.can_approve_deny_users'
 
     model = User
     queryset = User.objects.filter(is_pending=True)
@@ -49,7 +49,7 @@ class PendingUserListView(PermissionRequiredMixin, ListView):
 
 
 class ApprovedUserListView(PermissionRequiredMixin, ListView):
-    permission_required = 'lsoa.can_approve_deny_users'
+    permission_required = 'kidviz.can_approve_deny_users'
 
     model = User
     queryset = User.objects.filter(is_pending=False, is_active=True)
@@ -57,7 +57,7 @@ class ApprovedUserListView(PermissionRequiredMixin, ListView):
 
 
 class DeniedUserListView(PermissionRequiredMixin, ListView):
-    permission_required = 'lsoa.can_approve_deny_users'
+    permission_required = 'kidviz.can_approve_deny_users'
 
     model = User
     queryset = User.objects.filter(is_pending=False, is_active=False)

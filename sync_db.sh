@@ -1,20 +1,20 @@
 #!/bin/bash
 
-echo "dropdb lsoa"
-dropdb lsoa
+echo "dropdb kidviz"
+dropdb kidviz
 
-echo "dropuser lsoa"
-dropuser lsoa
+echo "dropuser kidviz"
+dropuser kidviz
 
-echo "createuser lsoa -S"
-createuser lsoa -S
+echo "createuser kidviz -S"
+createuser kidviz -S
 
-echo "createdb lsoa"
-createdb lsoa
+echo "createdb kidviz"
+createdb kidviz
 
-echo "GRANT ALL ON DATABASE lsoa TO lsoa;"
-echo "GRANT ALL ON DATABASE lsoa TO lsoa;" | psql -d lsoa
+echo "GRANT ALL ON DATABASE kidviz TO kidviz;"
+echo "GRANT ALL ON DATABASE kidviz TO kidviz;" | psql -d kidviz
 
 echo "heroku pg:backups:capture" && heroku pg:backups:capture && echo "heroku pg:backups:download" && heroku pg:backups:download && \
-gunzip -c dumpfile.gz | pg_restore --verbose --clean --no-acl --no-owner -d lsoa -U lsoa && rm -f dumpfile.gz
+gunzip -c dumpfile.gz | pg_restore --verbose --clean --no-acl --no-owner -d kidviz -U kidviz && rm -f dumpfile.gz
 rm -f latest.dump
