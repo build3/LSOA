@@ -126,7 +126,7 @@
 
         {#    Constructs    #}
         <div class="text-center">
-            <label> {{ form.no_constructs }} {{ form.no_constructs.label }} </label>
+          <label> {{ form.no_constructs }} {{ form.no_constructs.label }} </label>
         </div>
         {% if form.constructs.errors %}
           <div role="alert" class="alert alert-danger">
@@ -313,11 +313,11 @@
       }
 
       var deselectConstruct = function (constructId) {
-          $('[data-construct-id="' + constructId + '"]').removeClass('bg-success');
-          if (checkedConstructs.hasOwnProperty(constructId)) {
-            delete checkedConstructs[constructId];
-            $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
-          }
+        $('[data-construct-id="' + constructId + '"]').removeClass('bg-success');
+        if (checkedConstructs.hasOwnProperty(constructId)) {
+          delete checkedConstructs[constructId];
+          $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
+        }
       }
 
       var toggleConstruct = function (constructId) {
@@ -370,23 +370,23 @@
       };
 
       var handleConstructsSelection = function () {
-          var $target = $('#id_no_constructs');
-          if ($target.is(':checked')) {
-              $('#constructs-choices').hide()
-              clearChocies();
-          } else {
-              $('#constructs-choices').show()
-          }
+        var $target = $('#id_no_constructs');
+        if ($target.is(':checked')) {
+          $('#constructs-choices').hide()
+          clearChocies();
+        } else {
+          $('#constructs-choices').show()
+        }
       }
 
       var clearChocies = function () {
-          var constructs = []
-          {% for construct in construct_choices %}
-            constructs.push({{ construct.pk }})
-          {% endfor %}
-          for (var index = 0; index < constructs.length; index++) {
-              deselectConstruct(constructs[index])
-          }
+        var constructs = []
+        {% for construct in construct_choices %}
+          constructs.push({{ construct.pk }})
+        {% endfor %}
+        for (var index = 0; index < constructs.length; index++) {
+          deselectConstruct(constructs[index])
+        }
       }
 
       $('.construct').on('click', function (e) {
@@ -395,7 +395,7 @@
       });
 
       $('#id_no_constructs').on('click', function (e) {
-          handleConstructsSelection()
+        handleConstructsSelection()
       })
 
       $('.student').on('click', function (e) {
