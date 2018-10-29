@@ -373,13 +373,13 @@
         var $target = $('#id_no_constructs');
         if ($target.is(':checked')) {
           $('#constructs-choices').hide()
-          clearChocies();
+          clearChoices()
         } else {
           $('#constructs-choices').show()
         }
       }
 
-      var clearChocies = function () {
+      var clearChoices = function () {
         var constructs = []
         {% for construct in construct_choices %}
           constructs.push({{ construct.pk }})
