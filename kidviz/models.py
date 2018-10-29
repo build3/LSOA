@@ -173,6 +173,18 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     observation_date = models.DateField(default=now)
 
+    @property
+    def allowed_student(self):
+        if not self.grouping:
+            return []
+
+        groups = self.grouping.groups.all()
+        students = set()
+        for group in groups:
+            students.update(list(group.students.all()))
+
+        return list(students)
+
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
         return _display
