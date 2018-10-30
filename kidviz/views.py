@@ -353,66 +353,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
     """
     template_name = 'observations.html'
 
-    def get_data_for_construct_id(self, construct_id, course_id, date_from, date_to, tags):
-        IS_OTHER = False
-        if course_id:
-            all_students = Student.objects.filter(course=course_id, status=Student.ACTIVE)
-        else:
-            all_students = Student.objects.filter(status=Student.ACTIVE)
-        all_observations = Observation.objects.prefetch_related('students').filter(
-            constructs__level__construct_id=construct_id,
-            students__in=all_students
-        )
-
-        if date_from:
-            all_observations = all_observations.filter(observation_date__gte=date_from)
-
-        if date_to:
-            all_observations = all_observations.filter(observation_date__lte=date_to)
-
-        if tags:
-            tag_ids = [tag.id for tag in tags]
-            all_observations = all_observations.filter(tags__in=tag_ids)
-
-        all_constructs_sublevels = LearningConstructSublevel.objects.filter(level__construct_id=construct_id)
-        c_name = LearningConstruct.objects.filter(id=construct_id).first()
-        if c_name:
-            c_name = c_name.abbreviation + ' '
-        else:
-            IS_OTHER = True
-            c_name = 'Observations without constructs '
-
-        # Create data dicts
-        student_map = {s.id: str(s) for s in all_students}
-        construct_map = collections.OrderedDict(
-            {csl.id: {'description': csl.description, 'name': csl.name.replace(c_name, '')} for csl in
-             all_constructs_sublevels})
-
-        if IS_OTHER:
-            construct_map['other'] = {'Description': 'Observations without constructs', 'name': ' '}
-
-        observations_map = {}
-        matrix = {s.id: collections.defaultdict(set) for s in all_students}
-
-        for observation in all_observations:
-            if observation.constructs.count():
-                for obs_construct in observation.constructs.all():
-                    for obs_student in observation.students.filter(id__in=all_students):
-                        matrix[obs_student.id][obs_construct.id].add(observation.id)
-            else:
-                for obs_student in observation.students.filter(id__in=all_students):
-                    matrix[obs_student.id]['other'].add(observation.id)
-
-        return {
-            'student_map': student_map,
-            'observations_map': observations_map,
-            'construct_map': construct_map,
-            'matrix': matrix,
-            'c_name': c_name,
-            'all_observations': all_observations,
-            'IS_OTHER': IS_OTHER
-        }
-
     def selected_chart(self):
         get = self.request.GET or {}
         chart_keys = ['chart_v1', 'chart_v2', 'chart_v3']
@@ -424,8 +364,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         course_id = kwargs.get('course_id')
-        all_constructs = LearningConstruct.objects.all()
-        top_level_construct_map = {c.id: c.abbreviation for c in all_constructs}
         date_filtering_form = DateFilteringForm(self.request.GET)
         date_from = None
         date_to = None
@@ -437,25 +375,63 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
 
-        constructs_to_cover = LearningConstruct.objects.annotate(
+        observations = Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs') \
+            .filter(course=course_id)
+
+        if date_from:
+            observations = observations.filter(observation_date__gte=date_from)
+
+        if date_to:
+            observations = observations.filter(observation_date__lte=date_to)
+
+        if tags:
+            tag_ids = [tag.id for tag in tags]
+            observations = observations.filter(tags__in=tag_ids)
+
+        constructs = LearningConstruct.objects.annotate(
             q_count=Count('learningconstructlevel__learningconstructsublevel__observation')
         ).order_by('-q_count')
 
-        tables = [self.get_data_for_construct_id(cid, course_id, date_from, date_to, tags) for cid in
-                  constructs_to_cover.values_list('id', flat=True)]
-        star_chart_tables = tables + [self.get_data_for_construct_id(None, course_id, date_from, date_to, tags)]
+        all_students = Student.objects.filter(status=Student.ACTIVE)
+        if course_id:
+            all_students = all_students.filter(course=course_id)
+
+        table_matrix = {}
+        obseravtion_without_construct = {}
+        for construct in constructs:
+            table_matrix[construct] = {}
+            for student in all_students:
+                table_matrix[construct][student] = {}
+                obseravtion_without_construct[student] = []
+                for sublevel in construct.sublevels:
+                    table_matrix[construct][student][sublevel] = []
+
+        for observation in observations:
+            students = observation.students.all()
+            sublevels = observation.constructs.all()
+            for student in students:
+                if student not in all_students:
+                    continue
+
+                if not sublevels:
+                    obseravtion_without_construct[student].append(observation)
+
+                for sublevel in sublevels:
+                    construct = sublevel.level.construct
+                    table_matrix[construct][student][sublevel].append(observation)
 
         data = super().get_context_data(**kwargs)
         data.update({
-            'star_chart_tables': star_chart_tables,
-            'dot_plot_tables': tables,
+            'table_matrix': table_matrix,
+            'obseravtion_without_construct': obseravtion_without_construct,
+            'all_observations': observations,
             'selected_constructs': selected_constructs,
-            'top_level_construct_map': top_level_construct_map,
             'courses': Course.objects.all(),
             'course_id': course_id,
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart()
-
         })
         return data
 

@@ -23,3 +23,8 @@ def selected_subconstructs(constructs, filtered):
         return []
     filtered_ids = set(filtered.values_list('id', flat=True))
     return [(id, construct) for id, construct in constructs if id in filtered_ids]
+
+
+@register.filter
+def observation_pks(observations):
+    return [o.pk for o in observations]

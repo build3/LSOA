@@ -200,6 +200,12 @@ class LearningConstruct(TimeStampedModel):
     def __str__(self):
         return '{} ({})'.format(self.name, self.abbreviation)
 
+    @property
+    def sublevels(self):
+        return LearningConstructSublevel.objects.filter(
+            level__construct_id=self.id
+        )
+
 
 class LearningConstructLevel(TimeStampedModel):
     """

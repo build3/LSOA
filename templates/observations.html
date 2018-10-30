@@ -280,8 +280,7 @@
 
   {# MODALS #}
   <div class="d-none">
-    {% for table in star_chart_tables %}
-      {% for observation in table.all_observations %}
+      {% for observation in all_observations %}
         <div class="observation-body" data-observation-id="{{ observation.id }}">
           <h3>
             <a href="{% url 'observation_detail_view' pk=observation.id %}">{% if observation.name %}{{ observation.name }}{% else %}Observation #{{ observation.id }}{% endif %}</a>
@@ -347,7 +346,6 @@
           <div class="hr" style="height: 0;width: 100%;border-bottom: 2px solid #AAA; margin-bottom: 20px; margin-top: 20px"></div>
         </div>
       {% endfor %}
-    {% endfor %}
   </div>
 
   <!-- Modal -->
