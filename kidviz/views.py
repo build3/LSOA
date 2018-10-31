@@ -396,9 +396,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             tag_ids = [tag.id for tag in tags]
             observations = observations.filter(tags__in=tag_ids)
 
-        constructs = LearningConstruct.objects.annotate(
-            q_count=Count('learningconstructlevel__learningconstructsublevel__observation')
-        ).order_by('-q_count')
+        constructs = LearningConstruct.objects.all()
 
         all_students = Student.objects.filter(status=Student.ACTIVE)
         if course_id:
