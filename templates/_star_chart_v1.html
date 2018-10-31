@@ -1,6 +1,6 @@
 {% load observations %}
 
-{% for construct, students in table_matrix.items %}
+{% for construct, students in star_matrix.items %}
 <div style="overflow-x: scroll;width:100%;">
     <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.name }}</h4>
         <table class="table table-bordered">
@@ -71,6 +71,4 @@
             {% endfor %}
         </tbody>
     </table>
-</div>
-
 </div>

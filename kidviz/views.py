@@ -378,7 +378,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         observations = Observation.objects \
             .prefetch_related('students') \
             .prefetch_related('constructs') \
-            .filter(course=course_id)
+            .all()
+
+        if  course_id:
+            observations = observations.filter(course=course_id)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -398,15 +401,18 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         if course_id:
             all_students = all_students.filter(course=course_id)
 
-        table_matrix = {}
+        star_matrix = {}
+        dot_matrix = {}
         obseravtion_without_construct = {}
         for construct in constructs:
-            table_matrix[construct] = {}
+            star_matrix[construct] = {}
+            dot_matrix[construct] = {}
             for student in all_students:
-                table_matrix[construct][student] = {}
+                star_matrix[construct][student] = {}
                 obseravtion_without_construct[student] = []
                 for sublevel in construct.sublevels:
-                    table_matrix[construct][student][sublevel] = []
+                    star_matrix[construct][student][sublevel] = []
+                    dot_matrix[construct][sublevel] = []
 
         for observation in observations:
             students = observation.students.all()
@@ -420,11 +426,13 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                 for sublevel in sublevels:
                     construct = sublevel.level.construct
-                    table_matrix[construct][student][sublevel].append(observation)
+                    star_matrix[construct][student][sublevel].append(observation)
+                    dot_matrix[construct][sublevel].append(observation)
 
         data = super().get_context_data(**kwargs)
         data.update({
-            'table_matrix': table_matrix,
+            'star_matrix': star_matrix,
+            'dot_matrix': dot_matrix,
             'obseravtion_without_construct': obseravtion_without_construct,
             'all_observations': observations,
             'selected_constructs': selected_constructs,
