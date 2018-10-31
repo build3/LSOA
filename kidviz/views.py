@@ -378,6 +378,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         observations = Observation.objects \
             .prefetch_related('students') \
             .prefetch_related('constructs') \
+            .prefetch_related('tags') \
+            .prefetch_related('constructs__level') \
+            .prefetch_related('constructs__level__construct') \
             .all()
 
         if  course_id:
