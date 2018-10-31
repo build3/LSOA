@@ -1,6 +1,7 @@
 {% load observations %}
 
 {% for construct, sublevels in dot_matrix.items %}
+
 <div style="overflow-x: scroll;width:100%;">
     <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.name }}</h4>
         <table class="table table-bordered">
@@ -34,4 +35,5 @@
             </tbody>
     </table>
 </div>
+
 {% endfor %}
