@@ -62,13 +62,15 @@ FRONTEND_THIRD_PARTY_APPS = [
     'tinymce',  # for HTML editor for sublevel examples
     'active_link',  # for easy active classes
     'import_export',  # for file uploads
-    'debug_toolbar', # for debug
 ]
 LOCAL_APPS = [
     'users',
     'kidviz',
 ]
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + BACKEND_THIRD_PARTY_APPS + FRONTEND_THIRD_PARTY_APPS
+
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -81,8 +83,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'tz_detect.middleware.TimezoneMiddleware',
     'middleware.DjangoThreadLocalMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+if DEBUG:
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 # DATABASES AND CACHING
 
