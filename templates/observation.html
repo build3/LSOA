@@ -125,12 +125,15 @@
         </div>
 
         {#    Constructs    #}
+        <div class="text-center">
+          <label> {{ form.no_constructs }} {{ form.no_constructs.label }} </label>
+        </div>
         {% if form.constructs.errors %}
           <div role="alert" class="alert alert-danger">
             {{ form.constructs.errors }}
           </div>
         {% endif %}
-        <div class="text-center mt-2">
+        <div id="constructs-choices" class="text-center mt-2">
           {% for sublevel in construct_choices %}
             <input type="hidden" value="{{ sublevel.id }}" data-construct-id-value="{{ sublevel.id }}">
             <div class="btn btn-light construct" data-construct-id="{{ sublevel.id }}" style="padding: 15px 15px;">
@@ -309,6 +312,14 @@
         $(attr).closest('.collapse').addClass('show');
       }
 
+      var deselectConstruct = function (constructId) {
+        $('[data-construct-id="' + constructId + '"]').removeClass('bg-success');
+        if (checkedConstructs.hasOwnProperty(constructId)) {
+          delete checkedConstructs[constructId];
+          $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
+        }
+      }
+
       var toggleConstruct = function (constructId) {
         $('[data-construct-id="' + constructId + '"]').toggleClass('bg-success', 'text-white');
         if (checkedConstructs.hasOwnProperty(constructId)) {
@@ -358,10 +369,34 @@
         }
       };
 
+      var handleConstructsSelection = function () {
+        var $target = $('#id_no_constructs');
+        if ($target.is(':checked')) {
+          $('#constructs-choices').hide()
+          clearChoices()
+        } else {
+          $('#constructs-choices').show()
+        }
+      }
+
+      var clearChoices = function () {
+        var constructs = []
+        {% for construct in construct_choices %}
+          constructs.push({{ construct.pk }})
+        {% endfor %}
+        for (var index = 0; index < constructs.length; index++) {
+          deselectConstruct(constructs[index])
+        }
+      }
+
       $('.construct').on('click', function (e) {
         toggleConstruct($(this).data('construct-id'));
         $('#sublevel-description').html($(this).find('.sublevel-desc').html());
       });
+
+      $('#id_no_constructs').on('click', function (e) {
+        handleConstructsSelection()
+      })
 
       $('.student').on('click', function (e) {
         toggleStudent($(this).data('student-id'));
@@ -375,6 +410,7 @@
       markSelectStudents();
       markSelectConstructs();
       markSelectTags();
+      handleConstructsSelection();
 
       {# THIS SECTION IS THE VIDEO NOTE CODE #}
 

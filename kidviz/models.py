@@ -151,6 +151,9 @@ class Observation(TimeStampedModel, OwnerMixin):
     name = models.CharField(max_length=75, blank=True, default='')
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.PROTECT)
 
+    # Field describes if constructs selection is required.
+    no_constructs = models.BooleanField(default=False)
+
     course = models.ForeignKey('kidviz.Course', blank=True, null=True, on_delete=models.PROTECT)
     grouping = models.ForeignKey('kidviz.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
     construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])

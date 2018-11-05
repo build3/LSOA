@@ -86,9 +86,12 @@ class ObservationForm(forms.ModelForm):
 
     class Meta:
         model = Observation
-        fields = ['students', 'constructs', 'tag_choices', 'tags', 'annotation_data', 'original_image', 'video',
-                  'observation_date',
-                  'notes', 'video_notes', 'parent', 'owner', 'name', 'course', 'grouping', 'construct_choices', ]
+        fields = [
+            'students', 'constructs', 'tag_choices', 'tags', 'annotation_data',
+            'original_image', 'video', 'observation_date', 'no_constructs',
+            'notes', 'video_notes', 'parent', 'owner', 'name', 'course',
+            'grouping', 'construct_choices',
+        ]
         widgets = {
             'course': forms.HiddenInput(),
             'grouping': forms.HiddenInput(),
@@ -123,7 +126,7 @@ class ObservationForm(forms.ModelForm):
         if not self.cleaned_data['students']:
             self.add_error(field='students', error='You must choose at least one student for the observation')
 
-        if not self.cleaned_data['constructs']:
+        if not (self.cleaned_data['constructs'] or self.cleaned_data['no_constructs']):
             self.add_error(field='constructs',
                            error='You must choose at least one learning construct for the observation')
 
