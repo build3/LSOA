@@ -23,7 +23,7 @@
 .buckets {
   display: flex;
   justify-content: flex-start;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   padding: 10px 50px;
 }
 
@@ -34,8 +34,8 @@
   border: 1px solid #dfe6e9;
   height: auto;
   min-height: 131px;
-  width: 100%;
   padding: 10px;
+  margin-top: 10px;
   position: relative;
 }
 
