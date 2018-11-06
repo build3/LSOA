@@ -174,7 +174,7 @@ class Observation(TimeStampedModel, OwnerMixin):
     observation_date = models.DateField(default=now)
 
     @property
-    def allowed_student(self):
+    def allowed_students(self):
         if not self.grouping:
             return []
 
