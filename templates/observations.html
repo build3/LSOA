@@ -284,7 +284,13 @@
       {% for observation in table.all_observations %}
         <div class="observation-body" data-observation-id="{{ observation.id }}">
           <h3>
-            <a href="{% url 'observation_detail_view' pk=observation.id %}">{% if observation.name %}{{ observation.name }}{% else %}Observation #{{ observation.id }}{% endif %}</a>
+            <a href="{% url 'observation_detail_view' pk=observation.id %}">
+                {% if observation.name %}
+                    {{ observation.name }}
+                {% else %}
+                    Observation #{{ observation.id }}
+                {% endif %}
+            </a>
             <a href="{% url 'observation_detail_view' pk=observation.id %}" class=" btn btn-primary pull-right">Edit</a>
           </h3>
           <small class="d-block"><b>Constructs:</b> {{ observation.constructs.all|join:', ' }}</small>
@@ -299,7 +305,7 @@
             {% endif %}
           </small>
           <small class="d-block">
-            <b>Students from group</b>: {{ observation.allowed_student|join:', ' }}
+            <b>Students from group</b>: {{ observation.allowed_students|join:', ' }}
           </small>
 
           {% if observation.tags.count %}
