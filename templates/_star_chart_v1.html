@@ -1,41 +1,74 @@
 {% load observations %}
 
-{% for table in star_chart_tables %}
-  <div style="overflow-x: scroll;width:100%;">
-    <h4 class="text-align-center" style="margin-bottom: 25px;">{{ table.c_name }}</h4>
-    <table class="table table-bordered">
-      <thead>
-      <tr>
-        <th scope="col">&nbsp;</th>
-        {% for csl_id, csl_data in table.construct_map.items %}
-          <th scope="col" title="{{ csl_data.description }}" data-toggle="tooltip">
-            {{ csl_data.name }}
-            {% if csl_data.description|length > 0 %}
-              <span><i class="fa fa-info-circle"></i></span>
-            {% endif %}
-          </th>
-        {% endfor %}
-      </tr>
-      </thead>
-      <tbody>
+{% for construct, students in star_matrix.items %}
+<div style="overflow-x: scroll;width:100%;">
+    <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.abbreviation }}</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">&nbsp;</th>
+                    {% for level in construct.sublevels %}
+                    <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
+                        {{ level.name }}
+                        {% if level.description|length > 0 %}
+                            <span><i class="fa fa-info-circle"></i></span>
+                        {% endif %}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for student, levels in students.items %}
+                <tr>
+                    <th scope="row">{{ student }}</th>
+                    {% for level, observations in levels.items %}
+                        <td data-csl-id="{{ csl_id }}"
+                            class="text-center"
+                            {% if observations|length > 0 %}
+                                data-modal-launch-observations="{{ observations|observation_pks }}"
+                            {% endif %}>
 
-      {% for student_id, construct_data in table.matrix.items %}
-        <tr>
-          <th scope="row">{{ table.student_map | keyvalue:student_id }}</th>
-          {% for csl_id, csl_data in table.construct_map.items %}
-            {% with exists=table.matrix|keyvalue:student_id|keyvalue:csl_id %}
-              <td data-csl-id="{{ csl_id }}" class="text-center"
-                  {% if exists %}data-modal-launch-observations="[{{ exists|join:',' }}]">
-                    <i data-toggle="tooltip" title=""
-                       class="fa fa-star"></i>{% if exists|length > 1 %}
-                    <span class="star-number">({{ exists|length }})</span>{% endif %}
-                  {% else %}>&nbsp;{% endif %}</td>
-            {% endwith %}
-          {% endfor %}
-        </tr>
-      {% endfor %}
-      </tbody>
+                            {% if observations|length > 0 %}
+                                <i data-toggle="tooltip" title="" class="fa fa-star"></i>
+                            {% endif %}
+                            {% if observations|length > 1 %}
+                                <span class="star-number">({{ observations|length }})</span>
+                            {% else %}
+                                &nbsp;
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
     </table>
-  </div>
-
+</div>
 {% endfor %}
+
+<div style="overflow-x: scroll;width:100%;">
+    <h4 class="text-align-center" style="margin-bottom: 25px;">Observations without constructs</h4>
+    <table class="table table-bordered">
+        <tbody>
+            {% for student, observations in obseravtion_without_construct.items %}
+                <tr>
+                    <th scope="row">{{ student }}</th>
+                    <td data-csl-id="{{ csl_id }}"
+                        class="text-center"
+                        {% if observations|length > 0 %}
+                            data-modal-launch-observations="{{ observations|observation_pks }}"
+                        {% endif %}>
+
+                        {% if observations|length > 0 %}
+                            <i data-toggle="tooltip" title="" class="fa fa-star"></i>
+                        {% endif %}
+                        {% if observations|length > 1 %}
+                            <span class="star-number">({{ observations|length }})</span>
+                        {% else %}
+                            &nbsp;
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

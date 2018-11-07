@@ -6,6 +6,8 @@ from django.urls import reverse_lazy
 APP_NAME = 'kidviz'
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+INTERNAL_IPS = ['127.0.0.1']
+
 # BASIC DJANGO SETTINGS
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'RESETME')
@@ -67,6 +69,9 @@ LOCAL_APPS = [
 ]
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + BACKEND_THIRD_PARTY_APPS + FRONTEND_THIRD_PARTY_APPS
 
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -79,6 +84,9 @@ MIDDLEWARE = [
     'tz_detect.middleware.TimezoneMiddleware',
     'middleware.DjangoThreadLocalMiddleware',
 ]
+
+if DEBUG:
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 # DATABASES AND CACHING
 
