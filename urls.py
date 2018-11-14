@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import path
 from django.views.generic import RedirectView
 
+import settings
 import kidviz.views
 
 urlpatterns = [
@@ -55,3 +56,10 @@ urlpatterns = [
     path('report/ajax', kidviz.views.StudentReportAjax.as_view(), name='report_ajax'),
 
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns

@@ -280,12 +280,33 @@
 
   {# MODALS #}
   <div class="d-none">
-    {% for table in star_chart_tables %}
-      {% for observation in table.all_observations %}
+      {% for observation in all_observations %}
         <div class="observation-body" data-observation-id="{{ observation.id }}">
-          <h3><a href="{% url 'observation_detail_view' pk=observation.id %}">{% if observation.name %}{{ observation.name }}{% else %}Observation #{{ observation.id }}{% endif %}</a></h3>
-          <small style="display: block;">Constructs: {{ observation.constructs.all|join:', ' }}</small>
-          <small style="display: block;">Recorded on: {{ observation.created }}</small>
+          <h3>
+            <a href="{% url 'observation_detail_view' pk=observation.id %}">
+                {% if observation.name %}
+                    {{ observation.name }}
+                {% else %}
+                    Observation #{{ observation.id }}
+                {% endif %}
+            </a>
+            <a href="{% url 'observation_detail_view' pk=observation.id %}" class=" btn btn-primary pull-right">Edit</a>
+          </h3>
+          <small class="d-block"><b>Constructs:</b> {{ observation.constructs.all|join:', ' }}</small>
+          <small class="d-block"><b>Observation date:</b> {{ observation.observation_date }}</small>
+          <small class="d-block"><b>Recorded on:</b> {{ observation.created }}</small>
+          <small class="d-block">
+            <b>Other students included:</b>
+            {% if observation.students.all|length > 1 %}
+              {{ observation.students.all|join:', ' }}
+            {% else %}
+              -
+            {% endif %}
+          </small>
+          <small class="d-block">
+            <b>Students from group</b>: {{ observation.allowed_students|join:', ' }}
+          </small>
+
           {% if observation.tags.count %}
             <b style="display: block;">Tags:</b>
             {% for tag in observation.tags.all %}
@@ -313,7 +334,7 @@
 
           {% if observation.video %}
             <div style="display: flex; justify-content: center;">
-              <video src="{{ observation.video.url }}" alt="" style="width: 60%; height: auto;"></video>
+              <video src="{{ observation.video.url }}" alt="" style="width: 60%; height: auto;" controls></video>
             </div>
           {% endif %}
 
@@ -324,16 +345,13 @@
 
           {% if observation.video_notes %}
             <b style="display: block;">Video Note:</b>
-            <video src="{{ observation.video_notes.url }}" style="width: 100%; height: auto;"></video>
+            <video src="{{ observation.video_notes.url }}" style="width: 100%; height: auto;" controls></video>
           {% endif %}
 
-          {% if observation.students.all|length > 1 %}
-            <small style="display: block;">Other students included: {{ observation.students.all|join:', ' }}</small>
-          {% endif %}
+
           <div class="hr" style="height: 0;width: 100%;border-bottom: 2px solid #AAA; margin-bottom: 20px; margin-top: 20px"></div>
         </div>
       {% endfor %}
-    {% endfor %}
   </div>
 
   <!-- Modal -->

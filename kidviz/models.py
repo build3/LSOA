@@ -151,6 +151,9 @@ class Observation(TimeStampedModel, OwnerMixin):
     name = models.CharField(max_length=75, blank=True, default='')
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.PROTECT)
 
+    # Field describes if constructs selection is required.
+    no_constructs = models.BooleanField(default=False)
+
     course = models.ForeignKey('kidviz.Course', blank=True, null=True, on_delete=models.PROTECT)
     grouping = models.ForeignKey('kidviz.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
     construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
@@ -173,6 +176,18 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     observation_date = models.DateField(default=now)
 
+    @property
+    def allowed_students(self):
+        if not self.grouping:
+            return []
+
+        groups = self.grouping.groups.all()
+        students = set()
+        for group in groups:
+            students.update(list(group.students.all()))
+
+        return list(students)
+
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
         return _display
@@ -187,6 +202,12 @@ class LearningConstruct(TimeStampedModel):
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.abbreviation)
+
+    @property
+    def sublevels(self):
+        return LearningConstructSublevel.objects.filter(
+            level__construct_id=self.id
+        )
 
 
 class LearningConstructLevel(TimeStampedModel):

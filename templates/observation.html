@@ -94,7 +94,7 @@
           {% endif %}
         </div>
         <div class="btn-group-lg text-center mt-1" id="buttons-draw-or-reset" style="display:none;">
-          <a id="reset" class="btn btn-primary mb-0 text-white">Reset</a>
+          <a class="btn btn-primary mb-0 text-white" data-toggle="modal" data-target="#confirmModal">Reset</a>
           <a id="enable-draw" class="btn btn-primary mb-0 enab disabled text-white">
             <span class="enab">Enable</span>
             <span class="disa">Clear</span> Drawing</a>
@@ -125,12 +125,15 @@
         </div>
 
         {#    Constructs    #}
+        <div class="text-center">
+          <label> {{ form.no_constructs }} {{ form.no_constructs.label }} </label>
+        </div>
         {% if form.constructs.errors %}
           <div role="alert" class="alert alert-danger">
             {{ form.constructs.errors }}
           </div>
         {% endif %}
-        <div class="text-center mt-2">
+        <div id="constructs-choices" class="text-center mt-2">
           {% for sublevel in construct_choices %}
             <input type="hidden" value="{{ sublevel.id }}" data-construct-id-value="{{ sublevel.id }}">
             <div class="btn btn-light construct" data-construct-id="{{ sublevel.id }}" style="padding: 15px 15px;">
@@ -284,6 +287,27 @@
       {{ hidden }}
     {% endfor %}
   </form>
+
+  <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmModalLabel">Reset media</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to reset media?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button id="reset" type="button" class="btn btn-primary" data-dismiss="modal">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     $(document).ready(function () {
       {# THIS SECTION HANDLES THE STUDENT/CONSTRUCT TOGGLING #}
@@ -307,6 +331,14 @@
       var openCard = function (studentId) {
         var attr = '[data-student-id-value="' + studentId + '"]';
         $(attr).closest('.collapse').addClass('show');
+      }
+
+      var deselectConstruct = function (constructId) {
+        $('[data-construct-id="' + constructId + '"]').removeClass('bg-success');
+        if (checkedConstructs.hasOwnProperty(constructId)) {
+          delete checkedConstructs[constructId];
+          $('[data-construct-id-value="' + constructId + '"]').removeAttr('name');
+        }
       }
 
       var toggleConstruct = function (constructId) {
@@ -358,10 +390,34 @@
         }
       };
 
+      var handleConstructsSelection = function () {
+        var $target = $('#id_no_constructs');
+        if ($target.is(':checked')) {
+          $('#constructs-choices').hide()
+          clearChoices()
+        } else {
+          $('#constructs-choices').show()
+        }
+      }
+
+      var clearChoices = function () {
+        var constructs = []
+        {% for construct in construct_choices %}
+          constructs.push({{ construct.pk }})
+        {% endfor %}
+        for (var index = 0; index < constructs.length; index++) {
+          deselectConstruct(constructs[index])
+        }
+      }
+
       $('.construct').on('click', function (e) {
         toggleConstruct($(this).data('construct-id'));
         $('#sublevel-description').html($(this).find('.sublevel-desc').html());
       });
+
+      $('#id_no_constructs').on('click', function (e) {
+        handleConstructsSelection()
+      })
 
       $('.student').on('click', function (e) {
         toggleStudent($(this).data('student-id'));
@@ -375,6 +431,7 @@
       markSelectStudents();
       markSelectConstructs();
       markSelectTags();
+      handleConstructsSelection();
 
       {# THIS SECTION IS THE VIDEO NOTE CODE #}
 
