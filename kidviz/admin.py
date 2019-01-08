@@ -144,7 +144,7 @@ class ObservationAdmin(admin.ModelAdmin):
     form = ObservationAdminForm
     preserve_filters = True
     filter_horizontal = ('students', 'constructs', 'tags',)
-    list_display = ('name', 'owner', 'course', 'created',)
+    list_display = ('id', 'name', 'owner', 'course', 'created',)
     list_filter = ('course', 'owner',)
     raw_id_fields = ('owner', 'course', 'parent', 'grouping',)
     search_fields = ('name', 'notes')
@@ -158,6 +158,7 @@ class ObservationAdmin(admin.ModelAdmin):
                 'students',
                 'constructs',
                 'tags',
+                'curricular_focus',
                 'observation_date',
                 'parent',
             )
