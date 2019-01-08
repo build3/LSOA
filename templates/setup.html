@@ -14,8 +14,11 @@
     $( document ).ready(function() {
       $("#id_context_tags").select2({
         tokenSeparators: [',', '\n']
-      })
-    })
+      });
+      $('#grouping_link').click(dumpFormData);
+      $('#edit_grouping_link').click(dumpFormData);
+      $('#add_tag').click(dumpFormData);
+    });
 
     function updateAddGroupLink() {
       var $gLink = $('#grouping_link');
@@ -109,6 +112,14 @@
       $('#id_context_tags').val('').trigger('change');
       $('.form-check-input').attr("checked", false).trigger("change");
     }
+    
+    function dumpFormData(e) {
+      $.ajax({
+        url : "{% url 'setup_dump' %}",
+        type: 'post',
+        data: $('#setupForm').serialize()
+      });
+    }
 
   </script>
 {% endblock %}
@@ -122,7 +133,7 @@
   <div class="row">
     <div class="col-6 offset-3">
       <div id="form-alert" role="alert"></div>
-      <form action="{% url 'setup' %}" method="post" novalidate>
+      <form action="{% url 'setup' %}" method="post" id="setupForm" novalidate>
         {% csrf_token %}
         {{ form.media }}
 
