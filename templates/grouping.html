@@ -18,7 +18,7 @@
   <script>
     lightbox.option({
       'albumLabel': ''
-    })
+    });
   </script>
 {% endblock %}
 
@@ -55,36 +55,28 @@
                 <div class="tools__title">Split into:</div>
                 <div class="split-into bucket-item students" data-split-into-students="2">
                   Groups of <span class="value">2</span> Students
-                  <div class="fa fa-warning warning"></div>
                 </div>
                 <div class="split-into bucket-item students" data-split-into-students="3">
                   Groups of <span class="value">3</span> Students
-                  <div class="fa fa-warning warning"></div>
                 </div>
                 <div class="split-into bucket-item students" data-split-into-students="4">
                   Groups of <span class="value">4</span> Students
-                  <div class="fa fa-warning warning"></div>
                 </div>
                 <div class="split-into bucket-item students" data-split-into-students-input="true">
                   Groups of <input type="number"> Students
-                  <div class="fa fa-warning warning"></div>
                 </div>
                 <hr>
                 <div class="split-into bucket-item groups" data-split-into-groups="2">
                   <span class="value">2</span> Groups
-                  <div class="fa fa-warning warning"></div>
                 </div>
                 <div class="split-into bucket-item groups" data-split-into-groups="3">
                   <span class="value">3</span> Groups
-                  <div class="fa fa-warning warning"></div>
                 </div>
                 <div class="split-into bucket-item groups" data-split-into-groups="4">
                   <span class="value">4</span> Groups
-                  <div class="fa fa-warning warning"></div>
                 </div>
                 <div class="split-into bucket-item groups" data-split-into-groups-input="true">
                   <input type="number"> Groups
-                  <div class="fa fa-warning warning"></div>
                 </div>
               </div>
               <hr>
@@ -165,9 +157,6 @@
 
       function initializeSplits() {
         var $inputs = $('.split-into input');
-        $inputs.on('keyup input change', function (e) {
-          setUpSplitWarnings($(e.currentTarget).parent('.split-into'));
-        });
 
         $inputs.on('click', function (e) {
           // Stop clicking the input from triggering the action
@@ -219,7 +208,6 @@
       }
 
       setUpTools();
-      setUpSplitWarnings();
       setUpSaveFunction();
       initializeGroups();
       initializeSplits();
@@ -239,49 +227,6 @@
      */
     function moveStudentToBucket(bucket, student) {
       $(bucket).find('.dropzone').append(student);
-    }
-
-
-    /**
-     * Setup splitting options. Show warning symbol if there is a remainder
-     **/
-    function setUpSplitWarnings($splitIntoElem) {
-      var allStudentsArea = $('.bucket-column--all .dropzone');
-      var totalNumberOfStudents = allStudentsArea.find('.student').length;
-      var showWarning = false;
-      if (!$splitIntoElem) {
-        $splitIntoElem = $('.split-into'); // Do them all if not supplied
-      } else {
-        $splitIntoElem = $($splitIntoElem);
-      }
-
-      $splitIntoElem.each(function (i, elem) {
-        var numStudentsPerGroup = $(elem).data('split-into-students');
-        var numFreeFormStudentsPerGroup = $(elem).data('split-into-students-input');
-
-        var numGroupsOfStudents = $(elem).data('split-into-groups');
-        var numFreeFormGroupsOfStudents = $(elem).data('split-into-groups-input');
-
-        // If it's a freeform, get the value
-        if (numFreeFormStudentsPerGroup) {
-          numStudentsPerGroup = $(elem).find('input').val();
-        }
-        if (numFreeFormGroupsOfStudents) {
-          numGroupsOfStudents = $(elem).find('input').val();
-        }
-
-        if (numStudentsPerGroup) {
-          showWarning = (numStudentsPerGroup > totalNumberOfStudents) || (totalNumberOfStudents % numStudentsPerGroup) !== 0
-        } else if (numGroupsOfStudents) {
-          showWarning = (numGroupsOfStudents > totalNumberOfStudents) || (totalNumberOfStudents % numGroupsOfStudents) !== 0
-        }
-
-        if (showWarning) {
-          $(elem).find('.warning').show();
-        } else {
-          $(elem).find('.warning').hide();
-        }
-      });
     }
 
     /**
