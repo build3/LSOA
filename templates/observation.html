@@ -208,7 +208,7 @@
                   {% for sublevel in construct_choices %}
                     {% for example in sublevel.examples.all %}
                       <div class="carousel-item {% if forloop.parentloop.first and forloop.first %} active {% endif %}"
-                           {% if forloop.first %}data-construct-id="{{ sublevel.id }}"{% endif %}
+                           {% if forloop.first %}data-sublevel-id="{{ sublevel.id }}"{% endif %}
                            style="text-align: center;">
                         <h4>{{ sublevel.name }}</h4>
                         <p>{{ example.text }}</p>
@@ -356,7 +356,7 @@
           checkedConstructs[constructId] = true;
           $('[data-construct-id-value="' + constructId + '"]').attr('name', 'constructs');
 
-          var exampleSlide = $('.carousel-item[data-construct-id="' + constructId + '"]');
+          var exampleSlide = $('.carousel-item[data-sublevel-id="' + constructId + '"]');
           var currentSlide = $('.carousel-item.active');
           if (exampleSlide.index() !== currentSlide.index() && exampleSlide.length) {
              exampleSlide.addClass('active')
