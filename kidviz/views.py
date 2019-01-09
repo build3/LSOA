@@ -62,12 +62,14 @@ class SetupView(LoginRequiredMixin, FormView):
         self.request.session['grouping'] = grouping
         self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
+        self.request.session['curricular_focus'] = d['curricular_focus']
         return HttpResponseRedirect(reverse_lazy('observation_view'))
 
     def get_context_data(self, **kwargs):
         r = super(SetupView, self).get_context_data(**kwargs)
         r['form'].fields['grouping'].init_bound_field(r['form'].initial.get('course'))
         r['constructs'] = []
+
         for lc in LearningConstruct.objects.all():
             construct = {
                 'name': lc.name,
@@ -89,6 +91,12 @@ class SetupView(LoginRequiredMixin, FormView):
                     level['sublevels'].append(sublevel)
                 construct['levels'].append(level)
             r['constructs'].append(construct)
+
+        r['curricular_focus_id'] = ContextTag.objects.get_or_create(
+            text='Curricular Focus',
+            curricular_focus = True
+        )[0].id
+
         return r
 
 
@@ -150,6 +158,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         session_grouping = self.request.session.get('grouping')
         session_construct_choices = self.request.session.get('constructs') or []
         session_tags = self.request.session.get('context_tags') or []
+        session_focus = self.request.session.get('curricular_focus') or ''
         last_observation_id = self.request.session.get('last_observation_id')
 
         course = Course.objects.filter(pk=session_course).first()
@@ -161,6 +170,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             'name': '{} Observed'.format(course.name),
             'course': course, 'grouping': grouping, 'tag_choices': session_tags,
             'construct_choices': session_construct_choices, 'owner': self.request.user,
+            'curricular_focus': session_focus
         })
         if last_observation_id:
             kwargs['last_observation_url'] = reverse_lazy('observation_detail_view', kwargs={'pk': last_observation_id})
@@ -177,6 +187,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         kwargs['course'] = course
         kwargs['grouping'] = grouping
         kwargs['tags'] = available_tags
+        kwargs['curricular_focus'] = session_focus
         kwargs['construct_choices'] = get_constructs(pk_list=session_construct_choices)
         kwargs['chosen_students'] = json.dumps([int(item) for item in self.request.POST.getlist('students')])
         kwargs['chosen_constructs'] = json.dumps([int(item) for item in self.request.POST.getlist('constructs')])
