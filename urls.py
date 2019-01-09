@@ -11,6 +11,7 @@ urlpatterns = [
 
     # setup view is the first view you see after logging in
     url(r'^setup/$', kidviz.views.SetupView.as_view(), name='setup'),
+    url(r'^setup-dump/$', kidviz.views.SetupView.as_view(), name='setup_dump'),
     url(r'^setup-groupings-ajax/$', kidviz.views.GroupingRelatedSelectView.as_view(), name='student-groupings-ajax'),
     url(r'^setup/course-default-ajax$', kidviz.views.DefaultCourseView.as_view(), name='set-default-course'),
 

@@ -159,6 +159,9 @@ class Observation(TimeStampedModel, OwnerMixin):
     construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
     tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
 
+    # since focus is assigned per-observation, ih has to be stored here and not on the tag's side
+    curricular_focus = models.CharField(max_length=255, blank=True, null=True)
+
     # regardless of how they're grouped, just save the raw students to the observation
     students = models.ManyToManyField('kidviz.Student', blank=True)
     constructs = models.ManyToManyField('kidviz.LearningConstructSublevel', blank=True)
@@ -265,6 +268,7 @@ class ContextTag(TimeStampedModel, OptionalOwnerMixin):
     text = models.CharField(max_length=255)
     color = models.CharField(max_length=7, default='#17a2b8')
     last_used = models.DateTimeField(auto_now=True)
+    curricular_focus = models.BooleanField(default=False)
 
     def __str__(self):
         return self.text
