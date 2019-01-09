@@ -101,7 +101,10 @@ class ObservationForm(forms.ModelForm):
             'construct_choices': forms.HiddenInput(),
             'tag_choices': forms.HiddenInput(),
             'notes': forms.Textarea(attrs={'class': 'notes-container'}),
-            'observation_date': forms.DateInput(attrs={'class': 'datepicker form-control'}),
+            'observation_date': forms.DateInput(attrs={
+                'class': 'datepicker form-control',
+                'data-format': 'yyyy-mm-dd'
+            }),
             'curricular_focus': forms.HiddenInput()
         }
 
