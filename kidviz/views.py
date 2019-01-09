@@ -9,6 +9,7 @@ from functools import reduce
 
 from braces.views import JSONResponseMixin
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -455,6 +456,87 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         })
         return data
 
+
+class TeacherObservationView(LoginRequiredMixin, TemplateView):
+    """
+    New matrix chart sorted by teachers
+    """
+    template_name = 'teachers_observations.html'
+
+    def get_context_data(self, **kwargs):
+        course_id = kwargs.get('course_id')
+        date_filtering_form = DateFilteringForm(self.request.GET)
+        date_from = None
+        date_to = None
+        selected_constructs = None
+
+        if date_filtering_form.is_valid():
+            date_from = date_filtering_form.cleaned_data['date_from']
+            date_to = date_filtering_form.cleaned_data['date_to']
+            selected_constructs = date_filtering_form.cleaned_data['constructs']
+            tags = date_filtering_form.cleaned_data['tags']
+
+        observations = Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs') \
+            .prefetch_related('tags') \
+            .prefetch_related('constructs__level') \
+            .prefetch_related('constructs__level__construct') \
+            .order_by('owner', 'constructs') \
+            .all()
+
+        if course_id:
+            observations = observations.filter(course=course_id)
+
+        if date_from:
+            observations = observations.filter(observation_date__gte=date_from)
+
+        if date_to:
+            observations = observations.filter(observation_date__lte=date_to)
+
+        if tags:
+            tag_ids = [tag.id for tag in tags]
+            observations = observations.filter(tags__in=tag_ids)
+
+        constructs = LearningConstruct.objects.all()
+
+        all_students = Student.objects.filter(status=Student.ACTIVE)
+        if course_id:
+            all_students = all_students.filter(course=course_id)
+
+        dot_matrix = {}
+
+        teachers = get_user_model().objects.filter(kidviz_observation_owner__isnull=False)
+        sublevels = LearningConstructSublevel.objects.filter(observation__isnull=False)
+
+        for teacher in teachers:
+            dot_matrix[teacher] = {}
+
+            for sublevel in sublevels:
+                dot_matrix[teacher][sublevel] = []
+
+            dot_matrix[teacher]['No construct'] = []
+
+        for observation in observations:
+            sublevels = observation.constructs.all()
+
+            if not sublevels:
+                dot_matrix[observation.owner]['No construct'].append(observation)
+
+            for sublevel in sublevels:
+                teacher = observation.owner
+                dot_matrix[teacher][sublevel].append(observation)
+
+        data = super().get_context_data(**kwargs)
+        data.update({
+            'dot_matrix': dot_matrix,
+            'all_observations': observations,
+            'selected_constructs': selected_constructs,
+            'courses': Course.objects.all(),
+            'course_id': course_id,
+            'filtering_form': date_filtering_form
+        })
+        return data
 
 def current_observation(request):
     initial = {
