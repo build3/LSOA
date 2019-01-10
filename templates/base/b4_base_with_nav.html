@@ -26,6 +26,11 @@
             {% endif %}
           ">Star Charts</a>
         </li>
+        <li class="nav-item {% active_link 'observations_all' %}">
+          <a class="nav-link" href="{% url 'observations_teachers' %}">
+            Teacher Charts
+          </a>
+        </li>
       {% if perms.kidviz.can_approve_deny_users %}
         <li class="nav-item {% active_link 'pending_users' %}">
           <a class="nav-link" href="{% url 'pending_users' %}">Pending Users</a>

@@ -11,6 +11,7 @@ urlpatterns = [
 
     # setup view is the first view you see after logging in
     url(r'^setup/$', kidviz.views.SetupView.as_view(), name='setup'),
+    url(r'^setup-dump/$', kidviz.views.SetupView.as_view(), name='setup_dump'),
     url(r'^setup-groupings-ajax/$', kidviz.views.GroupingRelatedSelectView.as_view(), name='student-groupings-ajax'),
     url(r'^setup/course-default-ajax$', kidviz.views.DefaultCourseView.as_view(), name='set-default-course'),
 
@@ -23,6 +24,9 @@ urlpatterns = [
     url(r'^observations/(?P<course_id>\d+)/$', kidviz.views.ObservationAdminView.as_view(),
         name='observations_specific'),
     url(r'^observations-ajax/$', kidviz.views.ObservationAjax.as_view(), name='observations-ajax'),
+    url(r'^observations-teachers/$', kidviz.views.TeacherObservationView.as_view(), name='observations_teachers'),
+    url(r'^observations-teachers/(?P<course_id>\d+)/$', kidviz.views.TeacherObservationView.as_view(),
+        name='observations_teachers_specific'),
 
     # pending/approved/denied users (for admins only)
     url(r'^users/', include('users.urls')),

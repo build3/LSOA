@@ -12,10 +12,25 @@
   <script src='{% static "django-related-select.js" %}'></script>
   <script>
     $( document ).ready(function() {
-      $("#id_context_tags").select2({
+      $('#id_context_tags').select2({
         tokenSeparators: [',', '\n']
-      })
-    })
+      });
+      $('#grouping_link').click(dumpFormData);
+      $('#edit_grouping_link').click(dumpFormData);
+      $('#add_tag').click(dumpFormData);
+
+      $('#id_context_tags').on('select2:select', function(e) {
+        var data = e.params.data;
+
+        if (e.params.data.id == '{{ curricular_focus_id }}') {
+          $('#curricular-focus-modal').modal();
+        }
+      });
+
+      $('#curricularFocusInput').change(function() {
+        $('#id_curricular_focus').val($(this).val());
+      });
+    });
 
     function updateAddGroupLink() {
       var $gLink = $('#grouping_link');
@@ -43,9 +58,9 @@
       var $courseField = $('#id_course');
       var $setDefaultButton = $('#set_default_course');
       if ($courseField.val()) {
-        $setDefaultButton.show()
+        $setDefaultButton.show();
       } else {
-        $setDefaultButton.hide()
+        $setDefaultButton.hide();
       }
     }
 
@@ -62,10 +77,10 @@
         },
         success: function (data) {
           $("#form-alert").addClass('alert alert-success');
-          $("#form-alert").text('Default course has been set')
+          $("#form-alert").text('Default course has been set');
         },
         error: function (xhr, status, e) {
-          alert('Setting default course failed.')
+          alert('Setting default course failed.');
         }
       });
     }
@@ -79,7 +94,7 @@
 
     function registerSelectListenersWithReady(id, func) {
       $(document).ready(func);
-      registerSelectListeners(id, func)
+      registerSelectListeners(id, func);
     }
 
     registerSelectListenersWithReady('#id_course', updateAddGroupLink);
@@ -90,7 +105,7 @@
 
     registerSelectListeners('#id_course', updateDefaultCourseVisibility);
 
-    $('#set_default_course').on('click', setDefaultCourse)
+    $('#set_default_course').on('click', setDefaultCourse);
 
     $('[data-modal-sublevel]').on('click', function (e) {
       var exampleId = $(this).data('modal-sublevel');
@@ -103,11 +118,19 @@
         size: 'lg',
         fade: true
       });
-    })
+    });
 
     function forceTagsReset() {
       $('#id_context_tags').val('').trigger('change');
       $('.form-check-input').attr("checked", false).trigger("change");
+    }
+    
+    function dumpFormData(e) {
+      $.ajax({
+        url : "{% url 'setup_dump' %}",
+        type: 'post',
+        data: $('#setupForm').serialize()
+      });
     }
 
   </script>
@@ -122,7 +145,7 @@
   <div class="row">
     <div class="col-6 offset-3">
       <div id="form-alert" role="alert"></div>
-      <form action="{% url 'setup' %}" method="post" novalidate>
+      <form action="{% url 'setup' %}" method="post" id="setupForm" novalidate>
         {% csrf_token %}
         {{ form.media }}
 
@@ -139,9 +162,11 @@
           {% else %}
 
             <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
+              {% if field.name != "curricular_focus" %}
               <div data-form-label="{{ field.auto_id }}">
                 <label for="{{ field.auto_id }}">{{ field.label }}</label>
               </div>
+              {% endif %}
               {{ field }}
               {% if field.name == "course" %}
               <div class="d-flex flex-row-reverse">
@@ -259,6 +284,22 @@
       <div class="modal-content">
         <div class="modal-body">
 
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="curricular-focus-modal" tabindex="-2" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="curricularFocusInput">Describe the curricular focus</label>
+            <input type="text" class="form-control" id="curricularFocusInput">
+          </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
