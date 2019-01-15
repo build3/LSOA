@@ -146,61 +146,61 @@
         var $canvas = $('#the-modal .modal-body #' + id);
         $canvas.attr('id', 'canvas' + id);
 
-        var annotation_data = $('#annotation_data_'+id).html();
+        var annotation_data = $('#annotation_data_' + id).html();
 
         $('#the-modal').on('shown.bs.modal', function() {
-          var url = $('#image-source-'+id).html();
-          if (!url) {
+            var url = $('#image-source-'+id).html();
+            if (!url) {
               return
-          }
+            }
 
-          var canvas = new fabric.Canvas('canvas' + id, {
-            isDrawingMode: false,
-            selection: false
-          });
+            var canvas = new fabric.Canvas('canvas' + id, {
+                isDrawingMode: false,
+                selection: false
+            });
 
-          var bgImg = new fabric.Image();
-          bgImg.setSrc(url.replace(/&amp;/g, '&'), function() {
-              var height = bgImg.height;
-              var width = bgImg.width;
-              var naturalWidth = bgImg.getOriginalSize().width
-              var imageScale = width/naturalWidth
+            var bgImg = new fabric.Image();
+            bgImg.setSrc(url.replace(/&amp;/g, '&'), function() {
+                var height = bgImg.height;
+                var width = bgImg.width;
+                var naturalWidth = bgImg.getOriginalSize().width
+                var imageScale = width / naturalWidth
 
-              var ctx = {}
-              if (annotation_data !== "") {
-                var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
-              }
+                var ctx = {}
+                if (annotation_data !== "") {
+                    var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+                }
 
-              var originalHeight = parseFloat(ctx['originalHeight']);
+                var originalHeight = parseFloat(ctx['originalHeight']);
 
-              if (isNaN(originalHeight)) {
-                // Assume that original height was the same - scale it for 60% like in html
-                originalHeight = height / 0.6;
-              }
-              var scale = originalHeight / height;
-              canvas.loadFromJSON(ctx);
+                if (isNaN(originalHeight)) {
+                    // Assume that original height was the same - scale it for 60% like in html
+                    originalHeight = height / 0.6;
+                }
+                var scale = originalHeight / height;
+                canvas.loadFromJSON(ctx);
 
-              canvas.forEachObject(function (object) {
-                object = object.scale(scale);
-                object.left = object.left * scale;
-                object.top = object.top * scale;
-              })
+                canvas.forEachObject(function (object) {
+                    object = object.scale(scale);
+                    object.left = object.left * scale;
+                    object.top = object.top * scale;
+                })
 
-              canvas.renderAll()
+                canvas.renderAll()
 
-              canvas.setBackgroundImage(
-                  bgImg,
-                  canvas.renderAll.bind(canvas), {
-                      scaleX: imageScale,
-                      scaleY:  imageScale
-                  }
-              );
+                canvas.setBackgroundImage(
+                    bgImg,
+                    canvas.renderAll.bind(canvas), {
+                        scaleX: imageScale,
+                        scaleY:  imageScale
+                    }
+                );
 
-              canvas.setHeight(height);
-              canvas.setWidth(width);
+                canvas.setHeight(height);
+                canvas.setWidth(width);
 
-              canvas.renderAll()
-          });
+                canvas.renderAll()
+            });
         })
     }
 
@@ -353,8 +353,8 @@
                 <div style="display: flex; justify-content: center;">
                   <canvas id="{{ observation.id }}"></canvas>
                 </div>
-                <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
-                <div class="d-none" id="image-source-{{observation.id}}">{{observation.original_image.url}}</div>
+                <div class="d-none" id="annotation_data_{{ observation.id }}">{{ observation.annotation_data }}</div>
+                <div class="d-none" id="image-source-{{ observation.id }}">{{ observation.original_image.url }}</div>
               </div>
             </div>
           </div>

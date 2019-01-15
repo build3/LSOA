@@ -17,4 +17,4 @@ def observation_pks(observations):
 
 @register.filter
 def course_from_session_or_first(request):
-    return request.session.get('course') or Course.objects.all().order_by('id').first().pk
+    return request.session.get('course') or Course.objects.order_by('id').first().pk
