@@ -126,6 +126,85 @@
     registerUpdateConstructsListener('#id_date_to');
 
 
+    function loadVideo(id, key) {
+        var $video = $('#' + key + '-source-' + id)[0]
+        if ($video) {
+            var link = $video.value
+            var $videoContainer = $('#' + key + '-' + id)[0]
+            var $videoElement = $('<video />', {
+                src: link,
+                type: 'video/mp4',
+                controls: true
+            })[0];
+
+            $videoContainer.append($videoElement)
+            $video.remove()
+        }
+    }
+
+    function loadPicture(id) {
+        var $canvas = $('#the-modal .modal-body #' + id);
+        $canvas.attr('id', 'canvas' + id);
+
+        var annotation_data = $('#annotation_data_'+id).html();
+
+        $('#the-modal').on('shown.bs.modal', function() {
+          var url = $('#image-source-'+id).html();
+          if (!url) {
+              return
+          }
+
+          var canvas = new fabric.Canvas('canvas' + id, {
+            isDrawingMode: false,
+            selection: false
+          });
+
+          var bgImg = new fabric.Image();
+          bgImg.setSrc(url.replace(/&amp;/g, '&'), function() {
+              var height = bgImg.height;
+              var width = bgImg.width;
+              var naturalWidth = bgImg.getOriginalSize().width
+              var imageScale = width/naturalWidth
+
+              var ctx = {}
+              if (annotation_data !== "") {
+                var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+              }
+
+              var originalHeight = parseFloat(ctx['originalHeight']);
+
+              if (isNaN(originalHeight)) {
+                // Assume that original height was the same - scale it for 60% like in html
+                originalHeight = height / 0.6;
+              }
+              var scale = originalHeight / height;
+              canvas.loadFromJSON(ctx);
+
+              canvas.forEachObject(function (object) {
+                object = object.scale(scale);
+                object.left = object.left * scale;
+                object.top = object.top * scale;
+              })
+
+              canvas.renderAll()
+
+              canvas.setBackgroundImage(
+                  bgImg,
+                  canvas.renderAll.bind(canvas), {
+                      scaleX: imageScale,
+                      scaleY:  imageScale
+                  }
+              );
+
+              canvas.setHeight(height);
+              canvas.setWidth(width);
+
+              canvas.renderAll()
+          });
+        })
+    }
+
+
     $(function () {
       // Init tooltips
       var is_touch_device = (
@@ -156,59 +235,12 @@
 
         $('#the-modal .modal-body').html('');
         observationIds.forEach(function (id) {
+          loadVideo(id, 'video')
+          loadVideo(id, 'video-notes')
+
           $('#the-modal .modal-body').append($('[data-observation-id="' + id + '"]').clone());
-          var $canvas = $('#the-modal .modal-body #' + id);
-          $canvas.attr('id', 'canvas' + id);
 
-          var annotation_data = $('#annotation_data_'+id).html();
-
-          $('#the-modal').on('shown.bs.modal', function() {
-            var $image = $('#the-modal .modal-body #image-' + id);
-            if ($image.length == 0) {
-                return
-            }
-
-            var height = $image.height();
-            var width = $image.width();
-            var naturalWidth = $image.get(0).naturalWidth;
-            $image.hide();
-            var imageScale = width/naturalWidth
-
-            var canvas = new fabric.Canvas('canvas' + id, {
-              isDrawingMode: false,
-              selection: false
-            });
-            canvas.setHeight(height);
-            canvas.setWidth(width);
-
-            var url = $('#url_'+id).html();
-            canvas.setBackgroundImage(
-              decodeURI(url.replace(/&amp;/g, '&')),
-              canvas.renderAll.bind(canvas), {
-                scaleX: imageScale,
-                scaleY:  imageScale
-              }
-            );
-
-            var ctx = {}
-            if (annotation_data !== "") {
-              var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
-            }
-            var originalHeight = parseFloat(ctx['originalHeight']);
-            if (isNaN(originalHeight)) {
-              // Assume that original height was the same - scale it for 60% like in html
-              originalHeight = height / 0.6;
-            }
-            var scale = height / originalHeight;
-
-            canvas.loadFromJSON(ctx);
-            canvas.forEachObject(function (object) {
-              object = object.scale(scale);
-              object.left = object.left * scale;
-              object.top = object.top * scale;
-            })
-            canvas.renderAll()
-          })
+          loadPicture(id)
         });
 
         var modal = $('#the-modal');
@@ -321,11 +353,8 @@
                 <div style="display: flex; justify-content: center;">
                   <canvas id="{{ observation.id }}"></canvas>
                 </div>
-                <div style="display: flex; justify-content: center;">
-                  <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style=" width: 60%; height: 60%"/>
-                </div>
                 <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
-                <div class="d-none" id="url_{{observation.id}}">{{observation.original_image.url}}</div>
+                <div class="d-none" id="image-source-{{observation.id}}">{{observation.original_image.url}}</div>
               </div>
             </div>
           </div>
@@ -333,9 +362,8 @@
           {% endif %}
 
           {% if observation.video %}
-            <div style="display: flex; justify-content: center;">
-              <video src="{{ observation.video.url }}" alt="" style="width: 60%; height: auto;" controls></video>
-            </div>
+            <input id="video-source-{{ observation.id }}" value="{{ observation.video.url }}" class="hidden"/>
+            <div id="video-{{ observation.id }}" style="display: flex; justify-content: center;"></div>
           {% endif %}
 
           {% if observation.notes %}
@@ -345,7 +373,8 @@
 
           {% if observation.video_notes %}
             <b style="display: block;">Video Note:</b>
-            <video src="{{ observation.video_notes.url }}" style="width: 100%; height: auto;" controls></video>
+            <input id="video-notes-source-{{ observation.id }}" value="{{ observation.video_notes.url }}" class="hidden"/>
+            <div id="video-notes-{{ observation.id }}" style="display: flex; justify-content: center;"></div>
           {% endif %}
 
 
