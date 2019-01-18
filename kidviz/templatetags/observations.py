@@ -1,5 +1,6 @@
 from django.conf import settings
 from django import template
+from ..models import Course
 
 register = template.Library()
 
@@ -12,3 +13,8 @@ def contains(observations, construct):
 @register.filter
 def observation_pks(observations):
     return [o.pk for o in observations]
+
+
+@register.filter
+def course_from_session_or_first(request):
+    return request.session.get('course') or Course.objects.order_by('id').first().pk
