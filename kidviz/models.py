@@ -217,7 +217,7 @@ class LearningConstructLevel(TimeStampedModel):
     """
     Some description here...
     """
-    construct = models.ForeignKey('kidviz.LearningConstruct', on_delete=models.CASCADE)
+    construct = models.ForeignKey('kidviz.LearningConstruct', on_delete=models.CASCADE, related_name='levels')
     level = models.IntegerField()
     description = models.TextField()
 
@@ -232,7 +232,7 @@ class LearningConstructSublevel(TimeStampedModel):
     """
     Some description here...
     """
-    level = models.ForeignKey('kidviz.LearningConstructLevel', on_delete=models.CASCADE)
+    level = models.ForeignKey('kidviz.LearningConstructLevel', on_delete=models.CASCADE, related_name='sublevels')
     name = models.CharField(max_length=255)
     description = models.TextField()
 

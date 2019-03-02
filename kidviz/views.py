@@ -71,18 +71,18 @@ class SetupView(LoginRequiredMixin, FormView):
         r['form'].fields['grouping'].init_bound_field(r['form'].initial.get('course'))
         r['constructs'] = []
 
-        for lc in LearningConstruct.objects.all():
+        for lc in LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels', 'levels__sublevels__examples').all():
             construct = {
                 'name': lc.name,
                 'levels': [],
             }
-            for lcl in lc.learningconstructlevel_set.all():
+            for lcl in lc.levels.all():
                 level = {
                     'id': lcl.id,
                     'name': '{}) {}'.format(lcl.level, lcl.description),
                     'sublevels': []
                 }
-                for lcsl in lcl.learningconstructsublevel_set.all():
+                for lcsl in lcl.sublevels.all():
                     sublevel = {
                         'id': lcsl.id,
                         'name': lcsl.name,
