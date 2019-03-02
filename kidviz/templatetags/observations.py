@@ -1,5 +1,5 @@
-from django.conf import settings
 from django import template
+
 from ..models import Course
 
 register = template.Library()

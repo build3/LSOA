@@ -3,6 +3,7 @@
 import django.contrib.postgres.fields
 from django.db import migrations, models
 
+
 def set_default_tags(apps, schema_editor):
     Observation = apps.get_model('kidviz', 'Observation')
 
@@ -15,8 +16,8 @@ def set_default_tags(apps, schema_editor):
 def reverse_set_default_tags(apps, schema_editor):
     pass
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
         ('kidviz', '0016_auto_20180726_2045'),
     ]
@@ -25,7 +26,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='observation',
             name='tag_choices',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.PositiveIntegerField(), blank=True, default=[], null=True, size=None),
+            field=django.contrib.postgres.fields.ArrayField(base_field=models.PositiveIntegerField(), blank=True,
+                                                            default=[], null=True, size=None),
         ),
         migrations.RunPython(set_default_tags, reverse_set_default_tags),
     ]
