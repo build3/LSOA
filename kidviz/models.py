@@ -53,6 +53,7 @@ class Student(TimeStampedModel):
     nickname = models.CharField(max_length=255, blank=True, default='')
     grade_level = models.PositiveSmallIntegerField(default=0)
     status = models.CharField(max_length=30, choices=STUDENT_STATUSES, default=ACTIVE)
+    consented_to_research = models.BooleanField(default=False)
 
     def __str__(self):
         return '{} {}'.format(self.nickname or self.first_name, self.last_name[0])

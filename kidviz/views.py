@@ -42,6 +42,11 @@ class SetupView(LoginRequiredMixin, FormView):
     template_name = 'setup.html'
     form_class = SetupForm
 
+    def get(self, request, *args, **kwargs):
+        if not self.request.user.has_perm("kidviz.add_observation"):
+            return HttpResponseRedirect(reverse('observations_all'))
+        return super().get(request, *args, **kwargs)
+
     def get_initial(self):
         initial = super(SetupView, self).get_initial()
         initial.update({
