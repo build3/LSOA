@@ -207,6 +207,12 @@ class LearningConstruct(TimeStampedModel):
     def __str__(self):
         return '{} ({})'.format(self.name, self.abbreviation)
 
+    @property
+    def sublevels(self):
+        return LearningConstructSublevel.objects.filter(
+            level__construct_id=self.id
+        )
+
 
 class LearningConstructLevel(TimeStampedModel):
     """
@@ -230,6 +236,12 @@ class LearningConstructSublevel(TimeStampedModel):
     level = models.ForeignKey('kidviz.LearningConstructLevel', on_delete=models.CASCADE, related_name='sublevels')
     name = models.CharField(max_length=255)
     description = models.TextField()
+
+    def short_name(self):
+        try:
+            return '{}'.format(self.name.split()[1])
+        except:
+            return '{}'.format(self.name)
 
     def __str__(self):
         return '{}'.format(self.name)

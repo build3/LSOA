@@ -7,10 +7,10 @@
             <thead>
                 <tr>
                     <th scope="col">&nbsp;</th>
-                    {% for level in construct.sublevels %}
-                    <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
-                        {{ level.name }}
-                        {% if level.description|length > 0 %}
+                    {% for sublevel in construct.sublevels %}
+                    <th scope="col" title="{{ sublevel.description }}" data-toggle="tooltip">
+                        {{ sublevel.short_name }}
+                        {% if sublevel.description|length > 0 %}
                             <span><i class="fa fa-info-circle"></i></span>
                         {% endif %}
                     </th>
@@ -20,7 +20,7 @@
             <tbody>
             {% for student, levels in students.items %}
                 <tr>
-                    <th scope="row">{{ student }}{% if not student.consented_to_research and not perms.kidviz.can_view_nonconsent_observations %}*{% endif %}</th>
+                    <th scope="row" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 150px;">{{ student }}{% if not student.consented_to_research and not perms.kidviz.can_view_nonconsent_observations %}*{% endif %}</th>
                     {% for level, observations in levels.items %}
                         <td data-csl-id="{{ csl_id }}"
                             class="text-center"
