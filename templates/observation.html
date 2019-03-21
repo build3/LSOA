@@ -282,16 +282,14 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-12">
+      <div class="col-12 d-flex justify-content-between">
         {% if last_observation_url %}
           <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
         {% else %}
           <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">Cancel</a>
         {% endif %}
-        <a href="#"
-           id="submit"
-           class="btn fa fa-3x fa-plus float-right text-dark"
-           onclick="document.getElementById('form').submit()">
+        <a href="#" class="btn-primary btn-lg" onclick="document.getElementById('form').submit()">
+          &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
         </a>
       </div>
     </div>
@@ -467,7 +465,7 @@
       $('.tag').on('click', function (e) {
         toggleTags($(this).data('tag-id'));
       });
-      
+
       $('#curricularFocusInput').change(function() {
         $('#id_curricular_focus').val($(this).val());
       });

@@ -53,6 +53,7 @@ class Student(TimeStampedModel):
     nickname = models.CharField(max_length=255, blank=True, default='')
     grade_level = models.PositiveSmallIntegerField(default=0)
     status = models.CharField(max_length=30, choices=STUDENT_STATUSES, default=ACTIVE)
+    consented_to_research = models.BooleanField(default=False)
 
     def __str__(self):
         return '{} {}'.format(self.nickname or self.first_name, self.last_name[0])
@@ -217,7 +218,7 @@ class LearningConstructLevel(TimeStampedModel):
     """
     Some description here...
     """
-    construct = models.ForeignKey('kidviz.LearningConstruct', on_delete=models.CASCADE)
+    construct = models.ForeignKey('kidviz.LearningConstruct', on_delete=models.CASCADE, related_name='levels')
     level = models.IntegerField()
     description = models.TextField()
 
@@ -232,9 +233,15 @@ class LearningConstructSublevel(TimeStampedModel):
     """
     Some description here...
     """
-    level = models.ForeignKey('kidviz.LearningConstructLevel', on_delete=models.CASCADE)
+    level = models.ForeignKey('kidviz.LearningConstructLevel', on_delete=models.CASCADE, related_name='sublevels')
     name = models.CharField(max_length=255)
     description = models.TextField()
+
+    def short_name(self):
+        try:
+            return '{}'.format(self.name.split()[1])
+        except:
+            return '{}'.format(self.name)
 
     def __str__(self):
         return '{}'.format(self.name)
@@ -283,9 +290,7 @@ class ContextTag(TimeStampedModel, OptionalOwnerMixin):
 
 
 class AdminPerms(models.Model):
-
     class Meta:
-
         managed = False  # No database table creation or deletion operations will be performed for this model
 
         permissions = (

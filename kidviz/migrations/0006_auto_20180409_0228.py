@@ -20,7 +20,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='observation',
             name='owner',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='kidviz_observation_owner',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='kidviz_observation_owner',
                                     to=settings.AUTH_USER_MODEL, verbose_name='owner'),
         ),
     ]
