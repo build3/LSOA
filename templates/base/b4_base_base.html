@@ -1,4 +1,4 @@
-{% load staticfiles tz_detect %}
+{% load staticfiles tz_detect raven %}
 <!DOCTYPE html>
 <html lang="en" class="h-100">
 <head>
@@ -15,6 +15,7 @@
   <link href="{% static 'vendor/datepicker/css/gijgo.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/common/css/common.css' %}" rel="stylesheet">
   {% block extrastyles %}{% endblock %}
+  <script>Raven.config('{% sentry_public_dsn %}').install()</script>
   <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 </head>
 <body class="h-100">
