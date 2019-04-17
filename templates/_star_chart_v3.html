@@ -11,7 +11,7 @@
                     {% for level in construct.sublevels %}
                         {% if level in selected_constructs %}
                         <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
-                            {{ level.name }}
+                            {{ level.short_name }}
                             {% if level.description|length > 0 %}
                                 <span><i class="fa fa-info-circle"></i></span>
                             {% endif %}
