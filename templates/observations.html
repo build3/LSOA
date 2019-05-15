@@ -64,10 +64,10 @@
     function initSelect2() {
       $("#id_constructs").select2({
         tokenSeparators: [',', '\n']
-      })
+      });
       $("#id_tags").select2({
         tokenSeparators: [',', '\n']
-      })
+      });
     }
 
     function loadAllowedConstructs() {
@@ -78,7 +78,7 @@
       var date_to = $('#id_date_to').val();
       var course = $('#courseSelector').val();
       if (isNaN(course)) {
-       course = undefined
+        course = undefined;
       }
 
       $.ajax({
@@ -92,7 +92,7 @@
           'csrfmiddlewaretoken': '{{ csrf_token }}'
         },
         success: function (response) {
-          var data = response['data']
+          var data = response['data'];
           var selected = $('#id_constructs').val();
           $('#id_constructs').empty();
 
@@ -113,7 +113,7 @@
       $('.datepicker').datepicker({
           uiLibrary: 'bootstrap4'
       });
-    })
+    });
 
     function registerUpdateConstructsListener(id) {
       var listeners = ['change', 'unfocus'];
@@ -124,6 +124,96 @@
 
     registerUpdateConstructsListener('#id_date_from');
     registerUpdateConstructsListener('#id_date_to');
+
+
+    function loadVideo(id, key) {
+        var $video = $('#' + key + '-source-' + id)[0];
+        if ($video) {
+            var link = $video.value;
+            var $videoContainer = $('#' + key + '-' + id)[0];
+            var $videoElement = $('<video />', {
+                src: link,
+                type: 'video/mp4',
+                controls: true
+            })[0];
+
+            $videoContainer.append($videoElement);
+            $video.remove();
+        }
+    }
+
+    function loadPicture(id) {
+        var $canvas = $('#the-modal .modal-body #' + id);
+        $canvas.attr('id', 'canvas' + id);
+
+        var annotation_data = $('#annotation_data_' + id).html();
+
+        $('#the-modal').on('shown.bs.modal', function() {
+            var url = $('#image-source-'+id).html();
+            if (!url) {
+              return;
+            }
+
+            var canvas = new fabric.Canvas('canvas' + id, {
+                isDrawingMode: false,
+                selection: false
+            });
+
+            var cHeight = 332;
+            var cWidth = 530;
+            var cWidthFull = 768;
+
+            var bgImg = new fabric.Image();
+            bgImg.setSrc(url.replace(/&amp;/g, '&'), function() {
+                var height = Math.min(bgImg.height, cHeight);
+                var width = Math.min(bgImg.width, cWidth);
+                var naturalWidth = bgImg.getOriginalSize().width;
+                var imgScale = width / naturalWidth;
+
+                var ctx = {};
+                if (annotation_data !== "") {
+                    var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+                }
+
+                var originalHeight = parseFloat(ctx['originalHeight']);
+
+                if (isNaN(originalHeight)) {
+                    // Assume that original height was the same - scale it for 60% like in html
+                    originalHeight = height / 0.6;
+                }
+                var scale = originalHeight / height;
+                canvas.loadFromJSON(ctx);
+                
+                var offset = cWidthFull - cWidth - 45;
+
+                canvas.forEachObject(function (object) {
+                    object = object.scale(scale);
+                    object.left = (object.left * scale) - offset;
+                    object.top = object.top * scale;
+                });
+
+                canvas.renderAll();
+
+                canvas.setBackgroundImage(
+                    bgImg,
+                    canvas.renderAll.bind(canvas), {
+                        scaleX: imgScale,
+                        scaleY: imgScale
+                    },
+                    {
+                        left: 200,
+                        originX: 'left',
+                        originY: 'top'
+                    }
+                );
+
+                canvas.setHeight(height);
+                canvas.setWidth(cWidthFull);
+
+                canvas.renderAll();
+            });
+        });
+    }
 
 
     $(function () {
@@ -156,59 +246,12 @@
 
         $('#the-modal .modal-body').html('');
         observationIds.forEach(function (id) {
+          loadVideo(id, 'video');
+          loadVideo(id, 'video-notes');
+
           $('#the-modal .modal-body').append($('[data-observation-id="' + id + '"]').clone());
-          var $canvas = $('#the-modal .modal-body #' + id);
-          $canvas.attr('id', 'canvas' + id);
 
-          var annotation_data = $('#annotation_data_'+id).html();
-
-          $('#the-modal').on('shown.bs.modal', function() {
-            var $image = $('#the-modal .modal-body #image-' + id);
-            if ($image.length == 0) {
-                return
-            }
-
-            var height = $image.height();
-            var width = $image.width();
-            var naturalWidth = $image.get(0).naturalWidth;
-            $image.hide();
-            var imageScale = width/naturalWidth
-
-            var canvas = new fabric.Canvas('canvas' + id, {
-              isDrawingMode: false,
-              selection: false
-            });
-            canvas.setHeight(height);
-            canvas.setWidth(width);
-
-            var url = $('#url_'+id).html();
-            canvas.setBackgroundImage(
-              decodeURI(url.replace(/&amp;/g, '&')),
-              canvas.renderAll.bind(canvas), {
-                scaleX: imageScale,
-                scaleY:  imageScale
-              }
-            );
-
-            var ctx = {}
-            if (annotation_data !== "") {
-              var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
-            }
-            var originalHeight = parseFloat(ctx['originalHeight']);
-            if (isNaN(originalHeight)) {
-              // Assume that original height was the same - scale it for 60% like in html
-              originalHeight = height / 0.6;
-            }
-            var scale = height / originalHeight;
-
-            canvas.loadFromJSON(ctx);
-            canvas.forEachObject(function (object) {
-              object = object.scale(scale);
-              object.left = object.left * scale;
-              object.top = object.top * scale;
-            })
-            canvas.renderAll()
-          })
+          loadPicture(id);
         });
 
         var modal = $('#the-modal');
@@ -216,11 +259,11 @@
           size: 'lg',
           fade: true
         });
-      })
+      });
 
       $('#courseSelector').on('change', function(e) {
         var course_id = this.value;
-        window.location = '{% url "observations_all" %}' + course_id
+        window.location = '{% url "observations_all" %}' + course_id;
       });
 
       $('.nav-link').on('click', function (e) {
@@ -228,14 +271,14 @@
         var chart_id = chart_href.substr(1);
         $('#filtering-submit').attr('name', chart_id);
         if (chart_id == "chart_v3") {
-          $("#construct-row").removeClass('d-none')
+          $("#construct-row").removeClass('d-none');
           initSelect2();
           loadAllowedConstructs();
         } else {
-          $("#construct-row").addClass('d-none')
+          $("#construct-row").addClass('d-none');
         }
 
-      })
+      });
 
     });
   </script>
@@ -321,11 +364,8 @@
                 <div style="display: flex; justify-content: center;">
                   <canvas id="{{ observation.id }}"></canvas>
                 </div>
-                <div style="display: flex; justify-content: center;">
-                  <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style=" width: 60%; height: 60%"/>
-                </div>
-                <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
-                <div class="d-none" id="url_{{observation.id}}">{{observation.original_image.url}}</div>
+                <div class="d-none" id="annotation_data_{{ observation.id }}">{{ observation.annotation_data }}</div>
+                <div class="d-none" id="image-source-{{ observation.id }}">{{ observation.original_image.url }}</div>
               </div>
             </div>
           </div>
@@ -333,9 +373,8 @@
           {% endif %}
 
           {% if observation.video %}
-            <div style="display: flex; justify-content: center;">
-              <video src="{{ observation.video.url }}" alt="" style="width: 60%; height: auto;" controls></video>
-            </div>
+            <input id="video-source-{{ observation.id }}" value="{{ observation.video.url }}" class="hidden"/>
+            <div id="video-{{ observation.id }}" style="display: flex; justify-content: center;"></div>
           {% endif %}
 
           {% if observation.notes %}
@@ -345,7 +384,8 @@
 
           {% if observation.video_notes %}
             <b style="display: block;">Video Note:</b>
-            <video src="{{ observation.video_notes.url }}" style="width: 100%; height: auto;" controls></video>
+            <input id="video-notes-source-{{ observation.id }}" value="{{ observation.video_notes.url }}" class="hidden"/>
+            <div id="video-notes-{{ observation.id }}" style="display: flex; justify-content: center;"></div>
           {% endif %}
 
 

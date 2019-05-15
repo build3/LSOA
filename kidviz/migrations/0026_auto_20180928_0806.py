@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('kidviz', '0025_student_student_id'),
     ]
@@ -13,7 +12,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='student',
             name='status',
-            field=models.CharField(choices=[('active', 'active'), ('inactive', 'inactive')], default='active', max_length=30),
+            field=models.CharField(choices=[('active', 'active'), ('inactive', 'inactive')], default='active',
+                                   max_length=30),
         ),
         migrations.AlterField(
             model_name='contexttag',

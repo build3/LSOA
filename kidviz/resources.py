@@ -1,8 +1,8 @@
 from django.utils import timezone
+from import_export.formats import base_formats
 from tablib import Dataset
 
 from kidviz.models import Course, Student
-from import_export.formats import base_formats
 
 FILE_FORMAT_MAP = {
     'xlsx': base_formats.XLSX,
@@ -15,7 +15,6 @@ ACCEPTED_FILE_FORMATS = FILE_FORMAT_MAP.values()
 
 
 def do_data_clean(table):
-
     def clean_string(cell):
         return str(cell or '').strip()
 
@@ -29,7 +28,6 @@ def do_data_clean(table):
 
 
 class ClassRoster(object):
-
     COLUMN_ORDER = (
         'Course ID',
         'Course Name',

@@ -1,5 +1,6 @@
 {% extends 'base/b4_base_base.html' %}
 {% load active_link_tags %}
+{% load observations %}
 
 {% block base-content %}
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -9,56 +10,60 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavDropdown">
       <ul class="navbar-nav mr-auto">
-        {% if request.session.course %}
+        {% if request.session.course and perms.kidviz.add_observation %}
           <li class="nav-item {% active_link 'observation_view' %}">
             <a class="nav-link" href="{% url 'observation_view' %}">Current Course</a>
           </li>
         {% endif %}
-        <li class="nav-item {% active_link 'setup' %}">
-          <a class="nav-link" href="{% url 'setup' %}">Setup</a>
-        </li>
-        <li class="nav-item {% active_link 'observations_all' %}">
-          <a class="nav-link" href="
-            {% if request.session.course %}
-            {% url 'observations_specific' request.session.course %}
-            {% else %}
-            {% url 'observations_all' %}
-            {% endif %}
-          ">Star Charts</a>
-        </li>
-        <li class="nav-item {% active_link 'observations_all' %}">
-          <a class="nav-link" href="{% url 'observations_teachers' %}">
-            Teacher Charts
+        {% if perms.kidviz.add_observation %}
+          <li class="nav-item {% active_link 'setup' %}">
+            <a class="nav-link" href="{% url 'setup' %}">Setup</a>
+          </li>
+        {% endif %}
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle"
+             href="#"
+             role="button"
+             data-toggle="dropdown"
+             aria-haspopup="true"
+             aria-expanded="false">
+            Charts and Reports
           </a>
-        </li>
-      {% if perms.kidviz.can_approve_deny_users %}
-        <li class="nav-item {% active_link 'pending_users' %}">
-          <a class="nav-link" href="{% url 'pending_users' %}">Pending Users</a>
-        </li>
-      {% endif %}
-        <li class="nav-item {% active_link 'import_class_roster' %}">
-          <a class="nav-link" href="{% url 'import_class_roster' %}">Import Class</a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item"
+               href="{% url 'observations_specific' request|course_from_session_or_first %}">Star Charts</a>
+            <a class="dropdown-item"
+               href="{% url 'observations_teachers_specific' request|course_from_session_or_first %}">Teacher Charts</a>
+            <a class="dropdown-item" href="{% url 'floating_students' %}">Floating Students Report</a>
+            <a class="dropdown-item" href="{% url 'doubled_students' %}">Doubled Students Report</a>
+            <a class="dropdown-item" href="{% url 'homonym_students' %}">Homonym Students Report</a>
+          </div>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle"
-            href="#"
-            role="button"
-            data-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false">
-            Reports
+             href="#"
+             role="button"
+             data-toggle="dropdown"
+             aria-haspopup="true"
+             aria-expanded="false">
+            Admin
           </a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item" href="{% url 'floating_students' %}">Floating Students</a>
-            <a class="dropdown-item" href="{% url 'doubled_students' %}">Doubled Students</a>
-            <a class="dropdown-item" href="{% url 'homonym_students' %}">Homonym Students</a>
+            {% if perms.kidviz.can_approve_deny_users %}
+              <a class="dropdown-item" href="{% url 'pending_users' %}">Pending Users</a>
+            {% endif %}
+
+            {% if perms.kidviz.add_course %}
+              <a class="dropdown-item" href="{% url 'import_class_roster' %}">Import Class</a>
+            {% endif %}
+
+            {% if perms.kidviz.add_contexttag %}
+              <a class="dropdown-item" href="{% url 'tag_list' %}">Edit Tags</a>
+            {% endif %}
+
+            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin Site</a>
           </div>
-      </li>
-        <li class="nav-item {% active_link 'tag_list' %}">
-          <a class="nav-link" href="{% url 'tag_list' %}">Tags</a>
-        </li>
-        <li class="nav-item {% active_link 'admin:index' %}">
-          <a class="nav-link" href="{% url 'admin:index' %}">Admin Site</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'account_logout' %}">Log Out</a>

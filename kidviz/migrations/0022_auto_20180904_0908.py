@@ -13,6 +13,7 @@ def create_groups_and_permissions(apps, schema_editor):
     Permission = apps.get_model('auth', 'Permission')
     administrators.permissions.add(Permission.objects.get(codename='can_approve_deny_users'))
 
+
 class Migration(migrations.Migration):
     dependencies = [
         ('kidviz', '0021_adminperms'),

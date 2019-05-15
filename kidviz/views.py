@@ -1,9 +1,9 @@
-import collections
+import datetime
 import datetime
 import io
 import json
-import operator
 import logging
+import operator
 from datetime import timedelta
 from functools import reduce
 
@@ -18,8 +18,8 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadReque
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.utils.text import slugify
 from django.utils.decorators import method_decorator
+from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, View, TemplateView, UpdateView, \
     CreateView, ListView
@@ -41,6 +41,11 @@ logger = logging.getLogger(__name__)
 class SetupView(LoginRequiredMixin, FormView):
     template_name = 'setup.html'
     form_class = SetupForm
+
+    def get(self, request, *args, **kwargs):
+        if not self.request.user.has_perm("kidviz.add_observation"):
+            return HttpResponseRedirect(reverse('observations_all'))
+        return super().get(request, *args, **kwargs)
 
     def get_initial(self):
         initial = super(SetupView, self).get_initial()
@@ -71,18 +76,19 @@ class SetupView(LoginRequiredMixin, FormView):
         r['form'].fields['grouping'].init_bound_field(r['form'].initial.get('course'))
         r['constructs'] = []
 
-        for lc in LearningConstruct.objects.all():
+        for lc in LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels',
+                                                             'levels__sublevels__examples').all():
             construct = {
                 'name': lc.name,
                 'levels': [],
             }
-            for lcl in lc.learningconstructlevel_set.all():
+            for lcl in lc.levels.all():
                 level = {
                     'id': lcl.id,
                     'name': '{}) {}'.format(lcl.level, lcl.description),
                     'sublevels': []
                 }
-                for lcsl in lcl.learningconstructsublevel_set.all():
+                for lcsl in lcl.sublevels.all():
                     sublevel = {
                         'id': lcsl.id,
                         'name': lcsl.name,
@@ -95,7 +101,7 @@ class SetupView(LoginRequiredMixin, FormView):
 
         r['curricular_focus_id'] = ContextTag.objects.get_or_create(
             text='Curricular Focus',
-            curricular_focus = True
+            curricular_focus=True
         )[0].id
 
         return r
@@ -308,8 +314,8 @@ class ObservationAjax(LoginRequiredMixin, View):
             constructs_data = [{'id': c.id, 'value': c.name} for c in list(constructs)]
             return JsonResponse({'success': True, 'data': constructs_data})
 
-
         return HttpResponseBadRequest()
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class GroupingSubmitView(LoginRequiredMixin, JSONResponseMixin, View):
@@ -380,6 +386,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         date_from = None
         date_to = None
         selected_constructs = None
+        tags = None
 
         if date_filtering_form.is_valid():
             date_from = date_filtering_form.cleaned_data['date_from']
@@ -395,7 +402,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             .prefetch_related('constructs__level__construct') \
             .all()
 
-        if  course_id:
+        if course_id:
             observations = observations.filter(course=course_id)
 
         if date_from:
@@ -408,7 +415,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             tag_ids = [tag.id for tag in tags]
             observations = observations.filter(tags__in=tag_ids)
 
-        constructs = LearningConstruct.objects.all()
+        constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
 
         all_students = Student.objects.filter(status=Student.ACTIVE)
         if course_id:
@@ -416,16 +423,17 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         star_matrix = {}
         dot_matrix = {}
-        obseravtion_without_construct = {}
+        observation_without_construct = {}
         for construct in constructs:
             star_matrix[construct] = {}
             dot_matrix[construct] = {}
             for student in all_students:
                 star_matrix[construct][student] = {}
-                obseravtion_without_construct[student] = []
-                for sublevel in construct.sublevels:
-                    star_matrix[construct][student][sublevel] = []
-                    dot_matrix[construct][sublevel] = []
+                observation_without_construct[student] = []
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        star_matrix[construct][student][sublevel] = []
+                        dot_matrix[construct][sublevel] = []
 
         for observation in observations:
             students = observation.students.all()
@@ -435,7 +443,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                     continue
 
                 if not sublevels:
-                    obseravtion_without_construct[student].append(observation)
+                    observation_without_construct[student].append(observation)
 
                 for sublevel in sublevels:
                     construct = sublevel.level.construct
@@ -446,7 +454,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         data.update({
             'star_matrix': star_matrix,
             'dot_matrix': dot_matrix,
-            'obseravtion_without_construct': obseravtion_without_construct,
+            'obseravtion_without_construct': observation_without_construct,
             'all_observations': observations,
             'selected_constructs': selected_constructs,
             'courses': Course.objects.all(),
@@ -469,6 +477,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
         date_from = None
         date_to = None
         selected_constructs = None
+        tags = None
 
         if date_filtering_form.is_valid():
             date_from = date_filtering_form.cleaned_data['date_from']
@@ -537,6 +546,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             'filtering_form': date_filtering_form
         })
         return data
+
 
 def current_observation(request):
     initial = {
@@ -716,7 +726,7 @@ class DoubledStudents(ListView):
 
     def get_queryset(self):
         return Student.objects.annotate(count=Count('course')) \
-            .filter(count__gte=2).order_by('pk')
+            .filter(count__gte=2).prefetch_related('course_set').order_by('pk')
 
 
 class HomonymStudents(ListView):
@@ -738,7 +748,7 @@ class HomonymStudents(ListView):
 
         return Student.objects.filter(query)
 
-    def get_context_data(self):
+    def get_context_data(self, **kwargs):
         data = super().get_context_data()
         objects = data['object_list']
         grouped_data = dict()

@@ -288,17 +288,22 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-12">
+      <div class="col-12 d-flex justify-content-between">
         {% if last_observation_url %}
           <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
         {% else %}
           <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">Cancel</a>
         {% endif %}
+
         <button
            id="submit"
            type="submit"
-           class="btn fa fa-3x fa-plus float-right text-dark">
+           class="btn-primary btn-lg">
+           &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
         </button>
+
+
+
       </div>
     </div>
     {% for hidden in form.hidden_fields %}
