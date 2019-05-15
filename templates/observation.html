@@ -9,6 +9,7 @@
 {% block extrascripts %}
   <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
   <script src="{% static 'vendor/lightbox2/js/lightbox-plus-jquery.min.js' %}"></script>
+  <script src="{% static 's3.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/npm/gijgo@1.9.10/js/gijgo.min.js" type="text/javascript"></script>
   <script>
     lightbox.option({
@@ -30,6 +31,11 @@
   </li>
 {% endblock %}
 {% block content %}
+
+    <div id="loader-frame" class="loader-frame">
+        <div class="loader"></div>
+    </div>
+
   {% if form.non_field_errors %}
     <div role="alert" class="alert alert-danger">
       {{ form.non_field_errors }}
@@ -61,7 +67,6 @@
           {# "#image.src => url", button-rows => image_taken_no_reset() #}
           {# 9. Edit observation, video (can't replace) #}
           {# "#image => hidden", "#video => url", button-rows => none() #}
-
           {% if recent_observation.original_image and use_last_sample %}
             <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
             <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
@@ -78,14 +83,12 @@
         </div>
 
         <div class="btn-group-lg text-center mt-1" id="buttons-capture">
-          <label class="btn btn-primary mb-0" for="photoUpload">Take photo
-            <input name="original_image" hidden
-                   type="file" accept="image/*"
-                   id="photoUpload"></label>
-          <label class="btn btn-primary mb-0" for="videoUpload">Take video
-            <input name="video" style="display:none;" type="file"
-                   accept="video/*"
-                   id="videoUpload"></label>
+          <label class="btn btn-primary mb-0" for="id_original_image">Take photo
+              <div hidden>{{ form.original_image }}</div>
+          </label>
+          <label class="btn btn-primary mb-0" for="id_video">Take video
+                <div hidden>{{ form.video }}</div>
+          </label>
           {% if recent_observation and not view.kwargs.pk %}
             <button class="btn btn-primary mb-0"
                     type="submit"
@@ -180,7 +183,7 @@
             {{ form.observation_date.errors }}
           </div>
         {% endif %}
-        <div>{{ form.observation_date }}</div>
+        <div id="date-frame">{{ form.observation_date }}</div>
         {# TAGS SECTION #}
         <div class="text-center">
           {% for tag in tags %}
@@ -199,9 +202,10 @@
         </div>
         <h4 style="text-align: center; margin: 0;">Notes</h4>
         <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
-        <input name="video_notes" style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
-        <label class="btn btn-primary w-100" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio
-          note</label>
+        <label class="btn btn-primary w-100" for="id_video_notes">
+            <div hidden>{{ form.video_notes }}</div>
+            <span id="id_video_notes_verb">Add</span> Video/Audio note
+        </label>
         <div>{{ form.notes }}</div>
         <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
         <div id="sublevel-examples" style="height: 150px">
@@ -248,6 +252,8 @@
             {{ form.students.errors }}
           </div>
         {% endif %}
+        {# required to insert django-like error alert on client side #}
+        <div id="student-empty-frame"></div>
         {% if grouping %}
           {% for group in grouping.groups.all %}
             <div class="card">
@@ -288,11 +294,11 @@
         {% else %}
           <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">Cancel</a>
         {% endif %}
-        <a href="#"
+        <button
            id="submit"
-           class="btn fa fa-3x fa-plus float-right text-dark"
-           onclick="document.getElementById('form').submit()">
-        </a>
+           type="submit"
+           class="btn fa fa-3x fa-plus float-right text-dark">
+        </button>
       </div>
     </div>
     {% for hidden in form.hidden_fields %}
@@ -467,7 +473,7 @@
       $('.tag').on('click', function (e) {
         toggleTags($(this).data('tag-id'));
       });
-      
+
       $('#curricularFocusInput').change(function() {
         $('#id_curricular_focus').val($(this).val());
       });
@@ -481,11 +487,11 @@
       {# THIS SECTION IS THE VIDEO NOTE CODE #}
 
       var recordedVideoNote = document.querySelector('video#recordedNote'); // TODO change to jquery
-      $('#videoNoteUpload').on('change', function (e) {
+      $('#id_video_notes').on('change', function (e) {
         $('#id_notes').hide()
         recordedVideoNote.src = URL.createObjectURL(this.files[0]);
         recordedVideoNote.style.display = '';
-        $('#videoNoteUploadVerb').text('Replace')
+        $('#id_video_notes_verb').text('Replace')
       });
 
       {# THIS SECTION IS THE IMAGE/VIDEO SAMPLE CODE #}
@@ -516,10 +522,10 @@
       {# CAN START IN STATES 1, 5, 7, 8, and 9 #}
 
       {# THIS HANDLES STATE 1 TO STATE 2 #}
-      $("#photoUpload").on("change", function (e) {
+      $("#id_original_image").on("change", function (e) {
         $("#image").attr("src", URL.createObjectURL(this.files[0])).show();
         $("#recorded").hide();
-        $("#videoUpload").val('');
+        $("#id_video").val('');
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -528,10 +534,10 @@
       });
 
       {# THIS HANDLES STATE 1 TO STATE 4 #}
-      $("#videoUpload").on("change", function (e) {
+      $("#id_video").on("change", function (e) {
         $("#recorded").attr("src", URL.createObjectURL(this.files[0])).show();
         $("#image").hide();
-        $("#photoUpload").val('');
+        $("#id_original_image").val('');
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -543,14 +549,14 @@
         $("#buttons-draw-or-reset").hide();
         $("#image").attr("src", '{% static "images/photo-placeholder.svg" %}').show();
         $("#recorded").hide();
-        $("#videoUpload").val('');
+        $("#id_video").val('');
 
         enableDisableDraw.classList.add('disabled');
         hideStage();
         stage.clear();
 
-        $("#photoUpload").val('');
-        $("#videoUpload").val('');
+        $("#id_original_image").val('');
+        $("#id_video").val('');
         $("#useMostRecentMedia").prop('checked', false);
       });
 
@@ -568,7 +574,7 @@
         {# this if block is goofy but otherwise it throws an error #}
         $("#recorded").attr("src", '{% if object.video %}{{ object.video.url|safe }}{% endif %}').show();
         $("#image").hide();
-        $("#photoUpload").val('');
+        $("#id_original_image").val('');
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").hide();
         setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue

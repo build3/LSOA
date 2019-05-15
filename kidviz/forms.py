@@ -121,6 +121,10 @@ class ObservationForm(forms.ModelForm):
                          empty_permitted=empty_permitted, instance=instance,
                          use_required_attribute=use_required_attribute)
 
+        self.fields['video_notes'].widget.attrs['accept'] = 'video/*'
+        self.fields['video'].widget.attrs['accept'] = 'video/*'
+        self.fields['original_image'].widget.attrs['accept'] = 'image/*'
+
     def clean(self):
         super().clean()
         if self.cleaned_data.get('annotation_data') or self.cleaned_data['original_image']:
