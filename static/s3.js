@@ -8,17 +8,17 @@
 
   // Provides django-like error alerts.
   function errorAlert (message) {
-      return (
-          '<div role="alert" class="alert alert-danger">' +
-          '   <ul class="errorlist"><li>' + message + '</li></ul>' +
-          '</div>'
-      );
+    return (
+      '<div role="alert" class="alert alert-danger">' +
+      '   <ul class="errorlist"><li>' + message + '</li></ul>' +
+      '</div>'
+    );
   }
 
   function hasConstructsChecked () {
     return (
-        $('.construct.bg-success').length > 0
-        || $('#id_no_constructs').prop('checked')
+      $('.construct.bg-success').length > 0
+      || $('#id_no_constructs').prop('checked')
     )
   }
 

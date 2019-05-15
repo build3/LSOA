@@ -105,7 +105,10 @@ class ObservationForm(forms.ModelForm):
                 'class': 'datepicker form-control',
                 'data-format': 'yyyy-mm-dd'
             }),
-            'curricular_focus': forms.HiddenInput()
+            'curricular_focus': forms.HiddenInput(),
+            'video_notes': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
+            'video': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
+            'original_image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
@@ -120,10 +123,6 @@ class ObservationForm(forms.ModelForm):
                          initial=initial, error_class=error_class, label_suffix=label_suffix,
                          empty_permitted=empty_permitted, instance=instance,
                          use_required_attribute=use_required_attribute)
-
-        self.fields['video_notes'].widget.attrs['accept'] = 'video/*'
-        self.fields['video'].widget.attrs['accept'] = 'video/*'
-        self.fields['original_image'].widget.attrs['accept'] = 'image/*'
 
     def clean(self):
         super().clean()
