@@ -105,7 +105,10 @@ class ObservationForm(forms.ModelForm):
                 'class': 'datepicker form-control',
                 'data-format': 'yyyy-mm-dd'
             }),
-            'curricular_focus': forms.HiddenInput()
+            'curricular_focus': forms.HiddenInput(),
+            'video_notes': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
+            'video': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
+            'original_image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
