@@ -164,32 +164,23 @@
     waitForAllFiles(form)
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  $( document ).ready(function() {
     let forms = Array.from(document.querySelectorAll('.s3file')).map(input => {
       return input.closest('form')
     })
     forms = new Set(forms)
     forms.forEach(form => {
       form.addEventListener('submit', (e) => {
-        // Thera are two types of submit in observation form.
-        // First one has name `use_recent_observation` which is used to set media
-        // of the previous observation. On such request server responds with
-        // redirection to `GET /observation/`` with initialized form.
-        // Second one is a submit whick firslty upload media directly to S3
-        // and after that submits data to web server.
-        if (e.explicitOriginalTarget.name != "use_recent_observation") {
-          e.preventDefault()
-          if (is_valid_form(form)) {
-            document.getElementById('loader-frame').style.visibility = "visible";
-            uploadS3Inputs(e.target)
-          }
+        e.preventDefault()
+        if (is_valid_form(form)) {
+          document.getElementById('loader-frame').style.visibility = "visible";
+          uploadS3Inputs(e.target)
         }
       })
       let submitButtons = form.querySelectorAll('input[type=submit], button[type=submit]')
       Array.from(submitButtons).forEach(submitButton => {
         submitButton.addEventListener('click',  clickSubmit)
-      }
-      )
+      })
     })
   })
 })()
