@@ -36,6 +36,11 @@
     <div class="loader"></div>
   </div>
 
+  <form id="get-recent-observation-form" method="post" name="use_recent_observation">
+    {% csrf_token %}
+    <input type="hidden" name="use_recent_observation" value="True">
+  </form>
+
   {% if form.non_field_errors %}
     <div role="alert" class="alert alert-danger">
       {{ form.non_field_errors }}
@@ -90,8 +95,8 @@
                 <div hidden>{{ form.video }}</div>
           </label>
           {% if recent_observation and not view.kwargs.pk %}
-            <button class="btn btn-primary mb-0"
-                    type="submit"
+            <button class="btn btn-primary mb-0 use-last-sample"
+                    type="button"
                     name="use_recent_observation" value="True">Use Last Sample
             </button>
           {% endif %}
@@ -296,7 +301,6 @@
         {% endif %}
 
         <button
-           id="submit"
            type="submit"
            class="btn-primary btn-lg">
            &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
@@ -354,6 +358,10 @@
       var checkedStudents = {};
       var checkedConstructs = {};
       var checkedTags = {};
+
+      $('.use-last-sample').click(function () {
+        $('#get-recent-observation-form').submit()
+      })
 
       var toggleStudent = function (studentId) {
         $('[data-student-id="' + studentId + '"]').toggleClass('bg-warning');
