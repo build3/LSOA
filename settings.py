@@ -75,6 +75,7 @@ if DEBUG:
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'kidviz.middleware.S3FileMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     's3file.middleware.S3FileMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
