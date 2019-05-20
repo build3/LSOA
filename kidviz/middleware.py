@@ -1,32 +1,10 @@
 import logging
 import os
-import tempfile
-from tempfile import SpooledTemporaryFile
 
 from botocore.exceptions import ClientError
 from django.core.files.storage import default_storage
 
-from storages.utils import setting
-
-
 logger = logging.getLogger('s3file')
-
-
-def _get_file(self):
-    if self._file is None:
-        self._file = SpooledTemporaryFile(
-            max_size=self._storage.max_memory_size,
-            suffix=".S3Boto3StorageFile",
-            dir=setting("FILE_UPLOAD_TEMP_DIR")
-        )
-        if 'r' in self._mode:
-            self._is_dirty = False
-            self._file.seek(0)
-    return self._file
-
-
-def _set_file(self, value):
-    self._file = value
 
 
 class S3FileMiddleware:
@@ -45,15 +23,53 @@ class S3FileMiddleware:
     @staticmethod
     def get_files_from_storage(paths):
         """Return S3 file where the name does not include the path."""
-        for path in paths:
 
+        # A bunch of monkey-patched methods to override
+        # S3Boto3StorageFile and S3Boto3Storage to copy
+        # file from temporary storage directly on S3 instead
+        # of downloading and re-uploading it.
+        def _dummy_get_file(self):
+            """
+            Return S3 Bucket object instead of file contents
+            """
+            if hasattr(self, '_use_dummy_s3_methods'):
+                return self.obj
+            else:
+                # Call original method
+                return self._get_file()
+
+        def _dummy_save_content(self, obj, content, parameters):
+            """
+            If passed an S3.Object with bucket_name and key,
+            issue copy instead of upload_fileobj. Otherwise,
+            revert to original method, so this doesn't break
+            the storage.
+            """
+            if hasattr(content, 'bucket_name'):
+                obj.copy({
+                    'Bucket': content.bucket_name,
+                    'Key': content.key
+                })
+            else:
+                self._old_save_content(obj, content, parameters)
+
+        for path in paths:
             f = default_storage.open(path)
             f.name = os.path.basename(path)
 
-            # Set custom file property to prevent download from S3 on read()
-            f._get_file = _get_file
-            f._set_file = _set_file
-            f.__class__.file = property(_get_file, _set_file)
+            # Set a flag so that we can decide whether to pass
+            # a call to an original method instead
+            f._use_dummy_s3_methods = True
+
+            # Override file getter to return S3.Object
+            f.__class__.file = property(
+                _dummy_get_file,
+                f.__class__._set_file
+            )
+            # Override _save_content to copy instead of re-upload
+            # and save the old method for use in other cases
+            default_storage.__class__._old_save_content = default_storage.__class__._save_content
+            default_storage.__class__._save_content = _dummy_save_content
 
             try:
                 yield f
