@@ -13,7 +13,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core import serializers
 from django.db.models import Count, Q
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
@@ -70,6 +69,7 @@ class SetupView(LoginRequiredMixin, FormView):
         self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
         self.request.session['curricular_focus'] = d['curricular_focus']
+        self.request.session['create_new'] = True
         return HttpResponseRedirect(reverse_lazy('observation_view'))
 
     def get_context_data(self, **kwargs):
@@ -160,6 +160,18 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             return self.get(request, *args, **kwargs)
         else:
             draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
+
+            # This is needed to update video or original_image when one of them is already set
+            # and user want to change to the opposite.
+            if draft_observation:
+                if draft_observation.video and self.request.POST.get('original_image', None):
+                    draft_observation.video = None
+                    draft_observation.save()
+
+                if draft_observation.original_image and self.request.POST.get('video', None):
+                    draft_observation.original_image = None
+                    draft_observation.save()
+
             form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
             return self.form_valid(form)
 
@@ -170,6 +182,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         session_tags = self.request.session.get('context_tags') or []
         session_focus = self.request.session.get('curricular_focus') or ''
         last_observation_id = self.request.session.get('last_observation_id')
+        create_new = self.request.session.get('create_new', False)
 
         course = Course.objects.filter(pk=session_course).first()
         grouping = None
@@ -209,9 +222,14 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if self.request.POST.get('use_recent_observation'):
             kwargs['use_last_sample'] = True
             kwargs['form'] = ObservationForm(initial=self.initial)
-        else:
+        
+        if not self.request.POST.get('use_recent_observation') and not create_new:
             draft_observation = Observation.objects.filter(is_draft=True) \
-                .order_by('-id').first()
+                .order_by('-id') \
+                .prefetch_related('students') \
+                .prefetch_related('constructs') \
+                .prefetch_related('tags') \
+                .first()
 
             if draft_observation:
                 kwargs['draft_observation'] = draft_observation
@@ -226,11 +244,28 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
-        obj = form.save()
-
         # Do not add draft observation to session.
-        if not self.request.POST.get('is_draft', False):
+        if self.request.POST.get('is_draft', 'False') == 'False':
+            obj = form.save()
             self.request.session['last_observation_id'] = obj.id
+        else:
+            # Not doing commit=False to save manyToMany relations.
+            obj = form.save()
+
+            should_reset_media = (
+                self.request.POST.get('original_image', None)
+                or self.request.POST.get('video', None)
+            )
+
+            # When user reset image or video to default state and then updates draft.
+            if not should_reset_media:
+                obj.video = None
+                obj.original_image = None
+                obj.save()
+
+            if 'create_new' in self.request.session:
+                del self.request.session['create_new']
+                self.request.session.modified = True
 
         return super().form_valid(form)
 

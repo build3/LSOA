@@ -174,7 +174,12 @@
         e.preventDefault()
         if (is_valid_form(form)) {
           document.getElementById('loader-frame').style.visibility = "visible";
-          uploadS3Inputs(e.target)
+          
+          if ($('#draft-hidden').val() !== 'True' || !window.draft_update) {
+            uploadS3Inputs(e.target)
+          } else {
+            window.HTMLFormElement.prototype.submit.call(form)
+          }
         }
       })
       let submitButtons = form.querySelectorAll('input[type=submit], button[type=submit]')

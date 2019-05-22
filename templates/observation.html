@@ -16,6 +16,15 @@
       'albumLabel': ''
     })
   </script>
+  {% if draft_observation.video_notes %}
+    <script>
+      window.video_notes = true;
+    </script>
+  {% else %}
+    <script>
+      window.video_notes = false;
+    </script>
+  {% endif %}
 {% endblock %}
 
 {% block extranav %}
@@ -214,14 +223,8 @@
         <h4 style="text-align: center; margin: 0;">Notes</h4>
         {% if draft_observation.video_notes %}
           <video id="recorded" style="width: 100%;" src="{{ draft_observation.video_notes.url }}" controls playsinline></video>
-          <script>
-            window.video_notes = true;
-          </script>
         {% else %}
           <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
-          <script>
-            window.video_notes = false;
-          </script>
         {% endif %}
         <label class="btn btn-primary w-100" for="id_video_notes">
             <div hidden>{{ form.video_notes }}</div>
@@ -310,23 +313,47 @@
     </div>
     <div class="row">
       <div class="col-12 d-flex justify-content-between">
-        {% if last_observation_url %}
-          <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
+        {% if draft_observation and last_observation_url %}
+          <div>
+            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss modal</button>
+            <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
+          </div>
         {% elif draft_observation %}
-          <a href={% url 'dismiss_draft' %} class="btn-primary btn-lg" id="dismiss-draft">Dismiss draft</a>
+          <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss modal</button>
+        {% elif last_observation_url %}
+          <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
         {% else %}
           <a href="{% url 'observation_view' %}" class="btn-primary btn-lg" id="cancel">Cancel</a>
         {% endif %}
 
-        <button type="submit" id="draft-btn" class="btn-primary btn-lg">Save as draft</button>
-        <button
-           id="save-button"
-           type="submit"
-           class="btn-primary btn-lg"
-           style="margin-right: 0px;">
-           &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
-        </button>
-        <input id="draft-hidden" name="is_draft" value="False" type="hidden">
+        <div class="modal fade" id="dismissModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4>Dismiss modal</h4>
+              </div>
+              <div class="modal-body">
+                Are you sure to dismiss this observation draft?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href={% url 'dismiss_draft' %} class="btn btn-primary" id="dismiss-draft">Dismiss draft</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <button type="submit" id="draft-btn" class="btn-primary btn-lg">Save as draft</button>
+          <button
+            id="save-button"
+            type="submit"
+            class="btn-primary btn-lg"
+            style="margin-right: 0px;">
+            &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
+          </button>
+          <input id="draft-hidden" name="is_draft" value="False" type="hidden">
+        </div>
 
       </div>
     </div>
@@ -379,6 +406,14 @@
 
       $('#draft-btn').click(function() {
         $('#draft-hidden').val('True');
+
+        const draft = "{{ draft_observation }}";
+
+        if (draft && !window.media_updated) {
+          window.draft_update = true
+        } else {
+          window.draft_update = false
+        }
       })
 
       $('#save-button').click(function() {
@@ -394,6 +429,30 @@
         }
       }
 
+      var enableDisableDraw = document.querySelector('a#enable-draw');
+
+      shouldDisplayReset();
+
+      function shouldDisplayReset() {
+        const image = "{{ draft_observation.original_image }}"
+        const video = "{{ draft_observation.video }}"
+
+        if (image !== '') {
+          $("#recorded").hide();
+          $("#id_video").val('');
+
+          $("#buttons-capture").hide();
+          $("#buttons-draw-or-reset").show();
+
+          enableDisableDraw.classList.remove('disabled');
+        } else if (video !== '') {
+          $("#image").hide();
+          $("#id_original_image").val('');
+
+          $("#buttons-capture").hide();
+          $("#buttons-draw-or-reset").show();
+        }
+      }
 
       {# THIS SECTION HANDLES THE STUDENT/CONSTRUCT TOGGLING #}
 
@@ -544,6 +603,7 @@
         $('#id_notes').hide()
         recordedVideoNote.src = URL.createObjectURL(this.files[0]);
         recordedVideoNote.style.display = '';
+        window.media_updated = true
         $('#id_video_notes_verb').text('Replace')
       });
 
@@ -579,6 +639,7 @@
         $("#image").attr("src", URL.createObjectURL(this.files[0])).show();
         $("#recorded").hide();
         $("#id_video").val('');
+        window.media_updated = true
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -591,6 +652,7 @@
         $("#recorded").attr("src", URL.createObjectURL(this.files[0])).show();
         $("#image").hide();
         $("#id_original_image").val('');
+        window.media_updated = true
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -601,6 +663,7 @@
         $("#buttons-capture").show();
         $("#buttons-draw-or-reset").hide();
         $("#image").attr("src", '{% static "images/photo-placeholder.svg" %}').show();
+        window.media_updated = true
         $("#recorded").hide();
         $("#id_video").val('');
 
@@ -621,6 +684,7 @@
         $("#recorded").hide();
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").hide(); // TODO show this and show previous annotation with ability to edit it
+        window.media_updated = true
       }
 
       if ("{% if object.video %}{{ object.video.url }}{% endif %}") {
@@ -630,6 +694,7 @@
         $("#id_original_image").val('');
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").hide();
+        window.media_updated = true
         setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
       }
 
@@ -646,7 +711,7 @@
 
       var annotationInput = document.querySelector('#annotated-image');
 
-      var enableDisableDraw = document.querySelector('a#enable-draw');
+      
       var drawingColorButton = document.querySelector('a#drawing-color-button');
       var drawingColorDisplay = document.querySelector('#drawing-color');
       var color;
