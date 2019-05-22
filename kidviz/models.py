@@ -179,6 +179,7 @@ class Observation(TimeStampedModel, OwnerMixin):
     video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
 
     observation_date = models.DateField(default=now)
+    is_draft = models.BooleanField(default=False)
 
     @property
     def allowed_students(self):
