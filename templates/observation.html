@@ -31,7 +31,6 @@
   </li>
 {% endblock %}
 {% block content %}
-
   <div id="loader-frame" class="loader-frame">
     <div class="loader"></div>
   </div>
@@ -78,6 +77,12 @@
           {% elif recent_observation.video and use_last_sample %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
             <video id="recorded" style="width: 100%;" src="{{ recent_observation.video.url }}" controls playsinline/>
+          {% elif draft_observation.original_image %}
+            <img id="image" src="{{ draft_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
+            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+          {% elif draft_observation.video %}
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
+            <video id="recorded" style="width: 100%;" src="{{ draft_observation.video.url }}" controls playsinline/>
           {% else %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%; height: 332px; object-fit: contain;"/>
             <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
@@ -101,6 +106,7 @@
             </button>
           {% endif %}
         </div>
+
         <div class="btn-group-lg text-center mt-1" id="buttons-draw-or-reset" style="display:none;">
           <a class="btn btn-primary mb-0 text-white" data-toggle="modal" data-target="#confirmModal">Reset</a>
           <a id="enable-draw" class="btn btn-primary mb-0 enab disabled text-white">
@@ -206,7 +212,17 @@
           {% endfor %}
         </div>
         <h4 style="text-align: center; margin: 0;">Notes</h4>
-        <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
+        {% if draft_observation.video_notes %}
+          <video id="recorded" style="width: 100%;" src="{{ draft_observation.video_notes.url }}" controls playsinline></video>
+          <script>
+            window.video_notes = true;
+          </script>
+        {% else %}
+          <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
+          <script>
+            window.video_notes = false;
+          </script>
+        {% endif %}
         <label class="btn btn-primary w-100" for="id_video_notes">
             <div hidden>{{ form.video_notes }}</div>
             <span id="id_video_notes_verb">Add</span> Video/Audio note
@@ -296,15 +312,21 @@
       <div class="col-12 d-flex justify-content-between">
         {% if last_observation_url %}
           <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
+        {% elif draft_observation %}
+          <a href={% url 'dismiss_draft' %} class="btn-primary btn-lg" id="dismiss-draft">Dismiss draft</a>
         {% else %}
-          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">Cancel</a>
+          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg" id="cancel">Cancel</a>
         {% endif %}
 
+        <button type="submit" id="draft-btn" class="btn-primary btn-lg">Save as draft</button>
         <button
+           id="save-button"
            type="submit"
-           class="btn-primary btn-lg">
+           class="btn-primary btn-lg"
+           style="margin-right: 0px;">
            &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
         </button>
+        <input id="draft-hidden" name="is_draft" value="False" type="hidden">
 
       </div>
     </div>
@@ -353,6 +375,26 @@
 
   <script>
     $(document).ready(function () {
+      {# DRAFT OBSERVATION SECTION #}
+
+      $('#draft-btn').click(function() {
+        $('#draft-hidden').val('True');
+      })
+
+      $('#save-button').click(function() {
+        $('#draft-hidden').val('False');
+      })
+
+      changeStateOfNotes();
+
+      function changeStateOfNotes() {
+        if (window.video_notes) {
+          $('#id_notes').hide()
+          $('#id_video_notes_verb').text('Replace')
+        }
+      }
+
+
       {# THIS SECTION HANDLES THE STUDENT/CONSTRUCT TOGGLING #}
 
       var checkedStudents = {};
@@ -726,7 +768,6 @@
         }
         return null;
       }
-
     });
 
   </script>

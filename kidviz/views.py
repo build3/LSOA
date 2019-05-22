@@ -13,8 +13,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core import serializers
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -158,7 +159,9 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if self.request.POST.get('use_recent_observation'):
             return self.get(request, *args, **kwargs)
         else:
-            return super().post(request, *args, **kwargs)
+            draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
+            form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
+            return self.form_valid(form)
 
     def get_context_data(self, **kwargs):
         session_course = self.request.session.get('course')
@@ -206,12 +209,29 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if self.request.POST.get('use_recent_observation'):
             kwargs['use_last_sample'] = True
             kwargs['form'] = ObservationForm(initial=self.initial)
+        else:
+            draft_observation = Observation.objects.filter(is_draft=True) \
+                .order_by('-id').first()
+
+            if draft_observation:
+                kwargs['draft_observation'] = draft_observation
+                kwargs['chosen_constructs'] = json.dumps(
+                    list(map(lambda construct: construct.pk, draft_observation.constructs.all())))
+                kwargs['chosen_tags'] = json.dumps(
+                    list(map(lambda tag: tag.pk, draft_observation.tags.all())))
+                kwargs['chosen_students'] = json.dumps(
+                    list(map(lambda student: student.pk, draft_observation.students.all())))
+                kwargs['form'] = ObservationForm(instance=draft_observation)
 
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
         obj = form.save()
-        self.request.session['last_observation_id'] = obj.id
+
+        # Do not add draft observation to session.
+        if not self.request.POST.get('is_draft', False):
+            self.request.session['last_observation_id'] = obj.id
+
         return super().form_valid(form)
 
 
@@ -869,3 +889,16 @@ class StudentReportAjax(View):
                 })
 
         return HttpResponseBadRequest()
+
+
+class DismissDraft(LoginRequiredMixin, View):
+    """View used to dismiss draft."""
+
+    def get(self, request, *args, **kwargs):
+        Observation.objects.filter(is_draft=True) \
+            .order_by('-id') \
+            .first() \
+            .delete()
+
+        messages.add_message(self.request, messages.SUCCESS, 'Draft Dismissed.')
+        return HttpResponseRedirect(reverse_lazy('observation_view'))

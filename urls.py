@@ -37,6 +37,7 @@ urlpatterns = [
     # observation view - the main screen of the application
     url(r'^observation/$', kidviz.views.ObservationCreateView.as_view(), name='observation_view'),
     url(r'^observation/(?P<pk>\d+)/$', kidviz.views.ObservationDetailView.as_view(), name='observation_detail_view'),
+    url(r'^observation/dismiss-draft/$', kidviz.views.DismissDraft.as_view(), name='dismiss_draft'),
     url(r'^current-observation/$', kidviz.views.current_observation, name='current_observation'),
 
     # tag management
