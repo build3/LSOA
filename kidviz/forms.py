@@ -184,3 +184,11 @@ class DateFilteringForm(forms.Form):
         required=False,
         queryset=LearningConstructSublevel.objects.all()
     )
+
+
+class DraftObservationForm(ObservationForm):
+    """This form is used to save draft observation without any validation."""
+    
+    def clean(self):
+        """Remove validation from parent form."""
+        return self.cleaned_data

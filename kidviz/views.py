@@ -28,7 +28,7 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    DateFilteringForm
+    DateFilteringForm, DraftObservationForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -172,8 +172,33 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                     draft_observation.original_image = None
                     draft_observation.save()
 
-            form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
-            return self.form_valid(form)
+            if self.request.POST.get('is_draft', 'False') == 'True':
+                form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+                form.is_valid()
+
+                # Not doing commit=False to save manyToMany relations.
+                obj = form.save()
+
+                should_reset_media = (
+                    self.request.POST.get('original_image', None)
+                    or self.request.POST.get('video', None)
+                )
+
+                # When user reset image or video to default state and then updates draft.
+                if not should_reset_media:
+                    obj.video = None
+                    obj.original_image = None
+                    obj.save()
+
+                if 'create_new' in self.request.session:
+                    del self.request.session['create_new']
+                    self.request.session.modified = True
+
+                messages.add_message(self.request, messages.SUCCESS, 'Draft Created.')
+                return HttpResponseRedirect(self.get_success_url())
+            else:
+                form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
+                return self.form_valid(form)
 
     def get_context_data(self, **kwargs):
         session_course = self.request.session.get('course')
@@ -244,28 +269,11 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
+        obj = form.save()
+
         # Do not add draft observation to session.
         if self.request.POST.get('is_draft', 'False') == 'False':
-            obj = form.save()
             self.request.session['last_observation_id'] = obj.id
-        else:
-            # Not doing commit=False to save manyToMany relations.
-            obj = form.save()
-
-            should_reset_media = (
-                self.request.POST.get('original_image', None)
-                or self.request.POST.get('video', None)
-            )
-
-            # When user reset image or video to default state and then updates draft.
-            if not should_reset_media:
-                obj.video = None
-                obj.original_image = None
-                obj.save()
-
-            if 'create_new' in self.request.session:
-                del self.request.session['create_new']
-                self.request.session.modified = True
 
         return super().form_valid(form)
 

@@ -172,7 +172,17 @@
     forms.forEach(form => {
       form.addEventListener('submit', (e) => {
         e.preventDefault()
-        if (is_valid_form(form)) {
+
+        // Do not validate form when draft observation is saved.
+        if ($('#draft-hidden').val() === 'True') {
+          document.getElementById('loader-frame').style.visibility = "visible";
+
+          if (!window.draft_update) {
+            uploadS3Inputs(e.target)
+          } else {
+            window.HTMLFormElement.prototype.submit.call(form)
+          }
+        } else if (is_valid_form(form)) {
           document.getElementById('loader-frame').style.visibility = "visible";
           
           if ($('#draft-hidden').val() !== 'True' || !window.draft_update) {
@@ -182,6 +192,7 @@
           }
         }
       })
+
       let submitButtons = form.querySelectorAll('input[type=submit], button[type=submit]')
       Array.from(submitButtons).forEach(submitButton => {
         submitButton.addEventListener('click',  clickSubmit)
