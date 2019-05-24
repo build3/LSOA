@@ -266,8 +266,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                     list(map(lambda student: student.pk, draft_observation.students.all())))
                 kwargs['form'] = ObservationForm(instance=draft_observation)
 
-                created = timezone.localtime(draft_observation.created - timedelta(days=10))
-
+                created = timezone.localtime(draft_observation.created)
                 is_today = created.day == datetime.date.today().day
 
                 if is_today:
