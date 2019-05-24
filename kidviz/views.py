@@ -266,6 +266,16 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                     list(map(lambda student: student.pk, draft_observation.students.all())))
                 kwargs['form'] = ObservationForm(instance=draft_observation)
 
+                created = timezone.localtime(draft_observation.created - timedelta(days=10))
+
+                is_today = created.day == datetime.date.today().day
+
+                if is_today:
+                    kwargs['header'] = 'Draft observation {}'.format(created.strftime('%-I:%-M %p'))
+                else:
+                    kwargs['header'] = 'Draft observation {}'.format(created.strftime('%-m-%-d-%y %-I:%-M %p'))
+
+        kwargs['use_draft'] = True
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
@@ -296,6 +306,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
         kwargs['chosen_tags'] = list(self.object.tags.all().values_list('id', flat=True))
+        kwargs['use_draft'] = False
 
         return super().get_context_data(**kwargs)
 

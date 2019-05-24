@@ -29,7 +29,7 @@
 
 {% block extranav %}
   <li class="nav-item text-info" data-toggle="tooltip" data-html="true" title="{{ header }}">
-      {{ header|truncatechars:20 }}
+      {{ header|truncatechars:40 }}
       {% if created %}
         {% if is_today %}
           <span class="text-info float-right">{{ created|localtime|date:"g:i A" }}</span>
@@ -344,7 +344,12 @@
         </div>
 
         <div>
-          <button type="submit" id="draft-btn" class="btn-primary btn-lg">Save as draft</button>
+          {% if draft_observation %}
+            <button type="submit" id="draft-btn" class="btn-primary btn-lg">Update draft</button>
+          {% elif use_draft %}
+            <button type="submit" id="draft-btn" class="btn-primary btn-lg">Save as draft</button>
+          {% endif %}
+
           <button
             id="save-button"
             type="submit"
