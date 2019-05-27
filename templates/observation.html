@@ -313,18 +313,20 @@
     </div>
     <div class="row">
       <div class="col-12 d-flex justify-content-between">
-        {% if draft_observation and last_observation_url %}
-          <div>
+        <div>
+          <button type="submit" id="re-setup-btn" class="btn btn-primary btn-lg">Go back to setup</button>
+
+          {% if draft_observation and last_observation_url %}
             <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss modal</button>
             <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
-          </div>
-        {% elif draft_observation %}
-          <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss modal</button>
-        {% elif last_observation_url %}
-          <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
-        {% else %}
-          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg" id="cancel">Cancel</a>
-        {% endif %}
+          {% elif draft_observation %}
+            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss modal</button>
+          {% elif last_observation_url %}
+            <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
+          {% else %}
+            <a href="{% url 'observation_view' %}" class="btn btn-primary btn-lg" id="cancel">Cancel</a>
+          {% endif %}
+        </div>
 
         <div class="modal fade" id="dismissModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
           <div class="modal-dialog" role="document">
@@ -358,6 +360,7 @@
             &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
           </button>
           <input id="draft-hidden" name="is_draft" value="False" type="hidden">
+          <input id="back-to-setup" name="back_to_setup" value="False" type="hidden">
         </div>
 
       </div>
@@ -411,6 +414,19 @@
 
       $('#draft-btn').click(function() {
         $('#draft-hidden').val('True');
+
+        const draft = "{{ draft_observation }}";
+
+        if (draft && !window.media_updated) {
+          window.draft_update = true
+        } else {
+          window.draft_update = false
+        }
+      })
+
+      $('#re-setup-btn').click(function() {
+        $('#draft-hidden').val('True');
+        $('#back-to-setup').val('True');
 
         const draft = "{{ draft_observation }}";
 

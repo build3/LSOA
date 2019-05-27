@@ -34,6 +34,7 @@ from kidviz.models import (
     LearningConstruct, StudentGroup, Student, Observation
 )
 from kidviz.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
+from kidviz.utils import remove_key_from_session, reset_media, update_draft_media
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,13 @@ class SetupView(LoginRequiredMixin, FormView):
             'context_tags': self.request.session.get('context_tags'),
             'request': self.request
         })
+
+        if self.request.session.get('re_setup', False):
+            draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
+
+            if draft_observation:
+                initial['course'] = draft_observation.course
+
         return initial
 
     def form_valid(self, form):
@@ -69,7 +77,17 @@ class SetupView(LoginRequiredMixin, FormView):
         self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
         self.request.session['curricular_focus'] = d['curricular_focus']
-        self.request.session['create_new'] = True
+
+        if 're_setup' in self.request.session:
+            remove_key_from_session(self.request, 're_setup')
+            draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
+
+            # Create new observation when course has change.
+            if draft_observation.course.id != course.id:
+                self.request.session['create_new'] = True
+        else:
+            self.request.session['create_new'] = True
+
         return HttpResponseRedirect(reverse_lazy('observation_view'))
 
     def get_context_data(self, **kwargs):
@@ -156,45 +174,32 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if self.request.POST.get('use_recent_observation'):
+        if request.POST.get('use_recent_observation'):
             return self.get(request, *args, **kwargs)
         else:
             draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
+            original_image = request.POST.get('original_image', None)
+            video = request.POST.get('video', None)
 
-            # This is needed to update video or original_image when one of them is already set
-            # and user want to change to the opposite.
-            if draft_observation:
-                if draft_observation.video and self.request.POST.get('original_image', None):
-                    draft_observation.video = None
-                    draft_observation.save()
+            update_draft_media(draft_observation, original_image, video)
 
-                if draft_observation.original_image and self.request.POST.get('video', None):
-                    draft_observation.original_image = None
-                    draft_observation.save()
-
-            if self.request.POST.get('is_draft', 'False') == 'True':
+            if request.POST.get('is_draft', 'False') == 'True':
                 form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
                 form.is_valid()
 
                 # Not doing commit=False to save manyToMany relations.
                 obj = form.save()
 
-                should_reset_media = (
-                    self.request.POST.get('original_image', None)
-                    or self.request.POST.get('video', None)
-                )
-
                 # When user reset image or video to default state and then updates draft.
-                if not should_reset_media:
-                    obj.video = None
-                    obj.original_image = None
-                    obj.save()
+                reset_media(obj, original_image, video)
 
-                if 'create_new' in self.request.session:
-                    del self.request.session['create_new']
-                    self.request.session.modified = True
+                remove_key_from_session(request, 'create_new')
 
-                messages.add_message(self.request, messages.SUCCESS, 'Draft Created.')
+                if request.POST.get('back_to_setup', False) == 'True':
+                    request.session['re_setup'] = True
+                    return HttpResponseRedirect(reverse_lazy('setup'))
+
+                messages.add_message(request, messages.SUCCESS, 'Draft Created.')
                 return HttpResponseRedirect(self.get_success_url())
             else:
                 form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
@@ -257,14 +262,14 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 .first()
 
             if draft_observation:
-                kwargs['draft_observation'] = draft_observation
-                kwargs['chosen_constructs'] = json.dumps(
-                    list(map(lambda construct: construct.pk, draft_observation.constructs.all())))
-                kwargs['chosen_tags'] = json.dumps(
-                    list(map(lambda tag: tag.pk, draft_observation.tags.all())))
-                kwargs['chosen_students'] = json.dumps(
-                    list(map(lambda student: student.pk, draft_observation.students.all())))
-                kwargs['form'] = ObservationForm(instance=draft_observation)
+                kwargs.update({
+                    'draft_observation': draft_observation,
+                    'chosen_students': json.dumps(
+                        list(map(lambda student: student.pk, draft_observation.students.all()))), 
+                    'chosen_tags': self._tags(draft_observation, available_tags),
+                    'chosen_constructs': self._constructs(draft_observation, kwargs['construct_choices']),
+                    'form': ObservationForm(instance=draft_observation)
+                })
 
                 created = timezone.localtime(draft_observation.created)
                 is_today = created.day == datetime.date.today().day
@@ -285,6 +290,39 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             self.request.session['last_observation_id'] = obj.id
 
         return super().form_valid(form)
+
+    def _constructs(self, observation, available_constructs):
+        """Makes `chosen_constructs for draft observation.
+        
+        Args:
+            observation(`Observation`): Observation object.
+            available_constructs(list): List of available constructs for this observation.
+
+        Returns:
+            List with constructs which user selected earlier.
+        """
+        constructs = list(map(
+            lambda construct: construct.pk, observation.constructs.all()))
+
+        # Remove elements when construct was selected and then removed after re-setup.
+        return json.dumps(
+            [construct for construct in constructs if construct not in available_constructs])
+
+    def _tags(self, observation, available_tags):
+        """Makes `chosen_tags for draft observation.
+        
+        Args:
+            observation(`Observation`): Observation object.
+            available_tags(list): List of available tags for this observation.
+
+        Returns:
+            List with tags which user selected earlier.
+        """
+        tags = list(map(lambda tag: tag.pk, observation.tags.all()))
+
+        # Remove elements when tag was selected and then removed after re-setup.
+        return json.dumps(
+            [tag for tag in tags if tag not in available_tags])
 
 
 class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):

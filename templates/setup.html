@@ -13,7 +13,7 @@
   <script>
     $( document ).ready(function() {
       $('#id_context_tags').select2({
-        tokenSeparators: [',', '\n']
+        tokenSeparators: [',', '\n'],
       });
       $('#grouping_link').click(dumpFormData);
       $('#edit_grouping_link').click(dumpFormData);
@@ -160,34 +160,33 @@
             {# pass, because we'll manually render that field later #}
 
           {% else %}
-
             <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
               {% if field.name != "curricular_focus" %}
-              <div data-form-label="{{ field.auto_id }}">
-                <label for="{{ field.auto_id }}">{{ field.label }}</label>
-              </div>
+                <div data-form-label="{{ field.auto_id }}">
+                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                </div>
               {% endif %}
               {{ field }}
               {% if field.name == "course" %}
-              <div class="d-flex flex-row-reverse">
-                <a id="set_default_course" class="btn btn-primary btn-sm mt-1 ml-1" href="#">
-                  <i class="fa fa-paperclip"></i> Set as default course
-                </a>
-              </div>
+                <div class="d-flex flex-row-reverse">
+                  <a id="set_default_course" class="btn btn-primary btn-sm mt-1 ml-1" href="#">
+                    <i class="fa fa-paperclip"></i> Set as default course
+                  </a>
+                </div>
               {% endif %}
               {% if field.name == "grouping" %}
-                  <div class="d-flex flex-row-reverse">
-                    <a id="edit_grouping_link" class="btn btn-primary btn-sm mt-1 ml-1">
-                      <i class="fa fa-edit"></i> Edit Grouping
-                    </a>
-                    <a id="grouping_link" class="btn btn-primary btn-sm mt-1">
-                      <i class="fa fa-plus"></i> Add New Grouping
-                    </a>
+                <div class="d-flex flex-row-reverse">
+                  <a id="edit_grouping_link" class="btn btn-primary btn-sm mt-1 ml-1">
+                    <i class="fa fa-edit"></i> Edit Grouping
+                  </a>
+                  <a id="grouping_link" class="btn btn-primary btn-sm mt-1">
+                    <i class="fa fa-plus"></i> Add New Grouping
+                  </a>
                 </div>
               {% endif %}
 
               {% if field.name == "context_tags" %}
-                  <a id="add_tag" href="{% url 'create_tag' %}">+ Add New Tag</a>
+                <a id="add_tag" href="{% url 'create_tag' %}">+ Add New Tag</a>
               {% endif %}
             </div>
             {% if field.errors %}
@@ -196,9 +195,7 @@
               {% endfor %}
             {% endif %}
           {% endif %}
-
         {% endfor %}
-
 
         <div class="item-content">
           <div class="item-title  {% if form.constructs.errors %}text-danger{% endif %}">Select Learning Constructs
