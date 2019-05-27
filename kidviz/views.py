@@ -34,7 +34,6 @@ from kidviz.models import (
     LearningConstruct, StudentGroup, Student, Observation
 )
 from kidviz.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
-from kidviz.utils import remove_key_from_session, reset_media, update_draft_media
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +58,9 @@ class SetupView(LoginRequiredMixin, FormView):
         })
 
         if self.request.session.get('re_setup', False):
-            draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
+            draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
+                .order_by('-id') \
+                .first()
 
             if draft_observation:
                 initial['course'] = draft_observation.course
@@ -79,12 +80,7 @@ class SetupView(LoginRequiredMixin, FormView):
         self.request.session['curricular_focus'] = d['curricular_focus']
 
         if 're_setup' in self.request.session:
-            remove_key_from_session(self.request, 're_setup')
-            draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
-
-            # Create new observation when course has change.
-            if draft_observation.course.id != course.id:
-                self.request.session['create_new'] = True
+            self.request.session.pop('re_setup')
         else:
             self.request.session['create_new'] = True
 
@@ -122,6 +118,9 @@ class SetupView(LoginRequiredMixin, FormView):
             text='Curricular Focus',
             curricular_focus=True
         )[0].id
+
+        if self.request.session.get('re_setup', False):
+            r['re_setup'] = True
 
         return r
 
@@ -177,13 +176,19 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if request.POST.get('use_recent_observation'):
             return self.get(request, *args, **kwargs)
         else:
-            draft_observation = Observation.objects.filter(is_draft=True).order_by('-id').first()
+            draft_observation = Observation.objects.filter(is_draft=True, owner=request.user) \
+                .order_by('-id') \
+                .first()
+
             original_image = request.POST.get('original_image', None)
             video = request.POST.get('video', None)
 
-            update_draft_media(draft_observation, original_image, video)
+            # This is needed to update video or original_image when one of them is already set
+            # and user want to change to the opposite.
+            if draft_observation:
+                draft_observation.update_draft_media(original_image, video)
 
-            if request.POST.get('is_draft', 'False') == 'True':
+            if request.POST.get('is_draft', None) == 'True':
                 form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
                 form.is_valid()
 
@@ -191,11 +196,13 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 obj = form.save()
 
                 # When user reset image or video to default state and then updates draft.
-                reset_media(obj, original_image, video)
+                if not original_image and not video:
+                    obj.reset_media()
 
-                remove_key_from_session(request, 'create_new')
+                if 'create_new' in request.session:
+                    request.session.pop('create_new')
 
-                if request.POST.get('back_to_setup', False) == 'True':
+                if request.POST.get('back_to_setup', None) == 'True':
                     request.session['re_setup'] = True
                     return HttpResponseRedirect(reverse_lazy('setup'))
 
@@ -254,7 +261,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             kwargs['form'] = ObservationForm(initial=self.initial)
         
         if not self.request.POST.get('use_recent_observation') and not create_new:
-            draft_observation = Observation.objects.filter(is_draft=True) \
+            draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
                 .order_by('-id') \
                 .prefetch_related('students') \
                 .prefetch_related('constructs') \
@@ -266,8 +273,8 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                     'draft_observation': draft_observation,
                     'chosen_students': json.dumps(
                         list(map(lambda student: student.pk, draft_observation.students.all()))), 
-                    'chosen_tags': self._tags(draft_observation, available_tags),
-                    'chosen_constructs': self._constructs(draft_observation, kwargs['construct_choices']),
+                    'chosen_tags': draft_observation.make_tags(available_tags),
+                    'chosen_constructs': draft_observation.make_constructs(kwargs['construct_choices']),
                     'form': ObservationForm(instance=draft_observation)
                 })
 
@@ -290,39 +297,6 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             self.request.session['last_observation_id'] = obj.id
 
         return super().form_valid(form)
-
-    def _constructs(self, observation, available_constructs):
-        """Makes `chosen_constructs for draft observation.
-        
-        Args:
-            observation(`Observation`): Observation object.
-            available_constructs(list): List of available constructs for this observation.
-
-        Returns:
-            List with constructs which user selected earlier.
-        """
-        constructs = list(map(
-            lambda construct: construct.pk, observation.constructs.all()))
-
-        # Remove elements when construct was selected and then removed after re-setup.
-        return json.dumps(
-            [construct for construct in constructs if construct not in available_constructs])
-
-    def _tags(self, observation, available_tags):
-        """Makes `chosen_tags for draft observation.
-        
-        Args:
-            observation(`Observation`): Observation object.
-            available_tags(list): List of available tags for this observation.
-
-        Returns:
-            List with tags which user selected earlier.
-        """
-        tags = list(map(lambda tag: tag.pk, observation.tags.all()))
-
-        # Remove elements when tag was selected and then removed after re-setup.
-        return json.dumps(
-            [tag for tag in tags if tag not in available_tags])
 
 
 class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView):

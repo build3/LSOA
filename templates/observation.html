@@ -314,13 +314,13 @@
     <div class="row">
       <div class="col-12 d-flex justify-content-between">
         <div>
-          <button type="submit" id="re-setup-btn" class="btn btn-primary btn-lg">Go back to setup</button>
+          <button type="submit" id="re-setup-btn" class="btn btn-primary btn-lg">Reconfigurate observation template</button>
 
           {% if draft_observation and last_observation_url %}
-            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss modal</button>
+            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss</button>
             <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
           {% elif draft_observation %}
-            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss modal</button>
+            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Dismiss</button>
           {% elif last_observation_url %}
             <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
           {% else %}
@@ -332,7 +332,7 @@
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <h4>Dismiss modal</h4>
+                <h4>Dismiss</h4>
               </div>
               <div class="modal-body">
                 Are you sure to dismiss this observation draft?
