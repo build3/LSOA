@@ -215,37 +215,6 @@ class Observation(TimeStampedModel, OwnerMixin):
         self.original_image = None
         self.save()
 
-    def make_constructs(self, available_constructs):
-        """Makes `chosen_constructs` for `Observation`.
-
-        Args:
-            available_constructs(list): List of available constructs for this observation.
-
-        Returns:
-            List with constructs which user selected earlier.
-        """
-        constructs = list(map(
-            lambda construct: construct.pk, self.constructs.all()))
-
-        # Remove elements when construct was selected and then removed after re-setup.
-        return json.dumps(
-            [construct for construct in constructs if construct not in available_constructs])
-
-    def make_tags(self, available_tags):
-        """Makes `chosen_tags` for `Observation`.
-
-        Args:
-            available_tags(list): List of available tags for this observation.
-
-        Returns:
-            List with tags which user selected earlier.
-        """
-        tags = list(map(lambda tag: tag.pk, self.tags.all()))
-
-        # Remove elements when tag was selected and then removed after re-setup.
-        return json.dumps(
-            [tag for tag in tags if tag not in available_tags])
-
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
         return _display

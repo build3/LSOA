@@ -79,8 +79,11 @@ class SetupView(LoginRequiredMixin, FormView):
         self.request.session['context_tags'] = [t.id for t in tags]
         self.request.session['curricular_focus'] = d['curricular_focus']
 
-        if 're_setup' in self.request.session:
-            self.request.session.pop('re_setup')
+        if self.request.session.pop('re_setup', None):
+            tags = [tag.id for tag in tags]
+            constructs = [construct.id for construct in get_constructs(pk_list=constructs)]
+            draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
+                .update(construct_choices=constructs, tag_choices=tags)
         else:
             self.request.session['create_new'] = True
 
@@ -199,8 +202,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 if not original_image and not video:
                     obj.reset_media()
 
-                if 'create_new' in request.session:
-                    request.session.pop('create_new')
+                request.session.pop('create_new', None)
 
                 if request.POST.get('back_to_setup', None) == 'True':
                     request.session['re_setup'] = True
@@ -273,8 +275,9 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                     'draft_observation': draft_observation,
                     'chosen_students': json.dumps(
                         list(map(lambda student: student.pk, draft_observation.students.all()))), 
-                    'chosen_tags': draft_observation.make_tags(available_tags),
-                    'chosen_constructs': draft_observation.make_constructs(kwargs['construct_choices']),
+                    'chosen_tags': list(map(lambda tag: tag.pk, draft_observation.tags.all())),
+                    'chosen_constructs': list(map(
+                        lambda construct: construct.pk, draft_observation.constructs.all())),
                     'form': ObservationForm(instance=draft_observation)
                 })
 
