@@ -79,7 +79,7 @@ class SetupView(LoginRequiredMixin, FormView):
         self.request.session['context_tags'] = [t.id for t in tags]
         self.request.session['curricular_focus'] = d['curricular_focus']
 
-        if self.request.session.pop('re_setup', None):
+        if self.request.session.pop('reconfigure', None):
             tags = [tag.id for tag in tags]
             constructs = [construct.id for construct in get_constructs(pk_list=constructs)]
             draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
@@ -122,8 +122,11 @@ class SetupView(LoginRequiredMixin, FormView):
             curricular_focus=True
         )[0].id
 
-        if self.request.session.get('re_setup', False):
+        if self.request.session.pop('re_setup', None):
             r['re_setup'] = True
+            self.request.session['reconfigure'] = True
+        else:
+            self.request.session.pop('reconfigure', None)
 
         return r
 
