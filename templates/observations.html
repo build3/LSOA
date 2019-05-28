@@ -132,6 +132,7 @@
             var link = $video.value;
             var $videoContainer = $('#' + key + '-' + id)[0];
             var $videoElement = $('<video />', {
+                style: 'width: 100%; height: 100%;',
                 src: link,
                 type: 'video/mp4',
                 controls: true
