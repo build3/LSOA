@@ -12,8 +12,6 @@
   <script src='{% static "django-related-select.js" %}'></script>
   <script>
     $( document ).ready(function() {
-      localStorage.setItem('from', JSON.stringify({'from': 'setup'}));
-
       $('#id_context_tags').select2({
         tokenSeparators: [',', '\n'],
       });
