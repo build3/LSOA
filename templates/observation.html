@@ -323,7 +323,7 @@
         {% elif last_observation_url %}
           <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
         {% else %}
-          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg" id="cancel">Cancel</a>
+            <a href="{% url 'observation_view' %}" class="btn-primary btn-lg" id="cancel">Cancel</a>
         {% endif %}
 
         <div class="modal fade" id="dismissModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -407,6 +407,46 @@
 
   <script>
     $(document).ready(function () {
+      function setCancelLink() {
+        const use_draft = "{{ use_draft }}";
+
+        // This is used to check if we are in details or create view.
+        // If we are in create view remove `from` item to do not change basic href attr.
+        // This is needed to prevent bad usage of cancel button when clicking `Current Course`
+        // link in navbar.
+        if (use_draft === 'True') {
+          localStorage.removeItem('from')
+        }
+
+        const from = JSON.parse(localStorage.getItem('from')) || '';
+
+        if (from.from === 'charts') {
+          if (from.course === 'None') {
+            $('#cancel').attr('href', '{% url "observations_all" %}');
+          } else {
+            $('#cancel').attr('href', '{% url "observations_specific" course_id=course.id %}');
+          }
+        } else if (from.from === 'teachers') {
+          if (from.course === 'None') {
+            $('#cancel').attr('href', '{% url "observations_teachers" %}');
+          } else {
+            $('#cancel').attr('href', '{% url "observations_teachers_specific" course_id=course.id %}');
+          }
+        } else {
+          localStorage.removeItem('from')
+        }
+      }
+
+      $('#cancel').click(function() {
+        const from = JSON.parse(localStorage.getItem('from')) || ''
+
+        if (from.from === 'charts') {
+          localStorage.removeItem('from')
+        }
+      })
+
+      setCancelLink();
+
       {# DRAFT OBSERVATION SECTION #}
 
       $('#draft-btn').click(function() {

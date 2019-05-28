@@ -219,6 +219,7 @@
         window.location = '{% url "observations_teachers" %}' + course_id;
       });
 
+      localStorage.setItem('from', JSON.stringify({'from': 'teachers', 'course': '{{ course_id }}'}));
     });
   </script>
 {% endblock %}
