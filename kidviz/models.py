@@ -1,3 +1,4 @@
+import json
 import os
 from uuid import uuid4
 
@@ -192,6 +193,27 @@ class Observation(TimeStampedModel, OwnerMixin):
             students.update(list(group.students.all()))
 
         return list(students)
+
+    def update_draft_media(self, image, video):
+        """Updates media for `Observation`.
+
+        Args:
+            image(File or None): `original_image` from request.
+            video(File or None): `video` from request.
+        """
+        if self.video and image:
+            self.video = None
+            self.save()
+
+        if self.original_image and video:
+            self.original_image = None
+            self.save()
+
+    def reset_media(self):
+        """Reset `video` and `original_image` for `Observation`."""
+        self.video = None
+        self.original_image = None
+        self.save()
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
