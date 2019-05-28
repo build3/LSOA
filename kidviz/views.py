@@ -484,6 +484,12 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
+            course = date_filtering_form.cleaned_data['course']
+
+            if course:
+                course_id = course.id
+            else:
+                course_id = None
 
         observations = Observation.objects \
             .prefetch_related('students') \

@@ -261,10 +261,10 @@
         });
       });
 
-      $('#courseSelector').on('change', function(e) {
+      /*$('#courseSelector').on('change', function(e) {
         var course_id = this.value;
         window.location = '{% url "observations_all" %}' + course_id;
-      });
+      }); */
 
       $('.nav-link').on('click', function (e) {
         var chart_href = $(this).attr('href');
@@ -279,6 +279,41 @@
         }
 
       });
+
+      $('#id_date_from').on('change keyup paste', function() {
+        localStorage.setItem('date_from', $(this).val());
+      })
+
+      $('#id_date_to').on('change keyup paste', function() {
+        localStorage.setItem('date_to', $(this).val());
+      })
+
+      $('#id_tags').on('select2:select', function() {
+        localStorage.setItem('tags', JSON.stringify($(this).val()))
+      })
+
+      $('#id_tags').on('select2:unselect', function() {
+        localStorage.setItem('tags', JSON.stringify($(this).val()))
+      })
+
+      $('#filtering-submit').click(function() {
+        localStorage.removeItem('date_from');
+        localStorage.removeItem('tags');
+        localStorage.removeItem('date_to');
+      })
+
+      function updateInputs() {
+        const date_from = localStorage.getItem('date_from') || '';
+        const date_to = localStorage.getItem('date_to') || '';
+        const tags = JSON.parse(localStorage.getItem('tags')) || [];
+
+        $('#id_date_from').val(date_from);
+        $('#id_date_to').val(date_to);
+        $('#id_tags').val(tags);
+        $('#id_tags').trigger('change');
+      }
+
+      updateInputs();
 
     });
   </script>
