@@ -4,7 +4,11 @@
       <label class="mb-0" for="courseSelector">Filter class</label>
     </div>
     <select class="form-control" id="courseSelector" name="course">
-      <option value="">All Students</option>
+      {% if not course_id %}
+        <option value="" selected>All Students</option>
+      {% else %}
+        <option value="" selected>All Students</option>
+      {% endif %}
       {% for course in courses %}
         <option value="{{ course.id }}" {% if course.id == course_id|add:0 %}selected{% endif %}>{{ course.name }}</option>
       {% endfor %}
@@ -33,4 +37,5 @@
   <div class="d-flex flex-row-reverse">
     <input id="filtering-submit" type="submit" name="{{selected_chart}}" class="btn btn-primary">
   </div>
+  <input type="hidden" name="from" value="submit">
 </form>
