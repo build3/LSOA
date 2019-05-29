@@ -66,9 +66,10 @@
 
 .loader-frame{
     background-color: #D3D3D3D3;
-    width: 100%;
     height: 120%;
+    left: 0;
     position: absolute;
+    right: 0;
     z-index: 999;
     visibility: hidden;
 }
