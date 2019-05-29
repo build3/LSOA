@@ -323,10 +323,15 @@
             <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Discard</button>
           {% elif last_observation_url %}
             <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
-          {% else %}
+          {% endif %}
+
+          {% if use_draft %}
             <a href="{% url 'observation_view' %}" class="btn btn-primary btn-lg" id="cancel">Cancel</a>
+          {% else %}
+            <button type="button" class="btn btn-primary btn-lg" id="cancel">Cancel</button>
           {% endif %}
         </div>
+
 
         <div class="modal fade" id="dismissModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
           <div class="modal-dialog" role="document">
@@ -410,6 +415,10 @@
 
   <script>
     $(document).ready(function () {
+      $('#cancel').click(function() {
+        window.history.back()
+      })
+
       {# DRAFT OBSERVATION SECTION #}
 
       $('#draft-btn').click(function() {

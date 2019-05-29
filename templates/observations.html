@@ -278,9 +278,7 @@
         } else {
           $("#construct-row").addClass('d-none');
         }
-
       });
-
     });
   </script>
 {% endblock %}
@@ -346,7 +344,7 @@
                     Observation #{{ observation.id }}
                 {% endif %}
             </a>
-            <a href="{% url 'observation_detail_view' pk=observation.id %}" class=" btn btn-primary pull-right">Edit</a>
+            <a href="{% url 'observation_detail_view' pk=observation.id %}" class="btn btn-primary pull-right">Edit</a>
           </h3>
           <small class="d-block"><b>Constructs:</b> {{ observation.constructs.all|join:', ' }}</small>
           <small class="d-block"><b>Observation date:</b> {{ observation.observation_date }}</small>
