@@ -64,15 +64,17 @@
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2300' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E");
 }
 
-.loader-frame{
+.loader-frame {
     background-color: #D3D3D3D3;
     height: 120%;
     left: 0;
-    position: absolute;
     right: 0;
-    z-index: 999;
+    z-index: 1000;
+    overflow-y: scroll;
+    position: absolute;
     visibility: hidden;
 }
+
 .loader {
     border: 16px solid #f3f3f3; /* Light grey */
     border-top: 16px solid #3498db; /* Blue */
