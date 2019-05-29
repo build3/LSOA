@@ -473,7 +473,15 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         course_id = kwargs.get('course_id')
-        date_filtering_form = DateFilteringForm(self.request.GET)
+
+        date_filtering_form = DateFilteringForm(self.request.GET, initial={
+            'course': self.request.GET.get('course', None),
+            'date_from': self.request.GET.get('date_from', None),
+            'date_to': self.request.GET.get('date_to', None),
+            'constructs': self.request.GET.get('constructs', None),
+            'tags': self.request.GET.get('tags', None) 
+        })
+
         date_from = None
         date_to = None
         selected_constructs = None
@@ -484,6 +492,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
+            course = date_filtering_form.cleaned_data['course']
+
+            # If there aren't any query params use default course.
+            if self.request.GET:
+                if course:
+                    course_id = course.id
+                else:
+                    course_id = None
 
         observations = Observation.objects \
             .prefetch_related('students') \

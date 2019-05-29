@@ -262,11 +262,6 @@
         });
       });
 
-      $('#courseSelector').on('change', function(e) {
-        var course_id = this.value;
-        window.location = '{% url "observations_all" %}' + course_id;
-      });
-
       $('.nav-link').on('click', function (e) {
         var chart_href = $(this).attr('href');
         var chart_id = chart_href.substr(1);

@@ -184,6 +184,7 @@ class DateFilteringForm(forms.Form):
         required=False,
         queryset=LearningConstructSublevel.objects.all()
     )
+    course = forms.ModelChoiceField(required=False, queryset=Course.objects.all())
 
 
 class DraftObservationForm(ObservationForm):
