@@ -5,30 +5,6 @@
 'use strict';
 
 (() => {
-
-  function scrollToPreventBounce(htmlElement) {
-    const {scrollTop, offsetHeight, scrollHeight} = htmlElement;
-  
-    // If at top, bump down 1px
-    if (scrollTop <= 0) {
-      htmlElement.scrollTo(0, 1);
-      return;
-    }
-  
-    // If at bottom, bump up 1px
-    if (scrollTop + offsetHeight >= scrollHeight) {
-      htmlElement.scrollTo(0, scrollHeight - offsetHeight - 1);
-    }
-  }
-  // When rendering the element
-  function afterRender() {
-     htmlElement.addEventListener('touchstart', scrollToPreventBounce);
-  }
-  // Remember to clean-up when removing it
-  function beforeRemove() {
-     htmlElement.removeEventListener('touchstart', scrollToPreventBounce);
-  }
-
   // Provides django-like error alerts.
   function errorAlert (message) {
     return (
