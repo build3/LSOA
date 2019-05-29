@@ -202,7 +202,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 obj = form.save()
 
                 # When user reset image or video to default state and then updates draft.
-                if not original_image and not video:
+                if not 'original_image' in request.POST and not 'video' in request.POST:
                     obj.reset_media()
 
                 request.session.pop('create_new', None)
