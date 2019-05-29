@@ -43,7 +43,6 @@
   <div id="loader-frame" class="loader-frame">
     <div class="loader"></div>
   </div>
-
   <form id="get-recent-observation-form" method="post" name="use_recent_observation">
     {% csrf_token %}
     <input type="hidden" name="use_recent_observation" value="True">
@@ -866,4 +865,5 @@
     });
 
   </script>
+
 {% endblock %}

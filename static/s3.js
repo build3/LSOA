@@ -6,6 +6,29 @@
 
 (() => {
 
+  function scrollToPreventBounce(htmlElement) {
+    const {scrollTop, offsetHeight, scrollHeight} = htmlElement;
+  
+    // If at top, bump down 1px
+    if (scrollTop <= 0) {
+      htmlElement.scrollTo(0, 1);
+      return;
+    }
+  
+    // If at bottom, bump up 1px
+    if (scrollTop + offsetHeight >= scrollHeight) {
+      htmlElement.scrollTo(0, scrollHeight - offsetHeight - 1);
+    }
+  }
+  // When rendering the element
+  function afterRender() {
+     htmlElement.addEventListener('touchstart', scrollToPreventBounce);
+  }
+  // Remember to clean-up when removing it
+  function beforeRemove() {
+     htmlElement.removeEventListener('touchstart', scrollToPreventBounce);
+  }
+
   // Provides django-like error alerts.
   function errorAlert (message) {
     return (
@@ -175,6 +198,7 @@
 
         // Do not validate form when draft observation is saved.
         if ($('#draft-hidden').val() === 'True') {
+          document.getElementsByTagName("body")[0].style = 'background-color: rgba(211,211,211,3);';
           document.getElementById('loader-frame').style.visibility = "visible";
 
           if (!window.draft_update) {
@@ -183,6 +207,7 @@
             window.HTMLFormElement.prototype.submit.call(form)
           }
         } else if (is_valid_form(form)) {
+          document.getElementsByTagName("body")[0].style = 'background-color: rgba(211,211,211,3);';
           document.getElementById('loader-frame').style.visibility = "visible";
           
           if ($('#draft-hidden').val() !== 'True' || !window.draft_update) {
