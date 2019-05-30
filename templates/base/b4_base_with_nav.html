@@ -30,15 +30,37 @@
              aria-expanded="false">
             Charts and Reports
           </a>
-          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown"> 
+            <li class="dropdown-submenu"><a class="dropdown-item dropdown-toggle" href="#">Star Charts</a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a class="dropdown-item chart-item"
+                    href="{% url 'observations_specific' request|course_from_session_or_first %}#chart_v1">Star Chart v1</a>
+                </li>
+                <li>
+                  <a class="dropdown-item chart-item"
+                    href="{% url 'observations_specific' request|course_from_session_or_first %}#chart_v1_horizontal">Star Chart v1 Horizontal</a>
+                </li>
+                <li>
+                  <a class="dropdown-item chart-item"
+                    href="{% url 'observations_specific' request|course_from_session_or_first %}#chart_v1_vertical">Star Chart v1 Vertical</a>
+                </li>
+                <li>
+                  <a class="dropdown-item chart-item"
+                    href="{% url 'observations_specific' request|course_from_session_or_first %}#chart_v2">Star Chart v2</a>
+                </li>
+                <li>
+                  <a class="dropdown-item chart-item"
+                    href="{% url 'observations_specific' request|course_from_session_or_first %}#chart_v3">Star Chart v3</a>
+                </li>
+              </ul>
+            </li>
             <a class="dropdown-item"
-               href="{% url 'observations_specific' request|course_from_session_or_first %}">Star Charts</a>
-            <a class="dropdown-item"
-               href="{% url 'observations_teachers_specific' request|course_from_session_or_first %}">Teacher Charts</a>
-            <a class="dropdown-item" href="{% url 'floating_students' %}">Floating Students Report</a>
-            <a class="dropdown-item" href="{% url 'doubled_students' %}">Doubled Students Report</a>
-            <a class="dropdown-item" href="{% url 'homonym_students' %}">Homonym Students Report</a>
-          </div>
+               href="{% url 'observations_teachers_specific' request|course_from_session_or_first %}">Teacher Charts</a></li>
+            <li><a class="dropdown-item" href="{% url 'floating_students' %}">Floating Students Report</a></li>
+            <li><a class="dropdown-item" href="{% url 'doubled_students' %}">Doubled Students Report</a></li>
+            <li><a class="dropdown-item" href="{% url 'homonym_students' %}">Homonym Students Report</a></li>
+          </ul>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle"
