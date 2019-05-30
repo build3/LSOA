@@ -285,6 +285,7 @@
       // Select chart after refresh or back.
       const url = window.location.href.split('/');
       $(`#chartTab a[href="${url[url.length - 1]}"]`).tab('show');
+      window.scrollTo(0, 0);
     });
   </script>
 {% endblock %}
