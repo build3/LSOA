@@ -1,14 +1,35 @@
 {% load observations %}
+{% load static %}
+
+<script>
+  window.star_matrix = "{{ star_matrix_horizontal }}"
+</script>
 
 {% for construct, students in star_matrix.items %}
 <div style="overflow-x: scroll;width:100%;">
     <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.abbreviation }}</h4>
-        <table class="table table-bordered">
+        <table class="table table-bordered star_chart_table-{{ construct.id }}">
             <thead>
                 <tr>
                     <th scope="col">&nbsp;</th>
+                    {% for level in construct.levels.all %}
+                        <th colspan="{{ level.sublevels.count }}" data-sublevels="{{ level.sublevels.count }}" style="text-align:center;">
+                            <button class="btn btn-primary btn-sm horizontal-merge" id="horizontal-{{ level.id }}"
+                                data-sublevels="{{ level.sublevels.count }}" data-construct="construct-{{ construct.id }}"
+                                data-level-name="{{ level }}" data-levels-count="{{ construct.levels.count }}"
+                                >Merge horizontal {{ level }}</button>
+
+                            <button class="btn btn-primary btn-sm horizontal-unmerge" id="horizontal-back-{{ level.id }}"
+                                data-sublevels="{{ level.sublevels.count }}" data-construct="construct-{{ construct.id }}"
+                                data-level-name="{{ level }}" data-levels-count="{{ construct.levels.count }}"
+                                >Separate horizontal {{ level }}</button>
+                        </th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th scope="col">&nbsp;</th>
                     {% for sublevel in construct.sublevels %}
-                    <th scope="col" title="{{ sublevel.description }}" data-toggle="tooltip">
+                    <th style="text-align:center;" class="align-middle" scope="col" title="{{ sublevel.description }}" data-toggle="tooltip" data-level-id="{{ sublevel.level.id }}">
                         {{ sublevel.short_name }}
                         {% if sublevel.description|length > 0 %}
                             <span><i class="fa fa-info-circle"></i></span>
@@ -18,10 +39,11 @@
                 </tr>
             </thead>
             <tbody>
-            {% for student, levels in students.items %}
-                <tr>
-                    <th scope="row" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 150px;">{{ student }}{% if not student.consented_to_research and not perms.kidviz.can_view_nonconsent_observations %}*{% endif %}</th>
-                    {% for level, observations in levels.items %}
+            {% for student, sublevels in students.items %}
+                <tr class="construct-{{ construct.id }}">
+                    <th scope="row" class="student-{{ construct.id }}" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 150px;">{{ student }}{% if not student.consented_to_research and not perms.kidviz.can_view_nonconsent_observations %}*{% endif %}</th>
+                    
+                    {% for sublevel, observations in sublevels.items %}
                         <td data-csl-id="{{ csl_id }}"
                             class="text-center"
                             {% if observations|length > 0 %}
@@ -45,7 +67,7 @@
 </div>
 {% endfor %}
 
-<div style="overflow-x: scroll;width:100%;">
+<div style="overflow-x: scroll;width:100%;" id="star_table">
     <h4 class="text-align-center" style="margin-bottom: 25px;">Observations without constructs</h4>
     <table class="table table-bordered">
         <tbody>
@@ -72,3 +94,8 @@
         </tbody>
     </table>
 </div>
+
+
+{% block extrascripts %}
+  <script src="{% static 'merge.js' %}"></script>
+{% endblock %}

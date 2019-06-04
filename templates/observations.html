@@ -242,7 +242,7 @@
       });
 
       // Launch modals
-      $('[data-modal-launch-observations]').on('click', function (e) {
+      $('body').on('click', '[data-modal-launch-observations]', function (e) {
         var observationIds = $(this).data('modal-launch-observations');
 
         $('#the-modal .modal-body').html('');
@@ -304,9 +304,6 @@
               <a class="nav-link {% if selected_chart == "chart_v1" %} active {% endif %}" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "chart_v1_horizontal" %} active {% endif %}" data-toggle="tab" href="#chart_v1_horizontal">Star Chart v1 - Horizontal Collapse</a>
-            </li>
-            <li class="nav-item">
               <a class="nav-link {% if selected_chart == "chart_v1_vertical" %} active {% endif %}" data-toggle="tab" href="#chart_v1_vertical">Star Chart v1 - Vertical Collapse</a>
             </li>
             <li class="nav-item">
@@ -320,9 +317,6 @@
           <div class="tab-content">
             <div class="tab-pane {% if selected_chart == "chart_v1" %} active {% else %} fade {% endif %}" id="chart_v1">
               {% include "_star_chart_v1.html" %}
-            </div>
-            <div class="tab-pane {% if selected_chart == "chart_v1_horizontal" %} active {% else %} fade {% endif %}" id="chart_v1_horizontal">
-              {% include "_star_chart_horizontal_v1.html" %}
             </div>
             <div class="tab-pane {% if selected_chart == "chart_v1_vertical" %} active {% else %} fade {% endif %}" id="chart_v1_vertical">
               {% include "_star_chart_vertical_v1.html" %}
