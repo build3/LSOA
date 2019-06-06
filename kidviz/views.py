@@ -499,7 +499,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 if courses:
                     course_id = [course.id for course in courses]
                 else:
-                    course_id = (course_id or None)
+                    course_id = None
 
         observations = Observation.objects \
             .prefetch_related('students') \
