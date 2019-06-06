@@ -464,7 +464,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def selected_chart(self):
         get = self.request.GET or {}
-        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3', 'chart_v1_horizontal', 'chart_v1_vertical']
+        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3', 'chart_v1_vertical']
         for key in chart_keys:
             if key in get:
                 return key
@@ -557,23 +557,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                     star_matrix[construct][student][sublevel].append(observation)
                     dot_matrix[construct][sublevel].append(observation)
 
-        star_matrix_horizontal = {}
-
-        for construct in star_matrix:
-            star_matrix_horizontal[construct] = {}
-
-            for stundent in star_matrix[construct]:
-                star_matrix_horizontal[construct][stundent] = {}
-
-                for level in construct.levels.all():
-                    # Set is used here to remove same observations from collection.
-                    star_matrix_horizontal[construct][stundent][level] = set()
-
-                    for sublevel in level.sublevels.all():
-                        # Join sets to remove same observations.
-                        star_matrix_horizontal[construct][stundent][level] \
-                            .update(set(star_matrix[construct][stundent][sublevel]))
-
         star_matrix_vertical = {}
 
         # I had to divide it into two for loops because there was a bug which added new observation
@@ -606,7 +589,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'course_id': course_id,
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart(),
-            'star_matrix_horizontal': star_matrix_horizontal,
             'star_matrix_vertical': star_matrix_vertical
         })
         return data
