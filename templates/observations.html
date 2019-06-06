@@ -126,6 +126,12 @@
       $('.datepicker').datepicker({
           uiLibrary: 'bootstrap4'
       });
+
+      $('#filtering-submit').prop('disabled', true)
+
+      $('#filterForm :input').on('change input', function() {
+        $('#filtering-submit').removeAttr('disabled');
+      });
     });
 
     function registerUpdateConstructsListener(id) {
@@ -304,6 +310,8 @@
         $('#id_courses').find('option').removeAttr('selected');
         $('#id_courses').find('option').prop('selected', true);
         $('#id_courses').select2();
+
+        $('#filtering-submit').removeAttr('disabled');
       })
     });
   </script>
