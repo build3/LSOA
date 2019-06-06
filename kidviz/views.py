@@ -492,14 +492,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
-            course = date_filtering_form.cleaned_data['course']
+            courses = date_filtering_form.cleaned_data['courses']
 
             # If there aren't any query params use default course.
             if self.request.GET:
-                if course:
-                    course_id = course.id
+                if courses:
+                    course_id = [course.id for course in courses]
                 else:
-                    course_id = None
+                    course_id = (course_id or None)
 
         observations = Observation.objects \
             .prefetch_related('students') \
@@ -510,7 +510,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             .all()
 
         if course_id:
-            observations = observations.filter(course=course_id)
+            observations = observations.filter(course__in=course_id)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -523,10 +523,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             observations = observations.filter(tags__in=tag_ids)
 
         constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
-
         all_students = Student.objects.filter(status=Student.ACTIVE)
+
         if course_id:
-            all_students = all_students.filter(course=course_id)
+            all_students = all_students.filter(course__in=course_id)
 
         star_matrix = {}
         dot_matrix = {}
