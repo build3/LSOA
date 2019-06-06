@@ -184,7 +184,11 @@ class DateFilteringForm(forms.Form):
         required=False,
         queryset=LearningConstructSublevel.objects.all()
     )
-    course = forms.ModelChoiceField(required=False, queryset=Course.objects.all())
+    courses = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=Course.objects.all(),
+        widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
+    )
 
 
 class DraftObservationForm(ObservationForm):

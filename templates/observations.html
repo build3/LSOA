@@ -68,6 +68,19 @@
       $("#id_tags").select2({
         tokenSeparators: [',', '\n']
       });
+      $("#id_courses").select2({
+        tokenSeparators: [',', '\n']
+      });
+
+      var course_id = "{{ course_id }}";
+
+      if (course_id !== "None") {
+        course_id = JSON.parse(course_id);
+
+        if (typeof(course_id) === "number") {
+          $('#id_courses').val(`${course_id}`).trigger('change');
+        }
+      }
     }
 
     function loadAllowedConstructs() {
@@ -286,6 +299,12 @@
       const url = window.location.href.split('/');
       $(`#chartTab a[href="${url[url.length - 1]}"]`).tab('show');
       window.scrollTo(0, 0);
+
+      $('#select-all-courses').click(function() {
+        $('#id_courses').find('option').removeAttr('selected');
+        $('#id_courses').find('option').prop('selected', true);
+        $('#id_courses').select2();
+      })
     });
   </script>
 {% endblock %}
