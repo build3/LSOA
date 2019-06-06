@@ -16,19 +16,21 @@
     function addColumn(star_amount, startIndex, constructId, i, isLast) {
         if (star_amount.length !== 0) {
             addColumnWithStar(startIndex, constructId, star_amount, i, isLast)
+        } else if (isLast) {
+            addEmptyCellAfter(constructId, i + 1, startIndex - 2)
         } else {
-            isLast 
-                ? addEmptyCellAfter(constructId, i + 1, startIndex - 2)
-                : addEmptyCellBefore(constructId, i + 1, startIndex - 1);
+            addEmptyCellBefore(constructId, i + 1, startIndex - 1);
         }
     }
 
     function addColumnWithStar(startIndex, constructId, stars, rowIndex, isLast) {
         let span = createSpan(stars);
 
-        isLast
-            ? starColumnAfter(rowIndex + 1, constructId, startIndex - 2, stars, span)
-            : starColumnBefore(rowIndex + 1, constructId, startIndex - 1, stars, span);
+        if (isLast) {
+            starColumnAfter(rowIndex + 1, constructId, startIndex - 2, stars, span);
+        } else {
+            starColumnBefore(rowIndex + 1, constructId, startIndex - 1, stars, span);
+        } 
     }
 
     /**
@@ -49,9 +51,7 @@
         const allHeaders = $(`.star_chart_table-${constructId}`)
             .find('th');
     
-        return startIndex + (headers.length) === allHeaders.length - cells.length - levelCount - 1 ?
-            isLast = true :
-            isLast = false;
+        return startIndex + (headers.length) === allHeaders.length - cells.length - levelCount - 1
     }
 
     /**
@@ -171,10 +171,154 @@
             );
     }
 
+    function addHeaderAfter(header, startIndex, levelId, levelName) {
+        $(header)
+            .find('th')
+            .eq(startIndex - 1)
+            .after(`<th style="text-align:center;" class="align-middle" ` +
+                `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
+    }
+
+    function addHeaderBefore(header, startIndex, levelId, levelName) {
+        $(header)
+            .find('th')
+            .eq(startIndex)
+            .before(`<th style="text-align:center;" class="align-middle" ` +
+                `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
+    }
+
+    /**
+     * Returns all <th> for specify construct and level.
+     * @param {Integer} constructId 
+     * @param {Integer} levelId 
+     */
+    function getAllHeaders(constructId, levelId) {
+        return $(`.star_chart_table-${constructId} tr:eq(1)`)
+            .find(`[data-level-id='${levelId}']`);
+    }
+
+    /**
+     * Returns array with observations id used when merging.
+     * @param {Array} stars - Array with <td> elements.
+     */
+    function calculate_star_amount(stars) {
+        var star_amount = {}
+
+        for (var i = 0; i < stars[0].length; i++) {
+            star_amount[i] = []
+
+            for (var j = 0; j < stars.length; j++) {
+                const observations = $(stars[j][i]).data('modal-launch-observations');
+                
+                if (observations) {
+                    // Add observations and filter reoccurring ones.
+                    observations.map(observation => {
+                        if (!star_amount[i].some(star => observation === star)) {
+                            star_amount[i].push(observation);
+                        }
+                    });
+                }
+            }
+        }
+
+        return star_amount;
+    }
+
+    /**
+     * Adds merged observations to `mergedHorizontalLevels`.
+     * @param {Array} stars - Array with <td> elements. 
+     * @param {Integer} levelId 
+     */
+    function addMergedLevel(stars, levelId) {
+        for (var i = 0; i < stars.length; i++) {
+            for (var j = 0; j < stars[0].length; j++) {
+                mergedHorizontalLevels[levelId][i][j + 1] = [];
+                const observations = $(stars[i][j]).data('modal-launch-observations');
+                
+                if (observations) {
+                    observations.map(observation =>
+                        mergedHorizontalLevels[levelId][i][j + 1].push(observation));
+                }
+            }
+        }
+    }
+
+    /**
+     * Initializes `mergedHorizontalLevels`.
+     * @param {Integer} levelId
+     * @param {Integer} i - Index from loop.
+     * @param {Array} headers - Array with <th> for specific level.
+     */
+    function initMergedLevel(levelId, i, headers) {
+        mergedHorizontalLevels[levelId][i] = {};
+        mergedHorizontalLevels[levelId][i][0] = getSublevelData(headers[i]);
+    }
+
+    /**
+     * Add cells which are inside sublevels columns to `stars` array then remove
+     * those columns and calculate `startIndex`.
+     * In addition each sublevel and his observations
+     * are added to mergedHorizontalLevels dictionary.
+     */
+    function getCells(headers, levelId, constructId, construct) {
+        var stars = [];
+
+        [...Array(headers.length).keys()].map(i => {
+            initMergedLevel(levelId, i, headers);
+            stars[i] = removeColumns(headers, i, constructId, construct);
+        });
+
+        return stars;
+    }
+
+    /**
+     * Insert back merged columns.
+     * @param {Integer} sublevelsAmount
+     * @param {boolean} isLast
+     * @param {Integer} constructId
+     * @param {Integer} levelId
+     * @param {Array} stars
+     * @param {Integer} startIndex
+     */
+    function insertMergedColumns(sublevelsAmount, isLast, constructId, levelId, stars, startIndex) {
+        for (var i = sublevelsAmount - 1; i >= 0; i--) {
+            if (isLast) {
+                $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
+                    .find('th')
+                    .eq(startIndex - 1)
+                    .after(genareteHeader(stars[i][0], levelId));
+            } else {
+                $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
+                    .find('th')
+                    .eq(startIndex)
+                    .before(genareteHeader(stars[i][0], levelId));
+            }
+
+            for (var j = 1; j < Object.keys(stars[i]).length; j++) {
+                if (stars[i][j].length !== 0) {
+                    let span = createSpan(stars[i][j]);
+
+                    if (isLast) {
+                        starColumnAfter(j, constructId,
+                            startIndex - sublevelsAmount + (sublevelsAmount - 2), stars[i][j], span);
+                    } else {
+                        starColumnBefore(j, constructId, startIndex - 1, stars[i][j], span);
+                    }
+                } else {
+                    if (isLast) {
+                        addEmptyCellAfter(constructId, j,
+                            startIndex - sublevelsAmount + (sublevelsAmount - 2));
+                    } else {
+                        addEmptyCellBefore(constructId, j, startIndex - 1);
+                    }
+                }
+            }
+        }
+    }
+
     $('.horizontal-unmerge').hide();
 
     $('.horizontal-merge').click(function() {
-        var stars = [];
         var isLast = false;
 
         const levelId = $(this).attr('id').split('-')[1]
@@ -190,68 +334,28 @@
             mergedHorizontalLevels[levelId] = {};
 
             // Get all headers for level.
-            var headers = $(`.star_chart_table-${constructId} tr:eq(1)`)
-                .find(`[data-level-id='${levelId}']`);
+            var headers = getAllHeaders(constructId, levelId);
 
             // Check if merged sublevels are inside last level in table.
             isLast = isLastLevel(constructId, construct, headers, levelCount);
-
-            // Add cells which are inside sublevels columns to `stars` array then remove
-            // those columns and ca;culate `startIndex`.
-            // In addition each sublevel and his observations
-            // are added to mergedHorizontalLevels dictionary.
-            [...Array(headers.length).keys()].map(i => {
-                mergedHorizontalLevels[levelId][i] = {};
-                mergedHorizontalLevels[levelId][i][0] = getSublevelData(headers[i])
-                stars[i] = removeColumns(headers, i, constructId, construct);
-            });
-
-            // Initialize dictionary with amout of observations per cell.
-            var star_amount = {};
+            var stars = getCells(headers, levelId, constructId, construct);
 
             // Get first <th> element for specific table.
             var header = $(`.star_chart_table-${constructId} tr:eq(1)`).first();
 
             // If merged level is last inside table I have to add new header after the last element which left.
             // Otherwise add new header before sublevel which was first inside table before removing it.
-            isLast 
-                ? $(header).find('th').eq(startIndex - 1)
-                    .after(`<th style="text-align:center;" class="align-middle" ` +
-                        `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`)
-                : $(header).find('th').eq(startIndex)
-                    .before(`<th style="text-align:center;" class="align-middle" ` +
-                        `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
-
-            // Calculate observations inside cells.
-            for (var i = 0; i < stars[0].length; i++) {
-                star_amount[i] = []
-
-                for (var j = 0; j < stars.length; j++) {
-                    const observations = $(stars[j][i]).data('modal-launch-observations');
-                    
-                    if (observations) {
-                        // Add observations and filter reoccurring ones.
-                        observations.map(observation => {
-                            if (star_amount[i].filter(star => observation === star).length === 0) {
-                                star_amount[i].push(observation);
-                            }
-                        });
-                    }
-                }
+            if (isLast) {
+                addHeaderAfter(header, startIndex - 1, levelId, levelName);
+            } else {
+                addHeaderBefore(header, startIndex, levelId, levelName);
             }
+
+            // Initialize dictionary with amout of observations per cell.
+            var star_amount = calculate_star_amount(stars);
 
             // Add observations to `mergedHorizontalLevels` including all observations.
-            for (var i = 0; i < stars.length; i++) {
-                for (var j = 0; j < stars[0].length; j++) {
-                    mergedHorizontalLevels[levelId][i][j + 1] = [];
-                    const observations = $(stars[i][j]).data('modal-launch-observations');
-                    
-                    if (observations) {
-                        observations.map(observation =>
-                            mergedHorizontalLevels[levelId][i][j + 1].push(observation));
-                    }
-                }
-            }
+            addMergedLevel(stars, levelId);
 
             // Adds new <td>'s to table.
             [...Array(stars[0].length).keys()].map(
@@ -269,48 +373,19 @@
         const construct = $(this).data('construct');
         const constructId = construct.split('-')[1];
         const sublevelsAmount = $(this).data('sublevels');
-        var isLast = false;
         const levelCount = $(this).data('levels-count');
 
         var header = $(`.star_chart_table-${constructId} tr`)
             .find(`[data-level-id='${levelId}']`);
 
-        isLast = isLastLevel(constructId, construct, header, levelCount);
+        var isLast = isLastLevel(constructId, construct, header, levelCount);
         removeColumns(header, 0, constructId, construct);
 
         // Get observations which were merged for current levelId.
         const stars = mergedHorizontalLevels[levelId];
 
         // Creates new columns with observations which were there before merge.
-        for (var i = sublevelsAmount - 1; i >= 0; i--) {
-            for (var j = 0; j < Object.keys(stars[i]).length; j++) {
-                if (j === 0) {
-                    if (isLast) {
-                        $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
-                            .find('th')
-                            .eq(startIndex - 1)
-                            .after(genareteHeader(stars[i][j], levelId));
-                    } else {
-                        $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
-                            .find('th')
-                            .eq(startIndex)
-                            .before(genareteHeader(stars[i][j], levelId));
-                    }
-                } else if (stars[i][j].length !== 0) {
-                    let span = createSpan(stars[i][j]);
-
-                    isLast
-                        ? starColumnAfter(j, constructId,
-                            startIndex - sublevelsAmount + (sublevelsAmount - 2), stars[i][j], span)
-                        : starColumnBefore(j, constructId, startIndex - 1, stars[i][j], span);
-                } else {
-                    isLast 
-                        ? addEmptyCellAfter(constructId, j,
-                            startIndex - sublevelsAmount + (sublevelsAmount - 2))
-                        : addEmptyCellBefore(constructId, j, startIndex - 1);
-                }
-            }
-        }
+        insertMergedColumns(sublevelsAmount, isLast, constructId, levelId, stars, startIndex);
 
         mergedHorizontalLevels[levelId] = {}
 
