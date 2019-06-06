@@ -64,6 +64,20 @@
       $("#id_tags").select2({
         tokenSeparators: [',', '\n']
       });
+
+      $("#id_courses").select2({
+        tokenSeparators: [',', '\n']
+      });
+
+      var course_id = "{{ course_id }}";
+
+      if (course_id !== "None") {
+        course_id = JSON.parse(course_id);
+
+        if (typeof(course_id) === "number") {
+          $('#id_courses').val(`${course_id}`).trigger('change');
+        }
+      }
     }
 
     function loadAllowedConstructs() {

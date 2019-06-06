@@ -613,6 +613,14 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
+            courses = date_filtering_form.cleaned_data['courses']
+
+            # If there aren't any query params use default course.
+            if self.request.GET:
+                if courses:
+                    course_id = [course.id for course in courses]
+                else:
+                    course_id = None
 
         observations = Observation.objects \
             .prefetch_related('students') \
@@ -624,7 +632,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             .all()
 
         if course_id:
-            observations = observations.filter(course=course_id)
+            observations = observations.filter(course__in=course_id)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -640,7 +648,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
 
         all_students = Student.objects.filter(status=Student.ACTIVE)
         if course_id:
-            all_students = all_students.filter(course=course_id)
+            all_students = all_students.filter(course__in=course_id)
 
         dot_matrix = {}
 
