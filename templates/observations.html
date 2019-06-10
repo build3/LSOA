@@ -126,6 +126,10 @@
       $('.datepicker').datepicker({
           uiLibrary: 'bootstrap4'
       });
+
+      $('.datepicker').focus(function() {
+        $(this).blur();
+      })
     });
 
     function registerUpdateConstructsListener(id) {
