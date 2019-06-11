@@ -5,6 +5,8 @@
     // Describes in what position new elements are added to table.
     var startIndex = 0;
 
+    var endClasses = [];
+
     /**
      * Adds new column to table.
      * @param {Array} star_amount - Amount of observation per student.
@@ -30,7 +32,7 @@
             starColumnAfter(rowIndex + 1, constructId, startIndex - 2, stars, span);
         } else {
             starColumnBefore(rowIndex + 1, constructId, startIndex - 1, stars, span);
-        } 
+        }
     }
 
     /**
@@ -130,51 +132,81 @@
     }
 
     function addEmptyCellBefore(constructId, j, startIndex) {
+        var element = '<td data-csl-id="" class="text-center"></td>';
+
+        if (endClasses.includes(j - 1)) {
+            element = '<td data-csl-id="" class="text-center thicker"' +
+                'style="border-bottom: 3pt solid black;"></td>';
+        }
+
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${j + 1})`)
             .find(`td`)
             .eq(startIndex)
-            .before('<td data-csl-id="" class="text-center"></td>');
+            .before(element);
     }
 
     function addEmptyCellAfter(constructId, j, startIndex) {
+        var element = '<td data-csl-id="" class="text-center"></td>';
+
+        if (endClasses.includes(j - 1)) {
+            element = '<td data-csl-id="" class="text-center thicker"' +
+                'style="border-bottom: 3pt solid black;"></td>';
+        }
+
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${j + 1})`)
             .find(`td`)
             .eq(startIndex)
-            .after('<td data-csl-id="" class="text-center"></td>');
+            .after(element);
     }
 
     function starColumnBefore(rowIndex, constructId, startIndex, stars, span) {
+        var element = `<td data-csl-id="" class="text-center"` +
+            `data-modal-launch-observations="[${stars}]">` +
+            `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
+            `${span}</td>`;
+
+        if (endClasses.includes(rowIndex - 1)) {
+            element = `<td data-csl-id="" class="text-center thicker"` +
+                `style="border-bottom: 3pt solid black;"` +
+                `data-modal-launch-observations="[${stars}]">` +
+                `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
+                `${span}</td>`;
+        }
+
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${rowIndex + 1})`)
             .find('td')
             .eq(startIndex)
-            .before(
-                `<td data-csl-id="" class="text-center"` +
-                `data-modal-launch-observations="[${stars}]">` +
-                `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
-                `${span}</td>`
-            );
+            .before(element);
     }
 
     function starColumnAfter(rowIndex, constructId, startIndex, stars, span) {
+        var element = `<td data-csl-id="" class="text-center"` +
+            `data-modal-launch-observations="[${stars}]">` +
+            `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
+            `${span}</td>`;
+
+        if (endClasses.includes(rowIndex - 1)) {
+            element = `<td data-csl-id="" class="text-center"` +
+                `style="border-bottom: 3pt solid black;"` +
+                `data-modal-launch-observations="[${stars}]">` +
+                `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
+                `${span}</td>`;
+        }
+
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${rowIndex + 1})`)
             .find('td')
             .eq(startIndex)
-            .after(
-                `<td data-csl-id="" class="text-center"` +
-                `data-modal-launch-observations="[${stars}]">` +
-                `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
-                `${span}</td>`
-            );
+            .after(element);
     }
 
     function addHeaderAfter(header, startIndex, levelId, levelName) {
         $(header)
             .find('th')
-            .eq(startIndex - 1)
+            .eq(startIndex)
             .after(`<th style="text-align:center;" class="align-middle" ` +
                 `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
     }
@@ -316,6 +348,16 @@
         }
     }
 
+    function getTdsWhichEndClass(stars) {
+        return [...Array(stars[0].length).keys()].reduce((arr, i) => {
+            if($(stars[0][i]).hasClass('thicker')) {
+                arr.push(i);
+            }
+
+            return arr
+        }, []);
+    }
+
     $('.horizontal-unmerge').hide();
 
     $('.horizontal-merge').click(function() {
@@ -353,6 +395,9 @@
 
             // Initialize dictionary with amout of observations per cell.
             var star_amount = calculate_star_amount(stars);
+
+            // Gets tds which are end of class.
+            endClasses = getTdsWhichEndClass(stars);
 
             // Add observations to `mergedHorizontalLevels` including all observations.
             addMergedLevel(stars, levelId);
