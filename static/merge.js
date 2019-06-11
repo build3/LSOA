@@ -336,6 +336,9 @@
             // Get all headers for level.
             var headers = getAllHeaders(constructId, levelId);
 
+            // Hide tooltips for merged headers.
+            [...Array(headers.length).keys()].map(i => $(headers[i]).tooltip("hide"));
+
             // Check if merged sublevels are inside last level in table.
             isLast = isLastLevel(constructId, construct, headers, levelCount);
             var stars = getCells(headers, levelId, constructId, construct);
