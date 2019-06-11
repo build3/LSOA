@@ -81,19 +81,19 @@
           {# "#image => hidden", "#video => url", button-rows => none() #}
           {% if recent_observation.original_image and use_last_sample %}
             <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
           {% elif recent_observation.video and use_last_sample %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
-            <video id="recorded" style="width: 100%; height: 100%;" src="{{ recent_observation.video.url }}#t=0.1" controls playsinline/>
+            <video id="recorded" style="width: 100%; height: 332px;" src="{{ recent_observation.video.url }}#t=0.1" controls playsinline/>
           {% elif draft_observation.original_image %}
             <img id="image" src="{{ draft_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
           {% elif draft_observation.video %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
-            <video id="recorded" style="width: 100%; height: 100%;" src="{{ draft_observation.video.url }}#t=0.1" controls playsinline/>
+            <video id="recorded" style="width: 100%; height: 332px;" src="{{ draft_observation.video.url }}#t=0.1" controls playsinline/>
           {% else %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
           {% endif %}
 
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
