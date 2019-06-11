@@ -132,6 +132,10 @@
       $('#filterForm :input').on('change input', function() {
         $('#filtering-submit').removeAttr('disabled');
       });
+
+      $('.datepicker').focus(function() {
+        $(this).blur();
+      })
     });
 
     function registerUpdateConstructsListener(id) {

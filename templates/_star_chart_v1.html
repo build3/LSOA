@@ -13,12 +13,12 @@
                             <button class="btn btn-primary btn-sm horizontal-merge" id="horizontal-{{ level.id }}"
                                 data-sublevels="{{ level.sublevels.count }}" data-construct="construct-{{ construct.id }}"
                                 data-level-name="{{ level }}" data-levels-count="{{ construct.levels.count }}"
-                                >Horizontal merge {{ level }}</button>
+                                >Merge {{ level }}</button>
 
                             <button class="btn btn-primary btn-sm horizontal-unmerge" id="horizontal-back-{{ level.id }}"
                                 data-sublevels="{{ level.sublevels.count }}" data-construct="construct-{{ construct.id }}"
                                 data-level-name="{{ level }}" data-levels-count="{{ construct.levels.count }}"
-                                >Horizontal separate {{ level }}</button>
+                                >Separate {{ level }}</button>
                         </th>
                     {% endfor %}
                 </tr>
