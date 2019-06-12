@@ -260,11 +260,31 @@ class LearningConstructSublevel(TimeStampedModel):
     name = models.CharField(max_length=255)
     description = models.TextField()
 
+    COLORS = {
+        "LESS_THAN_THREE": "#0066FF",
+        "LESS_THAN_FIVE": "#99CCFF",
+        "FIVE": "#FFFFFF",
+        "LESS_THAN_EIGHT": "#E60000",
+        "EIGHT_AND_MORE": "#CC0000"
+    }
+
     def short_name(self):
         try:
             return '{}'.format(self.name.split()[1])
         except:
             return '{}'.format(self.name)
+
+    def get_color(self, observation_count):
+        if observation_count < 3:
+            return self.COLORS["LESS_THAN_THREE"]
+        elif observation_count < 5:
+            return self.COLORS["LESS_THAN_FIVE"]
+        elif observation_count == 5:
+            return self.COLORS["FIVE"]
+        elif observation_count < 8:
+            return self.COLORS["LESS_THAN_EIGHT"]
+        else:
+            return self.COLORS["EIGHT_AND_MORE"]
 
     def __str__(self):
         return '{}'.format(self.name)
