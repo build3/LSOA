@@ -542,6 +542,22 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                         star_matrix[construct][student][sublevel] = []
                         dot_matrix[construct][sublevel] = []
 
+        star_matrix_by_class = {}
+
+        for construct in constructs:
+            star_matrix_by_class[construct] = {}
+
+            for course in course_id:
+                course_object = Course.objects.get(id=course)
+                star_matrix_by_class[construct][course_object] = {}
+                
+                for student in course_object.students.all():
+                    star_matrix_by_class[construct][course_object][student] = {}
+                        
+                    for level in construct.levels.all():
+                        for sublevel in level.sublevels.all():
+                            star_matrix_by_class[construct][course_object][student][sublevel] = []
+
         for observation in observations:
             students = observation.students.all()
             sublevels = observation.constructs.all()
@@ -556,6 +572,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                     construct = sublevel.level.construct
                     star_matrix[construct][student][sublevel].append(observation)
                     dot_matrix[construct][sublevel].append(observation)
+                    star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
         star_matrix_vertical = {}
 
@@ -590,6 +607,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart(),
             'star_matrix_vertical': star_matrix_vertical,
+            'star_matrix_by_class': star_matrix_by_class
         })
         return data
 
