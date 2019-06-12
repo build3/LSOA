@@ -1,0 +1,36 @@
+{% load observations %}
+
+{% for construct, sublevels in dot_matrix.items %}
+
+<div style="overflow-x: scroll;width:100%;">
+    <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.abbreviation }}</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                {% for level in construct.sublevels %}
+                <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
+                    {{ level.short_name }}
+                    {% if level.description|length > 0 %}
+                        <span><i class="fa fa-info-circle"></i></span>
+                    {% endif %}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for sublevel, observations in sublevels.items %}
+                    <td style="height: 60px" class="text-center"
+                        bgcolor="{{ sublevel|get_color_for_sublevel:observations }}"></td>
+                {% endfor %}
+            </tr>
+            <tr>
+                {% for sublevel, observations in sublevels.items %}
+                    <td class="text-center">({{ observations|length }})</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endfor %}
