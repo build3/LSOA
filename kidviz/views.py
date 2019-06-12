@@ -593,7 +593,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                     for sublevel in level.sublevels.all():
                         # Join sets to remove same observations.
                         star_matrix_vertical[construct][sublevel] \
-                            .update(set(star_matrix[construct][student][sublevel]))                    
+                            .update(set(star_matrix[construct][student][sublevel]))
 
         data = super().get_context_data(**kwargs)
         data.update({

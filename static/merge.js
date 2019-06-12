@@ -132,75 +132,75 @@
     }
 
     function addEmptyCellBefore(constructId, j, startIndex) {
-        var element = '<td data-csl-id="" class="text-center"></td>';
+        var element = $(document.createElement('td'))
+            .addClass('text-center');
+        element[0].dataset.cslId = "";
 
         if (endClasses.includes(j - 1)) {
-            element = '<td data-csl-id="" class="text-center thicker"' +
-                'style="border-bottom: 3pt solid black;"></td>';
+            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${j + 1})`)
             .find(`td`)
             .eq(startIndex)
-            .before(element);
+            .before(element[0]);
     }
 
     function addEmptyCellAfter(constructId, j, startIndex) {
-        var element = '<td data-csl-id="" class="text-center"></td>';
+        var element = $(document.createElement('td'))
+            .addClass('text-center');
+        element[0].dataset.cslId = "";
 
         if (endClasses.includes(j - 1)) {
-            element = '<td data-csl-id="" class="text-center thicker"' +
-                'style="border-bottom: 3pt solid black;"></td>';
+            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${j + 1})`)
             .find(`td`)
             .eq(startIndex)
-            .after(element);
+            .after(element[0]);
     }
 
     function starColumnBefore(rowIndex, constructId, startIndex, stars, span) {
-        var element = `<td data-csl-id="" class="text-center"` +
-            `data-modal-launch-observations="[${stars}]">` +
-            `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
-            `${span}</td>`;
+        var element = $(document.createElement('td'))
+            .addClass('text-center')
+            .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+            .append(span);
+
+        element[0].dataset.cslId = "";
+        element[0].dataset.modalLaunchObservations = `[${stars}]`;
 
         if (endClasses.includes(rowIndex - 1)) {
-            element = `<td data-csl-id="" class="text-center thicker"` +
-                `style="border-bottom: 3pt solid black;"` +
-                `data-modal-launch-observations="[${stars}]">` +
-                `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
-                `${span}</td>`;
+            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${rowIndex + 1})`)
             .find('td')
             .eq(startIndex)
-            .before(element);
+            .before(element[0]);
     }
 
     function starColumnAfter(rowIndex, constructId, startIndex, stars, span) {
-        var element = `<td data-csl-id="" class="text-center"` +
-            `data-modal-launch-observations="[${stars}]">` +
-            `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
-            `${span}</td>`;
+        var element = $(document.createElement('td'))
+            .addClass('text-center')
+            .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+            .append(span);
+
+        element[0].dataset.cslId = "";
+        element[0].dataset.modalLaunchObservations = `[${stars}]`;
 
         if (endClasses.includes(rowIndex - 1)) {
-            element = `<td data-csl-id="" class="text-center"` +
-                `style="border-bottom: 3pt solid black;"` +
-                `data-modal-launch-observations="[${stars}]">` +
-                `<i data-toggle="tooltip" title="" class="fa fa-star"></i>` +
-                `${span}</td>`;
+            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
             .find(`tr:eq(${rowIndex + 1})`)
             .find('td')
             .eq(startIndex)
-            .after(element);
+            .after(element[0]);
     }
 
     function addHeaderAfter(header, startIndex, levelId, levelName) {
@@ -349,13 +349,7 @@
     }
 
     function getTdsWhichEndClass(stars) {
-        return [...Array(stars[0].length).keys()].reduce((arr, i) => {
-            if($(stars[0][i]).hasClass('thicker')) {
-                arr.push(i);
-            }
-
-            return arr
-        }, []);
+        return [...Array(stars[0].length).keys()].filter(i => $(stars[0][i]).hasClass('thicker'));
     }
 
     $('.horizontal-unmerge').hide();
