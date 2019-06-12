@@ -4,41 +4,32 @@
 
 <div style="overflow-x: scroll;width:100%;">
     <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.abbreviation }}</h4>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    {% for level in construct.sublevels %}
-                    <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
-                        {{ level.short_name }}
-                        {% if level.description|length > 0 %}
-                            <span><i class="fa fa-info-circle"></i></span>
-                        {% endif %}
-                    </th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    {% for sublevel, observations in sublevels.items %}
-                        {% if observations|length < 3 %}
-                            <td style="height: 60px" class="text-center" bgcolor="#0066FF"></td>
-                        {% elif observations|length < 5 %}
-                            <td style="height: 60px" class="text-center" bgcolor="#99CCFF"></td>
-                        {% elif observations|length == 5 %}
-                            <td style="height: 60px" class="text-center" bgcolor="#FFFFFF"></td>
-                        {% elif observations|length < 8 %}
-                            <td style="height: 60px" class="text-center" bgcolor="#E60000"></td>
-                        {% else %}
-                            <td style="height: 60px" class="text-center" bgcolor="#CC0000"></td>
-                        {% endif %}
-                    {% endfor %}
-                </tr>
-                <tr>
-                    {% for sublevel, observations in sublevels.items %}
-                        <td class="text-center">({{ observations|length }})</td>
-                    {% endfor %}
-                </tr>
-            </tbody>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                {% for level in construct.sublevels %}
+                <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
+                    {{ level.short_name }}
+                    {% if level.description|length > 0 %}
+                        <span><i class="fa fa-info-circle"></i></span>
+                    {% endif %}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for sublevel, observations in sublevels.items %}
+                    <td style="height: 60px" class="text-center"
+                        bgcolor="{{ sublevel|get_color_for_sublevel:observations }}"></td>
+                {% endfor %}
+            </tr>
+            <tr>
+                {% for sublevel, observations in sublevels.items %}
+                    <td class="text-center">({{ observations|length }})</td>
+                {% endfor %}
+            </tr>
+        </tbody>
     </table>
 </div>
 

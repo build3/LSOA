@@ -589,7 +589,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'course_id': course_id,
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart(),
-            'star_matrix_vertical': star_matrix_vertical
+            'star_matrix_vertical': star_matrix_vertical,
         })
         return data
 
