@@ -261,11 +261,13 @@ class LearningConstructSublevel(TimeStampedModel):
     description = models.TextField()
 
     COLORS = {
-        "LESS_THAN_THREE": "#0066FF",
-        "LESS_THAN_FIVE": "#99CCFF",
-        "FIVE": "#FFFFFF",
-        "LESS_THAN_EIGHT": "#E60000",
-        "EIGHT_AND_MORE": "#CC0000"
+        "ZERO": "#FFFFFF",
+        "LESS_THAN_THREE": "#E6E6FF",
+        "LESS_THAN_FIVE": "#B3B3FF",
+        "FIVE": "#9999FF",
+        "LESS_THAN_EIGHT": "#6666FF",
+        "LESS_THAN_TEN": "#3333FF",
+        "TEN_AND_MORE": "#0000FF"
     }
 
     def short_name(self):
@@ -275,7 +277,9 @@ class LearningConstructSublevel(TimeStampedModel):
             return '{}'.format(self.name)
 
     def get_color(self, observation_count):
-        if observation_count < 3:
+        if not observation_count:
+            return self.COLORS["ZERO"]
+        elif observation_count < 3:
             return self.COLORS["LESS_THAN_THREE"]
         elif observation_count < 5:
             return self.COLORS["LESS_THAN_FIVE"]
@@ -283,8 +287,10 @@ class LearningConstructSublevel(TimeStampedModel):
             return self.COLORS["FIVE"]
         elif observation_count < 8:
             return self.COLORS["LESS_THAN_EIGHT"]
+        elif observation_count < 10:
+            return self.COLORS["LESS_THAN_TEN"]
         else:
-            return self.COLORS["EIGHT_AND_MORE"]
+            return self.COLORS["TEN_AND_MORE"]
 
     def __str__(self):
         return '{}'.format(self.name)
