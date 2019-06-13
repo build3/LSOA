@@ -5,7 +5,11 @@
     // Describes in what position new elements are added to table.
     var startIndex = 0;
 
+    // Number of rows which end class or multiple classes
     var endClasses = [];
+
+    // Vertical merged students by class;
+    var mergedVertical = {}
 
     /**
      * Adds new column to table.
@@ -42,7 +46,8 @@
      * and - count of levels for construct.
      * @param {Integer} constructId 
      * @param {String} construct 
-     * @param {Array} headers 
+     * @param {Array} headers
+     * @param {} levelCount 
      */
     function isLastLevel(constructId, construct, headers, levelCount) {
         const cellIndex = headers[0].cellIndex;
@@ -53,7 +58,12 @@
         const allHeaders = $(`.star_chart_table-${constructId}`)
             .find('th');
     
-        return startIndex + (headers.length) === allHeaders.length - cells.length - levelCount - 1
+        // The calculations here checks if sublevel or level which is merging is last in corresponding table.
+        // To check if sublevel or level is last I sum `startIndex` (first column number of <th> elements for single level)
+        // and quantity of all headers for single level `(headers.length)` then I check if this is equal
+        // to subtraction of quantity of <th> elements in sublevels row, amount of vertical <th> cells(i.e student cells),
+        // cells with buttons and then 2 cells wchich are in the same level as buttons.
+        return startIndex + (headers.length) === allHeaders.length - (2 * cells.length) - levelCount - 2
     }
 
     /**
@@ -106,11 +116,13 @@
         const cellIndex = headers[i].cellIndex;
 
         if (i == 0) {
-            startIndex = cellIndex;
+            startIndex = cellIndex - 1;
         }
-                
+        
+        // Subtract by 2 cause there are two unneded elements which are counted as well
+        // (row with students and row with vertical merge buttons).
         const cells = $(`.star_chart_table-${constructId} .${construct}`)
-            .find(`td:eq(${cellIndex - 1})`);
+            .find(`td:eq(${cellIndex - 2})`);
         
         const value = cells;
 
@@ -206,7 +218,7 @@
     function addHeaderAfter(header, startIndex, levelId, levelName) {
         $(header)
             .find('th')
-            .eq(startIndex)
+            .eq(startIndex + 1)
             .after(`<th style="text-align:center;" class="align-middle" ` +
                 `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
     }
@@ -214,7 +226,7 @@
     function addHeaderBefore(header, startIndex, levelId, levelName) {
         $(header)
             .find('th')
-            .eq(startIndex)
+            .eq(startIndex + 1)
             .before(`<th style="text-align:center;" class="align-middle" ` +
                 `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
     }
@@ -317,12 +329,12 @@
             if (isLast) {
                 $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
                     .find('th')
-                    .eq(startIndex - 1)
+                    .eq(startIndex)
                     .after(genareteHeader(stars[i][0], levelId));
             } else {
                 $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
                     .find('th')
-                    .eq(startIndex)
+                    .eq(startIndex + 1)
                     .before(genareteHeader(stars[i][0], levelId));
             }
 
@@ -353,6 +365,8 @@
     }
 
     $('.horizontal-unmerge').hide();
+
+    $('.class-separate').hide();
 
     $('.horizontal-merge').click(function() {
         var isLast = false;
@@ -438,5 +452,156 @@
         $(`#horizontal-${levelId}`).show();
 
         remakeTooltips();
+    })
+
+    /**
+     * Calculates quantity of observations for each sublevel inside merging class.
+     * @param {Integer} sublevels - Amount of sublevels used in single table.
+     * @param {Integer} constructId - Table's construct ID.
+     * @param {Integer} classId - Merging class ID.
+     */
+    function calculateStarAmountVerticalByLevel(sublevels, constructId, classId) {
+        var star_amount = [];
+
+        for (var i = 0; i < sublevels; i++) {
+            star_amount.push([]);
+        }
+
+        var size = mergedVertical[constructId][classId].length;
+
+        for (var i = 0; i < size; i++) {
+            for (var j = 0; j < sublevels; j++) {
+                const observations = $(mergedVertical[constructId][classId][i].cells[j]).data('modal-launch-observations');
+                
+                if (observations) {
+                    // Add observations and filter reoccurring ones.
+                    observations.forEach(observation => {
+                        if (!star_amount[j].some(star => observation === star)) {
+                            star_amount[j].push(observation);
+                        }
+                    });
+                }
+
+                $(mergedVertical[constructId][classId][i].student).remove()
+                $(mergedVertical[constructId][classId][i].cells[j]).remove()
+            }
+        }
+
+        return star_amount;
+    }
+
+    /**
+     * Saves students and stars cells for merging class to restore them later
+     * when separate button is clicked.
+     * Cells are saved in this way:
+     * {
+     *   "student": Selector - <th> selector with student name.
+     *   "cells": [] - Array with <td> cells for stars.
+     * }
+     * @param {Array} students - <th> elements with students names.
+     * @param {Integer} constructId - ID of construct.
+     * @param {Integer} classId - ID of merging class. 
+     */
+    function saveCells(students, constructId, classId) {
+        var sublevels = 0;
+
+        if (!mergedVertical.hasOwnProperty(constructId)) {
+            mergedVertical[constructId] = {};
+        }
+
+        mergedVertical[constructId][classId] = []
+
+        for (var i = 0; i < students.length; i++) {
+            var cells = $($(students[i]).parent()).find('td')
+            sublevels = cells.length;
+            mergedVertical[constructId][classId].push({'student': students[i], 'cells': cells});
+        }
+
+        return sublevels;
+    }
+
+    $('.class-merge').click(function() {
+        const className = $(this).data('class');
+        const classId = $(this).attr('id').split('-')[2];
+        const construct = $(this).data('construct');
+        const constructId = construct.split('-')[1];
+
+        // Get <th> elements for students.
+        var students = $(`.star_chart_table-${constructId} tr`).find(`.class-${classId}`);
+
+        // Save cells to restore them when separating class.
+        const sublevels = saveCells(students, constructId, classId);
+
+        // Calculate amount of stars for each level inside merging class.
+        const star_amount = calculateStarAmountVerticalByLevel(sublevels, constructId, classId)
+
+        // Remove all empty <th> elements which starts row.
+        $(`.star_chart_table-${constructId}`).find(`.class-${classId}`).remove()
+
+        var tr = $(this).parent().parent();
+
+        // Append <th> with `className` to row which left.
+        $(tr).append(`<th scope="row" class="student-${constructId} class-${classId} thicker" ` +
+            `style="border-bottom: 3pt solid black; white-space: nowrap; ` +
+            `text-overflow: ellipsis; overflow: hidden; max-width: 150px;">${className}</th>`)
+
+        // Append to last row of class all stars for each level.
+        for (var i = 0; i < sublevels; i++) {
+            if (star_amount[i].length !== 0) {
+                let span = createSpan(star_amount[i]);
+
+                $(tr).append(`<td data-csl-id="" style="border-bottom: 3pt solid black;" ` +
+                    `class="text-center thicker" ` +
+                    `data-modal-launch-observations="[${star_amount[i]}]">` +
+                    `<i data-toggle="tooltip" title="" class="fa fa-star"></i>${span}</td>`)
+            } else {
+                $(tr).append('<td data-csl-id="" style="border-bottom: 3pt solid black;" ' +
+                    'class="text-center thicker"></td>')
+            }
+        }
+
+        $(this).hide();
+        $(`#class-separate-${classId}-${constructId}`).show();
+    })
+
+    $('.class-separate').click(function() {
+        const classId = $(this).attr('id').split('-')[2];
+        const construct = $(this).data('construct');
+        const constructId = construct.split('-')[1];
+
+        var tr = $(this).parent().parent();
+        var size = mergedVertical[constructId][classId].length;
+        var cells = $(tr).find('td');
+
+        // Get amount of sublevels used in table.
+        const sublevels = cells.length
+
+        // Remove all <td> elements inside created earlier row.
+        cells.remove();
+
+        // Remove header with class name
+        $(tr).find('th:eq(1)').remove();
+
+        // Append to row with button header with first student <th> element.
+        $(tr).append(mergedVertical[constructId][classId][size - 1].student);
+
+        // Append saved <td>s elements to row.
+        [...Array(sublevels).keys()].forEach(
+            i => $(tr).append(mergedVertical[constructId][classId][size - 1].cells[i]));
+
+        // Create new rows and append saved information about students.
+        for (var i = size - 2; i >= 0; i--) {
+            $(tr).before(`<tr class="construct-${constructId} class-${classId}"></tr>`);
+            tr = $(tr).prev();
+            $(tr).append('<th scope="col">&nbsp;</th>');
+            $(tr).append(mergedVertical[constructId][classId][i].student);
+
+            // Append saved <td>s elements to row.
+            [...Array(sublevels).keys()].forEach(
+                j => $(tr).append(mergedVertical[constructId][classId][i].cells[j]));
+        }
+
+        $(this).hide();
+        $(`#class-merge-${classId}-${constructId}`).show();
     })
 })()
