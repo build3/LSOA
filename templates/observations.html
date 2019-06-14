@@ -337,7 +337,7 @@
               <a class="nav-link {% if selected_chart == "chart_v2" %} active {% endif %}" data-toggle="tab" href="#chart_v2">Star Chart v2</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "chart_v2" %} active {% endif %}"
+              <a class="nav-link {% if selected_chart == "heat_map" %} active {% endif %}"
                 data-toggle="tab" href="#heat_map">Star Chart v2 Heat Map</a>
             </li>
             <li class="nav-item">
@@ -355,7 +355,7 @@
             <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="chart_v2">
               {% include "_star_chart_v2.html" %}
             </div>
-            <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="heat_map">
+            <div class="tab-pane {% if selected_chart == "heat_map" %} active {% else %} fade {% endif %}" id="heat_map">
               {% include "_star_chart_heat_map.html" %}
             </div>
             <div class="tab-pane {% if selected_chart == "chart_v3" %} active {% else %} fade {% endif %}" id="chart_v3">
