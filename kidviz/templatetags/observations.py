@@ -23,3 +23,13 @@ def course_from_session_or_first(request):
 @register.filter
 def get_color_for_sublevel(obj, observations):
     return obj.get_color(len(observations))
+
+
+@register.simple_tag(takes_context=True)
+def get_color_star_chart_4(context, sublevel, level_observations, construct):
+    all_observations = 0
+
+    for sublevel, observations in context['star_chart_4'][construct].items():
+        all_observations += len(observations)
+
+    return sublevel.get_color_dark(len(level_observations), all_observations)

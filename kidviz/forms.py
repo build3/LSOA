@@ -166,6 +166,8 @@ class ContextTagForm(forms.ModelForm):
 
 
 class DateFilteringForm(forms.Form):
+    TIME_WINDOW_CHOICES = [(1, '1 week'), (2, '2 weeks'), (3, '4 weeks')]
+
     date_from = forms.DateField(
         widget=forms.DateInput(attrs={'class': 'datepicker form-control'}),
         required=False
@@ -189,6 +191,7 @@ class DateFilteringForm(forms.Form):
         queryset=Course.objects.all(),
         widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
     )
+    time_window = forms.ChoiceField(required=False, choices=TIME_WINDOW_CHOICES)
 
 
 class DraftObservationForm(ObservationForm):

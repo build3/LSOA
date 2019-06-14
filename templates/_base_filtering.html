@@ -7,11 +7,11 @@
     <button type="button" id="select-all-courses" class="btn btn-primary ml-2">Select all</button>
   </div>
   <div class="row">
-    <div class="col-6">
+    <div id="date-from-row" class="col-6 {% if selected_chart == "chart_v4" %} d-none {% endif %}">
       <label>Date from</label>
       {{ filtering_form.date_from }}
     </div>
-    <div class="col-6">
+    <div id="date-to-row" class="col-6 {% if selected_chart == "chart_v4" %} d-none {% endif %}">
       <label>Date to</label>
       {{ filtering_form.date_to }}
     </div>
@@ -24,6 +24,13 @@
     <div id="construct-row" class="col-6 {% if selected_chart != "chart_v3" %} d-none {% endif %}">
       <label>Constructs</label>
       {{ filtering_form.constructs }}
+    </div>
+    <div id="time-window-row" class="col-6 {% if selected_chart != "chart_v4" %} d-none {% endif %}">
+      <label>Time window</label>
+      <div class="mt-2">
+        <input type="range" name="time_window" min="1" max="3"
+          value="{{ filtering_form.time_window.value }}" style="width: 100%;">
+      </div>
     </div>
   </div>
   <div class="d-flex flex-row-reverse">

@@ -287,12 +287,25 @@
         var chart_href = $(this).attr('href');
         var chart_id = chart_href.substr(1);
         $('#filtering-submit').attr('name', chart_id);
+        
         if (chart_id == "chart_v3") {
           $("#construct-row").removeClass('d-none');
+          $("#time-window-row").addClass('d-none');
+          $('#date-from-row').removeClass('d-none');
+          $('#date-to-row').removeClass('d-none');
+
           initSelect2();
           loadAllowedConstructs();
+        } else if (chart_id === "chart_v4") {
+          $("#construct-row").addClass('d-none');
+          $("#time-window-row").removeClass('d-none');
+          $('#date-from-row').addClass('d-none');
+          $('#date-to-row').addClass('d-none');
         } else {
           $("#construct-row").addClass('d-none');
+          $("#time-window-row").addClass('d-none');
+          $('#date-from-row').removeClass('d-none');
+          $('#date-to-row').removeClass('d-none');
         }
       });
 
@@ -308,11 +321,20 @@
       $(`#chartTab a[href="${url[url.length - 1]}"]`).tab('show');
       window.scrollTo(0, 0);
 
+      if (url[url.length - 1] == "#chart_v4") {
+        $("#construct-row").addClass('d-none');
+        $("#time-window-row").removeClass('d-none');
+        $('#date-from-row').addClass('d-none');
+        $('#date-to-row').addClass('d-none');
+      }
+
       $('#select-all-courses').click(function() {
         $('#id_courses').find('option').removeAttr('selected');
         $('#id_courses').find('option').prop('selected', true);
         $('#id_courses').select2();
       })
+
+      $('#id_time_window').addClass('form-control');
     });
   </script>
 {% endblock %}
@@ -337,11 +359,15 @@
               <a class="nav-link {% if selected_chart == "chart_v2" %} active {% endif %}" data-toggle="tab" href="#chart_v2">Star Chart v2</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "chart_v2" %} active {% endif %}"
+              <a class="nav-link {% if selected_chart == "heat_map" %} active {% endif %}"
                 data-toggle="tab" href="#heat_map">Star Chart v2 Heat Map</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {% if selected_chart == "chart_v3" %} active {% endif %}" data-toggle="tab" href="#chart_v3">Star Chart v3</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if selected_chart == "chart_v4" %} active {% endif %}"
+                data-toggle="tab" href="#chart_v4">Star Chart v4</a>
             </li>
           </ul>
 
@@ -355,11 +381,14 @@
             <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="chart_v2">
               {% include "_star_chart_v2.html" %}
             </div>
-            <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="heat_map">
+            <div class="tab-pane {% if selected_chart == "heat_map" %} active {% else %} fade {% endif %}" id="heat_map">
               {% include "_star_chart_heat_map.html" %}
             </div>
             <div class="tab-pane {% if selected_chart == "chart_v3" %} active {% else %} fade {% endif %}" id="chart_v3">
               {% include "_star_chart_v3.html" %}
+            </div>
+            <div class="tab-pane {% if selected_chart == "chart_v4" %} active {% else %} fade {% endif %}" id="chart_v4">
+              {% include "_star_chart_v4.html" %}
             </div>
           </div>
         </div>
