@@ -176,7 +176,6 @@ class ObservationAdmin(admin.ModelAdmin):
                 'course',
                 'grouping',
                 'construct_choices',
-                'parent',
             )
         })
     )
