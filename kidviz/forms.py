@@ -8,6 +8,7 @@ from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
+from kidviz.choices import *
 from kidviz.models import Course, LearningConstructSublevel, ContextTag, Observation
 
 
@@ -166,8 +167,6 @@ class ContextTagForm(forms.ModelForm):
 
 
 class DateFilteringForm(forms.Form):
-    TIME_WINDOW_CHOICES = [(1, '1 week'), (2, '2 weeks'), (3, '4 weeks')]
-
     date_from = forms.DateField(
         widget=forms.DateInput(attrs={'class': 'datepicker form-control'}),
         required=False

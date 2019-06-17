@@ -31,7 +31,7 @@
                         title="{{ sublevel.description }}" data-toggle="tooltip"
                         data-level-id="{{ sublevel.level.id }}">
                         {{ sublevel.short_name }}
-                        {% if sublevel.description|length > 0 %}
+                        {% if sublevel.description %}
                             <span><i class="fa fa-info-circle"></i></span>
                         {% endif %}
                     </th>
@@ -60,5 +60,8 @@
 {% endfor %}
 
 {% block extrascripts %}
+<script>
+window.COLORS_DARK = "{{ COLORS_DARK|escapejs }}";
+</script>
 <script src="{% static 'merge4.js' %}"></script>
 {% endblock %}

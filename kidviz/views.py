@@ -26,6 +26,7 @@ from django.views.generic import FormView, View, TemplateView, UpdateView, \
 from related_select.views import RelatedSelectView
 from tablib import Dataset
 
+from kidviz.choices import TIME_WINDOW_CHOICES, WEEK_1
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
     DateFilteringForm, DraftObservationForm
@@ -480,7 +481,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         date_to = None
         selected_constructs = None
         tags = None
-        time_window = None
+        time_window = WEEK_1
 
         if date_filtering_form.is_valid():
             date_from = date_filtering_form.cleaned_data['date_from']
@@ -490,6 +491,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             time_window = date_filtering_form.cleaned_data['time_window']
             courses = date_filtering_form.cleaned_data['courses']
 
+            if not time_window:
+                time_window = WEEK_1
+
             # If there aren't any query params use default course.
             if self.request.GET:
                 if courses:
@@ -497,12 +501,12 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 else:
                     course_id = None
 
-        observations = Observation.get_star_charts_observations(
+        observations = Observation.get_observations(
             course_id, date_from, date_to, tags)
-        time_observations = self._get_time_observations(observations, time_window)
+        time_observations = Observation.get_time_observations(observations, time_window)
 
         constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
-        all_students = Student.get_students_in_star_charts(course_id)
+        all_students = Student.get_students_by_course(course_id)
 
         star_matrix = {}
         dot_matrix = {}
@@ -553,7 +557,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'star_matrix_by_class': star_matrix_by_class,
             'star_chart_4': Observation.create_star_chart_4(
                 time_observations, all_students, constructs),
-            'time_observations_count': time_observations.count()
+            'time_observations_count': time_observations.count(),
+            'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
+            'time_window_display': dict(
+                    date_filtering_form.fields['time_window'].choices)[time_window]
         })
         return data
 
@@ -566,17 +573,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'tags': GET_DATA.get('tags', None),
             'time_window': GET_DATA.get('time_window', None)
         })
-
-    def _get_time_observations(self, observations, time_window):
-        if time_window:
-            if time_window == 3:
-                time_window = 4
-
-            time_window = datetime.date.today() - datetime.timedelta(weeks=int(time_window))
-        else:
-            time_window = datetime.date.today() - datetime.timedelta(weeks=1)
-
-        return observations.filter(observation_date__gte=time_window)
 
 
 class TeacherObservationView(LoginRequiredMixin, TemplateView):

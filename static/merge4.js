@@ -147,13 +147,15 @@
         var amount = 0;
 
         for (var i = 0; i < stars.length; i++) {
-            for (var j = 0; j < stars[0].length; j++) {
-                const observations = $(stars[i][j]).data('stars');
+            amount += [...Array(stars[0].length).keys()].reduce((acc, val) => {
+                const observations = $(stars[i][val]).data('stars');
 
                 if (observations) {
-                    amount += observations;
+                    acc += observations
                 }
-            }
+
+                return acc;
+            }, 0)
         }
 
         return amount
@@ -201,21 +203,6 @@
         }
     }
 
-    COLORS_DARK = {
-        "0": "#FFFFFF",
-        "LESS_THEN_10": "#E6E6E6",
-        "1": "#CCCCCC",
-        "2": "#B3B3B3",
-        "3": "#999999",
-        "4": "#808080",
-        "5": "#666666",
-        "6": "#4D4D4D",
-        "7": "#333333",
-        "8": "#1A1A1A",
-        "9": "#0D0D0D",
-        "10": "#000000"
-    }
-
     /**
      * Calculates new color for merged level. To get new color for level
      * new percent value is calculated. When starAmount is 0 color for 0% is used.
@@ -228,23 +215,19 @@
      */
     function calculateNewColor4(starAmount, constructId) {
         if (starAmount == 0) {
-            return COLORS_DARK["0"];
+            return window.COLORS_DARK["0"];
         }
 
         const cells = $(`.star-chart-4-table-${constructId}`).find('.stars-amount');
         const allStars = [...Array(cells.length).keys()].reduce(
             (acc, val) => acc += $(cells[val]).data('stars'), starAmount);
 
-        if (starAmount == allStars) {
-            return COLORS_DARK["10"];
-        }
-
         const percentValue = 100 * starAmount / allStars;
 
         if (percentValue < 10) {
-            return COLORS_DARK["LESS_THEN_10"]
+            return window.COLORS_DARK["LESS_THEN_10"]
         } else {
-            return COLORS_DARK[percentValue.toString()[0]]
+            return window.COLORS_DARK[percentValue.toString()[0]]
         }
     }
 
@@ -331,7 +314,7 @@
             var headers = getAllHeaders4(constructId, levelId);
 
             // Hide tooltips for merged headers.
-            [...Array(headers.length).keys()].map(i => $(headers[i]).tooltip("hide"));
+            [...Array(headers.length).keys()].forEach(i => $(headers[i]).tooltip("hide"));
 
             // Check if merged sublevels are inside last level in table.
             isLast = isLastLevel4(constructId, construct, headers, levelCount);

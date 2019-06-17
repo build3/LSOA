@@ -13,6 +13,8 @@ from tinymce.models import HTMLField
 
 from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
+from kidviz.choices import *
+
 
 @deconstructible
 class UploadToPathAndRename(object):
@@ -116,7 +118,7 @@ class Student(TimeStampedModel):
         return new_student
 
     @classmethod
-    def get_students_in_star_charts(cls, course_id):
+    def get_students_by_course(cls, course_id):
         all_students = Student.objects.filter(status=Student.ACTIVE)
 
         if course_id:
@@ -226,7 +228,7 @@ class Observation(TimeStampedModel, OwnerMixin):
         self.save()
 
     @classmethod
-    def get_star_charts_observations(cls, course_id, date_from, date_to, tags):
+    def get_observations(cls, course_id, date_from, date_to, tags):
         observations = Observation.objects \
             .prefetch_related('students') \
             .prefetch_related('constructs') \
@@ -245,8 +247,7 @@ class Observation(TimeStampedModel, OwnerMixin):
             observations = observations.filter(observation_date__lte=date_to)
 
         if tags:
-            tag_ids = [tag.id for tag in tags]
-            observations = observations.filter(tags__in=tag_ids)
+            observations = observations.filter(tags__in=tags)
 
         return observations
 
@@ -315,6 +316,18 @@ class Observation(TimeStampedModel, OwnerMixin):
                 star_chart_4[construct][sublevel].append(observation)
 
         return star_chart_4
+
+    @staticmethod
+    def get_time_observations(observations, time_window):
+        if time_window:
+            if time_window == WEEK_4:
+                time_window = 4
+
+            time_window = datetime.date.today() - datetime.timedelta(weeks=int(time_window))
+        else:
+            time_window = datetime.date.today() - datetime.timedelta(weeks=1)
+
+        return observations.filter(observation_date__gte=time_window)
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
@@ -419,10 +432,7 @@ class LearningConstructSublevel(TimeStampedModel):
         is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
         """
         if not observation_count:
-            return self.COLORS_DARK["0"]
-
-        if observation_count == all_observations:
-            return self.COLORS_DARK["10"]
+            return self.COLORS_DARK['0']
 
         percent_usage = 100 * observation_count / all_observations
 

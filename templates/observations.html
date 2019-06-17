@@ -291,21 +291,17 @@
         if (chart_id == "chart_v3") {
           $("#construct-row").removeClass('d-none');
           $("#time-window-row").addClass('d-none');
-          $('#date-from-row').removeClass('d-none');
-          $('#date-to-row').removeClass('d-none');
+          $('.date-class').removeClass('d-none');
 
           initSelect2();
           loadAllowedConstructs();
         } else if (chart_id === "chart_v4") {
           $("#construct-row").addClass('d-none');
           $("#time-window-row").removeClass('d-none');
-          $('#date-from-row').addClass('d-none');
-          $('#date-to-row').addClass('d-none');
+          $('.date-class').addClass('d-none');
         } else {
-          $("#construct-row").addClass('d-none');
-          $("#time-window-row").addClass('d-none');
-          $('#date-from-row').removeClass('d-none');
-          $('#date-to-row').removeClass('d-none');
+          $(".swapping").addClass('d-none');
+          $('.date-class').removeClass('d-none');
         }
       });
 

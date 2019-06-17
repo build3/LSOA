@@ -27,9 +27,6 @@ def get_color_for_sublevel(obj, observations):
 
 @register.simple_tag(takes_context=True)
 def get_color_star_chart_4(context, sublevel, level_observations, construct):
-    all_observations = 0
-
-    for sublevel, observations in context['star_chart_4'][construct].items():
-        all_observations += len(observations)
-
+    all_observations = sum([len(observations)
+        for sublevel, observations in context['star_chart_4'][construct].items()])
     return sublevel.get_color_dark(len(level_observations), all_observations)
