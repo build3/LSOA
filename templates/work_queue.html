@@ -1,0 +1,39 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% block content %}
+<div>
+    <h1 class="text-center mb-3 mt-3">Work queue</h1>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr class="text-center">
+                <th class="align-middle">Observation number</th>
+                <th class="align-middle">Name</th>
+                <th class="align-middle">Date</th>
+                <th class="align-middle">Selected students</th>
+                <th class="align-middle">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for observation in object_list %}
+                <tr class="text-center">
+                    <td class="align-middle">{{ observation.pk }}</td>
+                    <td class="align-middle">{{ observation.name }}</td>
+                    <td class="align-middle">{{ observation.observation_date }}</td>
+                    <td class="align-middle">{{ observation.students.all|join:", " }}</td>
+                    <td class="align-middle">
+                        <a href="{% url 'observation_detail_view' pk=observation.pk %}">
+                            <button class="btn btn-primary">Edit</button>
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No observations in work queue</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% include 'pagination.html' with page_obj=page_obj %}
+</div>
+{% endblock %}
