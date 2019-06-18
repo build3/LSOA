@@ -1009,4 +1009,7 @@ class WorkQueue(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Observation.objects.filter(owner=self.request.user, constructs=None)
+        return Observation.objects \
+            .prefetch_related('students') \
+            .filter(owner=self.request.user, constructs=None)
+            
