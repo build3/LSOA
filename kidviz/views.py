@@ -26,6 +26,7 @@ from django.views.generic import FormView, View, TemplateView, UpdateView, \
 from related_select.views import RelatedSelectView
 from tablib import Dataset
 
+from kidviz.choices import TIME_WINDOW_CHOICES, WEEK_1
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
     DateFilteringForm, DraftObservationForm
@@ -464,7 +465,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def selected_chart(self):
         get = self.request.GET or {}
-        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3', 'chart_v1_vertical', 'heat_map']
+        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3',
+            'chart_v1_vertical', 'heat_map', 'chart_v4']
         for key in chart_keys:
             if key in get:
                 return key
@@ -473,25 +475,20 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         course_id = kwargs.get('course_id')
-
-        date_filtering_form = DateFilteringForm(self.request.GET, initial={
-            'course': self.request.GET.get('course', None),
-            'date_from': self.request.GET.get('date_from', None),
-            'date_to': self.request.GET.get('date_to', None),
-            'constructs': self.request.GET.get('constructs', None),
-            'tags': self.request.GET.get('tags', None) 
-        })
+        date_filtering_form = self._init_filter_form(self.request.GET)
 
         date_from = None
         date_to = None
         selected_constructs = None
         tags = None
+        time_window = WEEK_1
 
         if date_filtering_form.is_valid():
             date_from = date_filtering_form.cleaned_data['date_from']
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
+            time_window = date_filtering_form.cleaned_data['time_window'] or WEEK_1
             courses = date_filtering_form.cleaned_data['courses']
 
             # If there aren't any query params use default course.
@@ -501,62 +498,30 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 else:
                     course_id = None
 
-        observations = Observation.objects \
-            .prefetch_related('students') \
-            .prefetch_related('constructs') \
-            .prefetch_related('tags') \
-            .prefetch_related('constructs__level') \
-            .prefetch_related('constructs__level__construct') \
-            .all()
-
-        if course_id:
-            observations = observations.filter(course__in=course_id)
-
-        if date_from:
-            observations = observations.filter(observation_date__gte=date_from)
-
-        if date_to:
-            observations = observations.filter(observation_date__lte=date_to)
-
-        if tags:
-            tag_ids = [tag.id for tag in tags]
-            observations = observations.filter(tags__in=tag_ids)
+        observations = Observation.get_observations(
+            course_id, date_from, date_to, tags)
+        time_observations = Observation.get_time_observations(observations, time_window)
 
         constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
-        all_students = Student.objects.filter(status=Student.ACTIVE)
-
-        if course_id:
-            all_students = all_students.filter(course__in=course_id)
+        all_students = Student.get_students_by_course(course_id)
 
         star_matrix = {}
         dot_matrix = {}
         observation_without_construct = {}
+        star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, course_id)
+
         for construct in constructs:
             star_matrix[construct] = {}
             dot_matrix[construct] = {}
+
             for student in all_students:
                 star_matrix[construct][student] = {}
                 observation_without_construct[student] = []
+
                 for level in construct.levels.all():
                     for sublevel in level.sublevels.all():
                         star_matrix[construct][student][sublevel] = []
                         dot_matrix[construct][sublevel] = []
-
-        star_matrix_by_class = {}
-
-        for construct in constructs:
-            star_matrix_by_class[construct] = {}
-
-            for course in course_id:
-                course_object = Course.objects.get(id=course)
-                star_matrix_by_class[construct][course_object] = {}
-                
-                for student in course_object.students.all():
-                    star_matrix_by_class[construct][course_object][student] = {}
-                        
-                    for level in construct.levels.all():
-                        for sublevel in level.sublevels.all():
-                            star_matrix_by_class[construct][course_object][student][sublevel] = []
 
         for observation in observations:
             students = observation.students.all()
@@ -574,27 +539,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                     dot_matrix[construct][sublevel].append(observation)
                     star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
-        star_matrix_vertical = {}
-
-        # I had to divide it into two for loops because there was a bug which added new observation
-        # for student in star_matrix.
-        for construct in star_matrix:
-            star_matrix_vertical[construct] = {}
-
-            for student in star_matrix[construct]:
-                for level in construct.levels.all():
-                    for sublevel in level.sublevels.all():
-                        # Set is used here to remove same observations from collection.
-                        star_matrix_vertical[construct][sublevel] = set()
-
-        for construct in star_matrix:
-            for student in star_matrix[construct]:
-                for level in construct.levels.all():
-                    for sublevel in level.sublevels.all():
-                        # Join sets to remove same observations.
-                        star_matrix_vertical[construct][sublevel] \
-                            .update(set(star_matrix[construct][student][sublevel]))
-
         data = super().get_context_data(**kwargs)
         data.update({
             'star_matrix': star_matrix,
@@ -606,10 +550,26 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'course_id': course_id,
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart(),
-            'star_matrix_vertical': star_matrix_vertical,
-            'star_matrix_by_class': star_matrix_by_class
+            'star_matrix_vertical': Observation.get_vertical_stars(star_matrix),
+            'star_matrix_by_class': star_matrix_by_class,
+            'star_chart_4': Observation.create_star_chart_4(
+                time_observations, all_students, constructs),
+            'time_observations_count': time_observations.count(),
+            'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
+            'time_window_display': dict(
+                    date_filtering_form.fields['time_window'].choices)[time_window]
         })
         return data
+
+    def _init_filter_form(self, GET_DATA):
+        return DateFilteringForm(GET_DATA, initial={
+            'course': GET_DATA.get('course', None),
+            'date_from': GET_DATA.get('date_from', None),
+            'date_to': GET_DATA.get('date_to', None),
+            'constructs': GET_DATA.get('constructs', None),
+            'tags': GET_DATA.get('tags', None),
+            'time_window': GET_DATA.get('time_window', None)
+        })
 
 
 class TeacherObservationView(LoginRequiredMixin, TemplateView):

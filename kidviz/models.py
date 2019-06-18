@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from uuid import uuid4
@@ -11,6 +12,8 @@ from django_extensions.db.models import TimeStampedModel
 from tinymce.models import HTMLField
 
 from utils.ownership import OwnerMixin, OptionalOwnerMixin
+
+from kidviz.choices import WEEK_1, WEEK_4
 
 
 @deconstructible
@@ -114,6 +117,15 @@ class Student(TimeStampedModel):
 
         return new_student
 
+    @classmethod
+    def get_students_by_course(cls, course_id):
+        all_students = Student.objects.filter(status=Student.ACTIVE)
+
+        if course_id:
+            all_students = all_students.filter(course__in=course_id)
+
+        return all_students
+
 
 class StudentGroup(TimeStampedModel):
     """
@@ -215,6 +227,123 @@ class Observation(TimeStampedModel, OwnerMixin):
         self.original_image = None
         self.save()
 
+    @classmethod
+    def get_observations(cls, course_id, date_from, date_to, tags):
+        observations = Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs') \
+            .prefetch_related('tags') \
+            .prefetch_related('constructs__level') \
+            .prefetch_related('constructs__level__construct') \
+            .all()
+
+        if course_id:
+            observations = observations.filter(course__in=course_id)
+
+        if date_from:
+            observations = observations.filter(observation_date__gte=date_from)
+
+        if date_to:
+            observations = observations.filter(observation_date__lte=date_to)
+
+        if tags:
+            observations = observations.filter(tags__in=tags)
+
+        return observations
+
+    @classmethod
+    def get_vertical_stars(cls, star_matrix):
+        star_matrix_vertical = {}
+
+        # I had to divide it into two for loops because there was a bug which added new observation
+        # for student in star_matrix.
+        for construct in star_matrix:
+            star_matrix_vertical[construct] = {}
+
+            for student in star_matrix[construct]:
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        # Set is used here to remove same observations from collection.
+                        star_matrix_vertical[construct][sublevel] = set()
+
+        for construct in star_matrix:
+            for student in star_matrix[construct]:
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        # Join sets to remove same observations.
+                        star_matrix_vertical[construct][sublevel] \
+                            .update(set(star_matrix[construct][student][sublevel]))
+
+        return star_matrix_vertical
+
+    @classmethod
+    def initialize_star_matrix_by_class(cls, constructs, course_id):
+        star_matrix_by_class = {}
+
+        for construct in constructs:
+            star_matrix_by_class[construct] = {}
+
+            for course in course_id:
+                course_object = Course.objects.get(id=course)
+                star_matrix_by_class[construct][course_object] = {}
+                
+                for student in course_object.students.all():
+                    star_matrix_by_class[construct][course_object][student] = {}
+                        
+                    for level in construct.levels.all():
+                        for sublevel in level.sublevels.all():
+                            star_matrix_by_class[construct][course_object][student][sublevel] = []
+
+        return star_matrix_by_class
+
+    @classmethod
+    def create_star_chart_4(cls, time_observations, all_students, constructs):
+        star_chart_4 = {}
+
+        for construct in constructs:
+            star_chart_4[construct] = {}
+
+            for student in all_students:
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        star_chart_4[construct][sublevel] = []
+
+        for observation in time_observations:
+            sublevels = observation.constructs.all()
+
+            for sublevel in sublevels:
+                construct = sublevel.level.construct
+                star_chart_4[construct][sublevel].append(observation)
+
+        return star_chart_4
+
+    @staticmethod
+    def get_time_observations(observations, time_window):
+        time_window = time_window or WEEK_1
+        time_window = datetime.date.today() - datetime.timedelta(
+            weeks=Observation._map_key_to_week(time_window))
+        return observations.filter(observation_date__gte=time_window)
+
+    @staticmethod
+    def _map_key_to_week(time_window):
+        """
+        Args:
+            time_window(str): Value from slider.
+
+        Returns:
+            int - number of weeks used to lookup observations.
+
+        For now keys for possible keys for time_window are "1" "2" and "3"
+        and there are 3 options "1 week", "2 weeks" and "4 weeks".
+        Unluckly we have to use a slider as widget to choose number of weeks
+        and there is no way to set specific values to slider
+        so we have to map 3 to 4 weeks.
+        """
+        if time_window == WEEK_4:
+            return 4
+        else:
+            return int(time_window)
+
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
         return _display
@@ -270,6 +399,21 @@ class LearningConstructSublevel(TimeStampedModel):
         "TEN_AND_MORE": "#0000FF"
     }
 
+    COLORS_DARK = {
+        "0": "#FFFFFF",  # == 0%
+        "LESS_THEN_10": "#E6E6E6", # < 10%
+        "1": "#CCCCCC", # < 20%
+        "2": "#B3B3B3", # < 30%
+        "3": "#999999", # < 40%
+        "4": "#808080", # < 50%
+        "5": "#666666", # < 60%
+        "6": "#4D4D4D", # < 70%
+        "7": "#333333", # < 80%
+ 		"8": "#1A1A1A", # < 90%
+        "9": "#0D0D0D", # < 100%
+        "10": "#000000" # == 100%
+    }
+
     def short_name(self):
         try:
             return '{}'.format(self.name.split()[1])
@@ -291,6 +435,26 @@ class LearningConstructSublevel(TimeStampedModel):
             return self.COLORS["LESS_THAN_TEN"]
         else:
             return self.COLORS["TEN_AND_MORE"]
+
+    def get_color_dark(self, observation_count, all_observations):
+        """
+        Calculates new color for merged level. To get new color for level
+        new percent value is calculated. When `observation_count` is 0 color for 0% is used.
+        When `observation_count` is equal to `all_observations` which are inside
+        table then color with `10` key is returned. If new `percent_value` is
+        less than 10% `LESS_THEN_10` key is used. Otherwise color is taken from
+        the first digit from new `percent_value`. For example when `percent_value`
+        is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
+        """
+        if not observation_count:
+            return self.COLORS_DARK['0']
+
+        percent_usage = 100 * observation_count / all_observations
+
+        if percent_usage < 10:
+            return self.COLORS_DARK["LESS_THEN_10"]
+        else:
+            return self.COLORS_DARK[str(percent_usage)[:1]]
 
     def __str__(self):
         return '{}'.format(self.name)
