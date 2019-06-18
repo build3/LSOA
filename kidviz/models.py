@@ -170,8 +170,8 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     course = models.ForeignKey('kidviz.Course', blank=True, null=True, on_delete=models.PROTECT)
     grouping = models.ForeignKey('kidviz.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
-    construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
-    tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
+    construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=list)
+    tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=list)
 
     # since focus is assigned per-observation, ih has to be stored here and not on the tag's side
     curricular_focus = models.CharField(max_length=255, blank=True, null=True)
