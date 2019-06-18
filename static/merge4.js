@@ -149,12 +149,7 @@
         for (var i = 0; i < stars.length; i++) {
             amount += [...Array(stars[0].length).keys()].reduce((acc, val) => {
                 const observations = $(stars[i][val]).data('stars');
-
-                if (observations) {
-                    acc += observations
-                }
-
-                return acc;
+                return acc += observations === undefined ? 0 : observations;
             }, 0)
         }
 
@@ -175,11 +170,7 @@
                 const observations = $(stars[i][j]).data('stars');
                 const color = $(stars[i][j]).data('color');
 
-                if (observations) {
-                    star_amount[i].observations = observations;
-                } else {
-                    star_amount[i].observations = 0;
-                }
+                star_amount[i].observations = observations === undefined ? 0 : observations;
 
                 if (color) {
                     star_amount[i].color = color;

@@ -488,11 +488,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
-            time_window = date_filtering_form.cleaned_data['time_window']
+            time_window = date_filtering_form.cleaned_data['time_window'] or WEEK_1
             courses = date_filtering_form.cleaned_data['courses']
-
-            if not time_window:
-                time_window = WEEK_1
 
             # If there aren't any query params use default course.
             if self.request.GET:

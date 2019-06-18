@@ -13,7 +13,7 @@ from tinymce.models import HTMLField
 
 from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
-from kidviz.choices import *
+from kidviz.choices import WEEK_1, WEEK_4
 
 
 @deconstructible
@@ -319,15 +319,30 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     @staticmethod
     def get_time_observations(observations, time_window):
-        if time_window:
-            if time_window == WEEK_4:
-                time_window = 4
-
-            time_window = datetime.date.today() - datetime.timedelta(weeks=int(time_window))
-        else:
-            time_window = datetime.date.today() - datetime.timedelta(weeks=1)
-
+        time_window = time_window or WEEK_1
+        time_window = datetime.date.today() - datetime.timedelta(
+            weeks=Observation._map_key_to_week(time_window))
         return observations.filter(observation_date__gte=time_window)
+
+    @staticmethod
+    def _map_key_to_week(time_window):
+        """
+        Args:
+            time_window(str): Value from slider.
+
+        Returns:
+            int - number of weeks used to lookup observations.
+
+        For now keys for possible keys for time_window are "1" "2" and "3"
+        and there are 3 options "1 week", "2 weeks" and "4 weeks".
+        Unluckly we have to use a slider as widget to choose number of weeks
+        and there is no way to set specific values to slider
+        so we have to map 3 to 4 weeks.
+        """
+        if time_window == WEEK_4:
+            return 4
+        else:
+            return int(time_window)
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
