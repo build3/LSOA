@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^observations-teachers/$', kidviz.views.TeacherObservationView.as_view(), name='observations_teachers'),
     url(r'^observations-teachers/(?P<course_id>\d+)/$', kidviz.views.TeacherObservationView.as_view(),
         name='observations_teachers_specific'),
+    url(r'^observations-work-queue/$', kidviz.views.WorkQueue.as_view(), name='work-queue'),
 
     # pending/approved/denied users (for admins only)
     url(r'^users/', include('users.urls')),

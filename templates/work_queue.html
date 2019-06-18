@@ -1,0 +1,83 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% block content %}
+<div>
+    <h1 class="text-center mb-3 mt-3">Work queue</h1>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr class="text-center">
+                <th class="align-middle">Observation number</th>
+                <th class="align-middle">Name</th>
+                <th class="align-middle">Date</th>
+                <th class="align-middle">Selected students</th>
+                <th class="align-middle">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for observation in object_list %}
+                <tr class="text-center">
+                    <td class="align-middle">{{ observation.pk }}</td>
+                    <td class="align-middle">{{ observation.name }}</td>
+                    <td class="align-middle">{{ observation.observation_date }}</td>
+                    <td class="align-middle">{{ observation.students.all|join:", " }}</td>
+                    <td class="align-middle">
+                        <a href="{% url 'observation_detail_view' pk=observation.pk %}">
+                            <button class="btn btn-primary">Edit</button>
+                        </a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5">No observations in work queue</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+        <div class="d-flex justify-content-center">
+            <ul class="pagination mt-4">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a href="?page={{ page_obj.previous_page_number }}"
+                            class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo;</span>
+                    </li>
+                {% endif %}
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ i }} <span class="sr-only">(current)</span>
+                            </span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a href="?page={{ page_obj.next_page_number }}"
+                            class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&raquo;</span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

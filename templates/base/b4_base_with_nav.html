@@ -21,6 +21,10 @@
           </li>
         {% endif %}
 
+        <li class="nav-item {% active_link 'work-queue' %}">
+          <a class="nav-link" href="{% url 'work-queue' %}">Work queue</a>
+        </li>
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle"
              href="#"

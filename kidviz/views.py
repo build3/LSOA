@@ -196,7 +196,11 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 draft_observation.update_draft_media(original_image, video)
 
             if request.POST.get('is_draft', None) == 'True':
-                form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+                if request.session.get('create_new', None):
+                    form = DraftObservationForm(request.POST, request.FILES)
+                else:
+                    form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+
                 form.is_valid()
 
                 # Not doing commit=False to save manyToMany relations.
@@ -997,3 +1001,12 @@ class DismissDraft(LoginRequiredMixin, View):
 
         messages.add_message(self.request, messages.SUCCESS, 'Draft Dismissed.')
         return HttpResponseRedirect(reverse_lazy('observation_view'))
+
+
+class WorkQueue(LoginRequiredMixin, ListView):
+    """View used to display work queue."""
+    template_name = 'work_queue.html'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return Observation.objects.filter(owner=self.request.user, constructs=None)
