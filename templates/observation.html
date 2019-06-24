@@ -122,7 +122,7 @@
             <span class="disa">Clear</span> Drawing</a>
           <a id="drawing-color-button" class="disabled btn btn-primary mb-0 text-white">Change Color <span
             id="drawing-color"></span></a>
-          <a>
+          <a id="erase-drawing" class="btn btn-primary mb-0 text-white">Erase Drawing</a>
           <div class="dropdown show" style="padding-top: 2px">
             <a id="brush-size-button"
                class="btn btn-primary mb-0 text-white"
@@ -752,6 +752,12 @@
         selection: false
       });
 
+      $('#erase-drawing').click(function() {
+        hideStage();
+        stage.clear();
+        updateAnnotationJson();
+      })
+
       var index = parseInt(Math.random() * 100);
       var colors = [
         "#1abc9c", "#2ecc71",
@@ -846,6 +852,7 @@
             stage.setHeight($image.height());
             stage.setWidth($image.width());
 
+            $('#erase-drawing').hide();
           }
           else if (enableDisableDraw.classList.contains('disa')) {
             // Disable drawing
@@ -853,6 +860,8 @@
             enableDisableDraw.classList.remove('disa');
             drawingColorButton.classList.add('disabled');
             stage.clear();
+
+            $('#erase-drawing').show();
           }
           updateAnnotationJson();
           stage.isDrawingMode = !stage.isDrawingMode;
