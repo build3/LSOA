@@ -762,6 +762,8 @@
       ];
 
       var image = document.getElementById('image');
+      // This is needed always call setUpEasel when image is loaded.
+      image.src = image.src
       image.onload = setUpEasel;
 
       function setUpEasel() {
