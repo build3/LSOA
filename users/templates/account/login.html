@@ -2,6 +2,10 @@
 
 {% load static bootstrap4 %}
 
+{% block extrastyles %}
+<link href="{% static 'login.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
   <form class="form-horizontal" role="form" action="{% url 'account_login' %}" method="POST">
     <div class="row mt-5">
@@ -9,6 +13,11 @@
         <h2>{% block title %}Sign In{% endblock %}</h2>
         <hr>
       </div>
+    </div>
+    <div class="col-md-6 offset-md-3">
+      {% if form.non_field_errors %}
+        {% bootstrap_form_errors form %}
+      {% endif %}
     </div>
     <div class="row">
       <div class="col-md-6 offset-md-3">
@@ -21,12 +30,20 @@
     </div>
     <div class="row">
       <div class="col-md-6 offset-md-3">
-        {% bootstrap_field form.login %}
+        {% if form.non_field_errors %}
+          {% bootstrap_field form.login bound_css_class="is-invalid" %}
+        {% else %}
+          {% bootstrap_field form.login %}
+        {% endif %}
       </div>
     </div>
     <div class="row">
       <div class="col-md-6 offset-md-3">
-        {% bootstrap_field form.password %}
+        {% if form.non_field_errors %}
+          {% bootstrap_field form.password bound_css_class="is-invalid" %}
+        {% else %}
+          {% bootstrap_field form.password %}
+        {% endif %}
       </div>
     </div>
     <div class="row">
