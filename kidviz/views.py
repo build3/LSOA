@@ -510,13 +510,12 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         all_students = Student.get_students_by_course(course_id)
 
         star_matrix = {}
-        dot_matrix = {}
+        dot_matrix = Observation.initialize_dot_matrix_by_class(constructs, course_id)
         observation_without_construct = {}
         star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, course_id)
 
         for construct in constructs:
             star_matrix[construct] = {}
-            dot_matrix[construct] = {}
 
             for student in all_students:
                 star_matrix[construct][student] = {}
@@ -525,7 +524,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 for level in construct.levels.all():
                     for sublevel in level.sublevels.all():
                         star_matrix[construct][student][sublevel] = []
-                        dot_matrix[construct][sublevel] = []
 
         for observation in observations:
             students = observation.students.all()
@@ -540,8 +538,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 for sublevel in sublevels:
                     construct = sublevel.level.construct
                     star_matrix[construct][student][sublevel].append(observation)
-                    dot_matrix[construct][sublevel].append(observation)
-                    star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
+
+                    if observation.course:
+                        dot_matrix[construct][observation.course][sublevel].append(observation)
+                        star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
         data = super().get_context_data(**kwargs)
         data.update({
