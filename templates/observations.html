@@ -290,7 +290,10 @@
       $('.nav-link').on('click', function (e) {
         var chart_href = $(this).attr('href');
         var chart_id = chart_href.substr(1);
-        $('#filtering-submit').attr('name', chart_id);
+
+        if (chart_href !== "#") {
+          $('#filtering-submit').attr('name', chart_id);
+        }
         
         if (chart_id == "chart_v3") {
           $("#construct-row").removeClass('d-none');
