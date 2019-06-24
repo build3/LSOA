@@ -39,7 +39,7 @@
         <tbody>
             {% for class, students in classes.items %}
                 {% for student, sublevels in students.items %}
-                    {% if forloop.last%}
+                    {% if forloop.last %}
                         <tr class="construct-{{ construct.id }}">
                             <th scope="col" style="border-bottom: 3pt solid black;">
                               <button id="class-merge-{{ class.id }}-{{ construct.id }}" type="button"
