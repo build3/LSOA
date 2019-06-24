@@ -772,7 +772,7 @@
       }
 
       function drawAnnotation() {
-        var ctx = JSON.parse("{{ form.annotation_data.value|default_if_none:'{}' }}".replace(/&quot;/g,'"'));
+        var ctx = JSON.parse(("{{ form.annotation_data.value|escapejs }}" || "{}"));
         var height = $('#image').height();
         var originalHeight = parseFloat(ctx['originalHeight']);
         if (isNaN(originalHeight)) {
