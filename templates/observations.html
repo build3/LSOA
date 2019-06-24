@@ -128,7 +128,7 @@
       initSelect2();
       loadAllowedConstructs();
       $('.datepicker').datepicker({
-          uiLibrary: 'bootstrap4'
+          uiLibrary: 'bootstrap4',
       });
 
       $('#filtering-submit').prop('disabled', true)
@@ -137,9 +137,7 @@
         $('#filtering-submit').removeAttr('disabled');
       });
 
-      $('.datepicker').focus(function() {
-        $(this).blur();
-      })
+      $('.datepicker').prop('readonly', true);
     });
 
     function registerUpdateConstructsListener(id) {
