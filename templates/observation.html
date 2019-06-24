@@ -713,8 +713,9 @@
         $("#image").attr("src", '{% if object.original_image %}{{ object.original_image.url|safe }}{% endif %}').show();
         $("#recorded").hide();
         $("#buttons-capture").hide();
-        $("#buttons-draw-or-reset").hide(); // TODO show this and show previous annotation with ability to edit it
+        $("#buttons-draw-or-reset").show(); // TODO show this and show previous annotation with ability to edit it
         window.media_updated = true
+        enableDisableDraw.classList.remove('disabled');
       }
 
       if ("{% if object.video %}{{ object.video.url }}{% endif %}") {
@@ -723,9 +724,10 @@
         $("#image").hide();
         $("#id_original_image").val('');
         $("#buttons-capture").hide();
-        $("#buttons-draw-or-reset").hide();
+        $("#buttons-draw-or-reset").show();
         window.media_updated = true
         setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
+        enableDisableDraw.classList.remove('disabled');
       }
 
 
