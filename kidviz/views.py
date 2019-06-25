@@ -1013,3 +1013,9 @@ class WorkQueue(LoginRequiredMixin, ListView):
             .prefetch_related('students') \
             .filter(owner=self.request.user, constructs=None)
             
+
+class RemoveDraft(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        Observation.objects.filter(pk=pk, is_draft=True, owner=request.user).delete()
+        messages.add_message(self.request, messages.SUCCESS, 'Draft removed.')
+        return HttpResponseRedirect(reverse_lazy('work-queue'))

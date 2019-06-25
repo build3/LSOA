@@ -21,9 +21,20 @@
                     <td class="align-middle">{{ observation.observation_date }}</td>
                     <td class="align-middle">{{ observation.students.all|join:", " }}</td>
                     <td class="align-middle">
-                        <a href="{% url 'observation_detail_view' pk=observation.pk %}">
-                            <button class="btn btn-primary">Edit</button>
-                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'observation_detail_view' pk=observation.pk %}">
+                                <button class="btn btn-primary">Edit</button>
+                            </a>
+
+                            {% if observation.is_draft %}
+                                <form method="POST" action="{% url "remove-draft" pk=observation.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary ml-2">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
             {% empty %}
