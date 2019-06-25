@@ -277,13 +277,17 @@ class Observation(TimeStampedModel, OwnerMixin):
         return star_matrix_vertical
 
     @classmethod
-    def initialize_star_matrix_by_class(cls, constructs, course_id):
+    def initialize_star_matrix_by_class(cls, constructs, course_ids):
         star_matrix_by_class = {}
+
+        # Use all courses when none specified.
+        if not course_ids:
+            course_ids = Course.objects.all().values_list('id', flat=True)
 
         for construct in constructs:
             star_matrix_by_class[construct] = {}
 
-            for course in course_id:
+            for course in course_ids:
                 course_object = Course.objects.get(id=course)
                 star_matrix_by_class[construct][course_object] = {}
                 
@@ -295,6 +299,27 @@ class Observation(TimeStampedModel, OwnerMixin):
                             star_matrix_by_class[construct][course_object][student][sublevel] = []
 
         return star_matrix_by_class
+
+    @classmethod
+    def initialize_dot_matrix_by_class(cls, constructs, course_ids):
+        dot_matrix = {}
+
+        # Use all courses when none specified.
+        if not course_ids:
+            course_ids = Course.objects.all().values_list('id', flat=True)
+
+        for construct in constructs:
+            dot_matrix[construct] = {}
+
+            for course in course_ids:
+                course_object = Course.objects.get(id=course)
+                dot_matrix[construct][course_object] = {}
+
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        dot_matrix[construct][course_object][sublevel] = []
+
+        return dot_matrix
 
     @classmethod
     def create_star_chart_4(cls, time_observations, all_students, constructs):

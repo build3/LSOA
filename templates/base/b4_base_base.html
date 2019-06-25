@@ -16,6 +16,7 @@
   <link href="{% static 'vendor/common/css/common.css' %}" rel="stylesheet">
   <link href="{% static 'base.css' %}" rel="stylesheet">
   {% block extrastyles %}{% endblock %}
+  <script src="https://cdn.ravenjs.com/3.26.4/raven.min.js" crossorigin="anonymous"></script>
   <script>Raven.config('{% sentry_public_dsn %}').install()</script>
   <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
 </head>

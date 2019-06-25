@@ -5,60 +5,7 @@
 
 {% block extrastyles %}
   <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
-  <style>
-    [role="tooltip"] {
-      z-index: 9999999;
-    }
-
-    table, .ios .page {
-      background-color: #fff !important;
-    }
-
-    .modal.show {
-      z-index: 5010;
-    }
-
-    [data-modal-launch-observations] {
-      cursor: pointer;
-    }
-
-    [data-modal-launch-observations] i {
-      color: goldenrod;
-    }
-
-    [data-modal-launch-observations]:hover i {
-      color: darkgoldenrod;
-    }
-
-    .star-number {
-      font-size: 12px;
-    }
-
-    .dot {
-      height: 25px;
-      width: 25px;
-      background-color: #f2a287;
-      border-radius: 50%;
-      display: inline-block;
-      margin: 3px auto;
-    }
-
-    .dot:hover {
-      background-color: #cb6634;
-    }
-
-    /*
-     * Height of date input is broken if there is no value. It have been
-     * solved in higher version of bootstrap.
-     */
-    input[type="date"] {
-	     height: 2.375rem;
-    }
-
-    .thicker {
-      border-bottom: 3pt solid black;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'observations.css' %}">
 {% endblock %}
 
 {% block extrascripts %}
