@@ -1019,3 +1019,9 @@ class RemoveDraft(LoginRequiredMixin, View):
         Observation.objects.filter(pk=pk, is_draft=True, owner=request.user).delete()
         messages.add_message(self.request, messages.SUCCESS, 'Draft removed.')
         return HttpResponseRedirect(reverse_lazy('work-queue'))
+
+
+class StartNewObservation(LoginRequiredMixin, View):
+    def get(self, request):
+        self.request.session['create_new'] = True
+        return HttpResponseRedirect(reverse_lazy('observation_view'))
