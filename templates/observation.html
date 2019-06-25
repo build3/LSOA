@@ -414,6 +414,24 @@
 
   <script>
     $(document).ready(function () {
+      var formChanged = false;
+
+      $('#form :input').on('change input', function() {
+        formChanged = true;
+      });
+
+      $('.nav-link').click(function() {
+        if (formChanged && !$(this).hasClass('not-confirm')) {
+          return confirm("You didn't save this observation. Do you want to continue.")
+        }
+      })
+
+      $('.chart-item').click(function() {
+        if (formChanged) {
+          return confirm("You didn't save this observation. Do you want to continue.")
+        }
+      })
+
       $('#cancel').click(function() {
         window.history.back()
       })
@@ -601,22 +619,27 @@
       $('.construct').on('click', function (e) {
         toggleConstruct($(this).data('construct-id'));
         $('#sublevel-description').html($(this).find('.sublevel-desc').html());
+        formChanged = true;
       });
 
       $('#id_no_constructs').on('click', function (e) {
-        handleConstructsSelection()
+        handleConstructsSelection();
+        formChanged = true;
       })
 
       $('.student').on('click', function (e) {
         toggleStudent($(this).data('student-id'));
+        formChanged = true;
       });
 
       $('.tag').on('click', function (e) {
         toggleTags($(this).data('tag-id'));
+        formChanged = true;
       });
 
       $('#curricularFocusInput').change(function() {
         $('#id_curricular_focus').val($(this).val());
+        formChanged = true;
       });
 
       // INITIALIZE STUDENTS/CONSTRUCTS IF "View/Edit Observation" PAGE
@@ -806,6 +829,7 @@
 
       function updateAnnotationJson() {
         annotationInput.value = getEaselData();
+        formChanged = true;
       }
 
       function hideStage() {
