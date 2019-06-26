@@ -36,13 +36,15 @@
     });
 
     // Set start value to min date available in slider.
-    $('#slider-value').html(`Current date: ${formatDate($('#date-slider').slider("option", "min"))}`);
+    $('#slider-value').html(`Observations from: ${formatDate($('#date-slider').slider("option", "min"))}
+        to: ${formatDate(dateToTime(window.maxDate))}`);
 
     /**
      * Changes element which displays current date. Called when moving slider.
      */
     function slide(event, ui) {
-        $("#slider-value").html(`Current date: ${(formatDate(ui.value))}`);
+        $("#slider-value").html(`Observations from: ${(formatDate(ui.value))}
+            to: ${formatDate(dateToTime(window.maxDate))}`);
     }
 
     /**
@@ -54,13 +56,10 @@
 
         var observationsFiltered = {};
         var allStars = {};
+        Object.keys(observations).forEach(construct => allStars[construct] = 0);
 
         for (var construct in observations) {
             observationsFiltered[construct] = {};
-
-            if (!allStars.hasOwnProperty(construct)) {
-                allStars[construct] = 0;
-            }
 
             for (var course in observations[construct]) {
                 observationsFiltered[construct][course] = {}
@@ -86,10 +85,8 @@
         for (var construct in observationsFiltered) {
             for (var course in observationsFiltered[construct]) {
                 for (var sublevel in observationsFiltered[construct][course]) {
-                    const color = calculateNewColor4(
-                        observationsFiltered[construct][course][sublevel].length,
-                        allStars[construct]
-                    );
+                    const size = observationsFiltered[construct][course][sublevel].length;
+                    const color = calculateNewColor(size, allStars[construct]);
 
                     let elem = $(`.star-chart-4-table-${construct}`)
                         .find(`.heat-${course}-${sublevel}`)
@@ -99,23 +96,23 @@
 
                     $(`.star-chart-4-table-${construct}`)
                         .find(`.stars-${course}-${sublevel}`)
-                        .html(observationsFiltered[construct][course][sublevel].length);
+                        .html(size);
                 }
             }
         }
     }
 
     /**
-     * Calculates new color for merged level. To get new color for level
+     * Calculates new color when value in slider change. To get new color for level
      * new percent value is calculated. When starAmount is 0 color for 0% is used.
      * When starAmount is equal to allStars which are inside table then color with `10` key is returned.
      * If new `percentValue` is less than 10% `LESS_THEN_10` key is used.
      * Otherwise color is taken from the first digit from new `percentValue`. For example when
      * `percentValue` is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
      * @param {Integer} starAmount 
-     * @param {Integer} constructId 
+     * @param {Integer} allStars 
      */
-    function calculateNewColor4(starAmount, allStars) {
+    function calculateNewColor(starAmount, allStars) {
         if (starAmount == 0) {
             return COLORS_DARK["0"];
         }

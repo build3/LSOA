@@ -36,6 +36,18 @@ class Course(TimeStampedModel, OwnerMixin):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def get_courses(cls, course_ids):
+        """
+        Creates and returns dict with courses where key is course's `id` and
+        value is a `Course` instance.
+        """
+        if not course_ids:
+            return Course.objects.prefetch_related('students').all()
+        else:
+            return Course.objects.prefetch_related('students') \
+                .filter(id__in=course_ids)
+
 
 class Student(TimeStampedModel):
     """
@@ -276,71 +288,57 @@ class Observation(TimeStampedModel, OwnerMixin):
         return star_matrix_vertical
 
     @classmethod
-    def initialize_star_matrix_by_class(cls, constructs, course_ids):
+    def initialize_star_matrix_by_class(cls, constructs, courses):
         star_matrix_by_class = {}
-
-        # Use all courses when none specified.
-        if not course_ids:
-            course_ids = Course.objects.all().values_list('id', flat=True)
 
         for construct in constructs:
             star_matrix_by_class[construct] = {}
 
-            for course in course_ids:
-                course_object = Course.objects.get(id=course)
-                star_matrix_by_class[construct][course_object] = {}
+            for course in courses:
+                star_matrix_by_class[construct][course] = {}
                 
-                for student in course_object.students.all():
-                    star_matrix_by_class[construct][course_object][student] = {}
+                for student in course.students.all():
+                    star_matrix_by_class[construct][course][student] = {}
                         
                     for level in construct.levels.all():
                         for sublevel in level.sublevels.all():
-                            star_matrix_by_class[construct][course_object][student][sublevel] = []
+                            star_matrix_by_class[construct][course][student][sublevel] = []
 
         return star_matrix_by_class
 
     @classmethod
-    def initialize_dot_matrix_by_class(cls, constructs, course_ids):
+    def initialize_dot_matrix_by_class(cls, constructs, courses):
         dot_matrix = {}
-
-        # Use all courses when none specified.
-        if not course_ids:
-            course_ids = Course.objects.all().values_list('id', flat=True)
 
         for construct in constructs:
             dot_matrix[construct] = {}
 
-            for course in course_ids:
-                course_object = Course.objects.get(id=course)
-                dot_matrix[construct][course_object] = {}
+            for course in courses:
+                dot_matrix[construct][course] = {}
 
                 for level in construct.levels.all():
                     for sublevel in level.sublevels.all():
-                        dot_matrix[construct][course_object][sublevel] = []
+                        dot_matrix[construct][course][sublevel] = []
 
         return dot_matrix
 
     @classmethod
-    def create_star_chart_4(cls, observations, constructs, course_ids):
+    def create_star_chart_4(cls, observations, constructs, courses):
         star_chart_4 = {}
         star_chart_4_dates = {}
-
-        if not course_ids:
-            course_ids = Course.objects.all().values_list('id', flat=True)
 
         for construct in constructs:
             star_chart_4[construct] = {}
             star_chart_4_dates[construct.id] = {}
 
-            for course in course_ids:
-                course_object = Course.objects.get(id=course)
-                star_chart_4[construct][course_object] = {}
-                star_chart_4_dates[construct.id][course_object.id] = {}
+            for course in courses:
+                star_chart_4[construct][course] = {}
+                star_chart_4_dates[construct.id][course.id] = {}
 
                 for level in construct.levels.all():
                     for sublevel in level.sublevels.all():
-                        star_chart_4[construct][course_object][sublevel] = []
-                        star_chart_4_dates[construct.id][course_object.id][sublevel.id] = []
+                        star_chart_4[construct][course][sublevel] = []
+                        star_chart_4_dates[construct.id][course.id][sublevel.id] = []
 
         for observation in observations:
             if observation.course:

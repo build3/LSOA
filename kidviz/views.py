@@ -504,11 +504,12 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
         all_students = Student.get_students_by_course(course_id)
+        courses = Course.get_courses(course_id)
 
         star_matrix = {}
-        dot_matrix = Observation.initialize_dot_matrix_by_class(constructs, course_id)
+        dot_matrix = Observation.initialize_dot_matrix_by_class(constructs, courses)
         observation_without_construct = {}
-        star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, course_id)
+        star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, courses)
 
         for construct in constructs:
             star_matrix[construct] = {}
@@ -540,7 +541,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                         star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
-                observations, constructs, course_id)
+                observations, constructs, courses)
 
         data = super().get_context_data(**kwargs)
         data.update({
