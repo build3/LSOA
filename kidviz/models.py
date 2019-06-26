@@ -13,8 +13,6 @@ from tinymce.models import HTMLField
 
 from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
-from kidviz.choices import WEEK_1, WEEK_4
-
 
 @deconstructible
 class UploadToPathAndRename(object):
@@ -37,6 +35,18 @@ class Course(TimeStampedModel, OwnerMixin):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_courses(cls, course_ids):
+        """
+        Creates and returns dict with courses where key is course's `id` and
+        value is a `Course` instance.
+        """
+        if not course_ids:
+            return Course.objects.prefetch_related('students').all()
+        else:
+            return Course.objects.prefetch_related('students') \
+                .filter(id__in=course_ids)
 
 
 class Student(TimeStampedModel):
@@ -235,6 +245,7 @@ class Observation(TimeStampedModel, OwnerMixin):
             .prefetch_related('tags') \
             .prefetch_related('constructs__level') \
             .prefetch_related('constructs__level__construct') \
+            .prefetch_related('course') \
             .all()
 
         if course_id:
@@ -277,97 +288,79 @@ class Observation(TimeStampedModel, OwnerMixin):
         return star_matrix_vertical
 
     @classmethod
-    def initialize_star_matrix_by_class(cls, constructs, course_ids):
+    def initialize_star_matrix_by_class(cls, constructs, courses):
         star_matrix_by_class = {}
-
-        # Use all courses when none specified.
-        if not course_ids:
-            course_ids = Course.objects.all().values_list('id', flat=True)
 
         for construct in constructs:
             star_matrix_by_class[construct] = {}
 
-            for course in course_ids:
-                course_object = Course.objects.get(id=course)
-                star_matrix_by_class[construct][course_object] = {}
+            for course in courses:
+                star_matrix_by_class[construct][course] = {}
                 
-                for student in course_object.students.all():
-                    star_matrix_by_class[construct][course_object][student] = {}
+                for student in course.students.all():
+                    star_matrix_by_class[construct][course][student] = {}
                         
                     for level in construct.levels.all():
                         for sublevel in level.sublevels.all():
-                            star_matrix_by_class[construct][course_object][student][sublevel] = []
+                            star_matrix_by_class[construct][course][student][sublevel] = []
 
         return star_matrix_by_class
 
     @classmethod
-    def initialize_dot_matrix_by_class(cls, constructs, course_ids):
+    def initialize_dot_matrix_by_class(cls, constructs, courses):
         dot_matrix = {}
-
-        # Use all courses when none specified.
-        if not course_ids:
-            course_ids = Course.objects.all().values_list('id', flat=True)
 
         for construct in constructs:
             dot_matrix[construct] = {}
 
-            for course in course_ids:
-                course_object = Course.objects.get(id=course)
-                dot_matrix[construct][course_object] = {}
+            for course in courses:
+                dot_matrix[construct][course] = {}
 
                 for level in construct.levels.all():
                     for sublevel in level.sublevels.all():
-                        dot_matrix[construct][course_object][sublevel] = []
+                        dot_matrix[construct][course][sublevel] = []
 
         return dot_matrix
 
     @classmethod
-    def create_star_chart_4(cls, time_observations, all_students, constructs):
+    def create_star_chart_4(cls, observations, constructs, courses):
         star_chart_4 = {}
+        star_chart_4_dates = {}
 
         for construct in constructs:
             star_chart_4[construct] = {}
+            star_chart_4_dates[construct.id] = {}
 
-            for student in all_students:
+            for course in courses:
+                star_chart_4[construct][course] = {}
+                star_chart_4_dates[construct.id][course.id] = {}
+
                 for level in construct.levels.all():
                     for sublevel in level.sublevels.all():
-                        star_chart_4[construct][sublevel] = []
+                        star_chart_4[construct][course][sublevel] = []
+                        star_chart_4_dates[construct.id][course.id][sublevel.id] = []
 
-        for observation in time_observations:
-            sublevels = observation.constructs.all()
+        for observation in observations:
+            if observation.course:
+                sublevels = observation.constructs.all()
 
-            for sublevel in sublevels:
-                construct = sublevel.level.construct
-                star_chart_4[construct][sublevel].append(observation)
+                for sublevel in sublevels:
+                    construct = sublevel.level.construct
+                    star_chart_4[construct][observation.course][sublevel].append(observation)
+                    star_chart_4_dates[construct.id][observation.course.id][sublevel.id].append(
+                        datetime.datetime \
+                            .combine(observation.observation_date, datetime.datetime.min.time()) \
+                            .timestamp())
 
-        return star_chart_4
+        return (star_chart_4, star_chart_4_dates)
 
-    @staticmethod
-    def get_time_observations(observations, time_window):
-        time_window = time_window or WEEK_1
-        time_window = datetime.date.today() - datetime.timedelta(
-            weeks=Observation._map_key_to_week(time_window))
-        return observations.filter(observation_date__gte=time_window)
+    @classmethod
+    def get_min_date_from_observation(cls, observations):
+        return observations.aggregate(models.Min('observation_date'))['observation_date__min']
 
-    @staticmethod
-    def _map_key_to_week(time_window):
-        """
-        Args:
-            time_window(str): Value from slider.
-
-        Returns:
-            int - number of weeks used to lookup observations.
-
-        For now keys for possible keys for time_window are "1" "2" and "3"
-        and there are 3 options "1 week", "2 weeks" and "4 weeks".
-        Unluckly we have to use a slider as widget to choose number of weeks
-        and there is no way to set specific values to slider
-        so we have to map 3 to 4 weeks.
-        """
-        if time_window == WEEK_4:
-            return 4
-        else:
-            return int(time_window)
+    @classmethod
+    def get_max_date_from_observations(cls, observations):
+        return observations.aggregate(models.Max('observation_date'))['observation_date__max']
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
@@ -473,6 +466,9 @@ class LearningConstructSublevel(TimeStampedModel):
         """
         if not observation_count:
             return self.COLORS_DARK['0']
+
+        if observation_count == all_observations:
+            return self.COLORS_DARK['10']
 
         percent_usage = 100 * observation_count / all_observations
 

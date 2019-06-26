@@ -5,7 +5,6 @@
 
 {% block extrastyles %}
   <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
-  <link rel="stylesheet" href="{% static 'slider.css' %}">
   <link rel="stylesheet" href="{% static 'observations.css' %}">
 {% endblock %}
 
@@ -245,14 +244,12 @@
         
         if (chart_id == "chart_v3") {
           $("#construct-row").removeClass('d-none');
-          $("#time-window-row").addClass('d-none');
           $('.date-class').removeClass('d-none');
 
           initSelect2();
           loadAllowedConstructs();
         } else if (chart_id === "chart_v4") {
           $("#construct-row").addClass('d-none');
-          $("#time-window-row").removeClass('d-none');
           $('.date-class').addClass('d-none');
         } else {
           $(".swapping").addClass('d-none');
@@ -268,15 +265,20 @@
       })
 
       // Select chart after refresh or back.
-      const url = window.location.href.split('/');
-      $(`#chartTab a[href="${url[url.length - 1]}"]`).tab('show');
+      let url = window.location.href.split('/');
+      url = url[url.length - 1].split('#');
+      $(`#chartTab a[href="#${url[url.length - 1]}"]`).tab('show');
       window.scrollTo(0, 0);
 
-      if (url[url.length - 1] == "#chart_v4") {
+      if (url[url.length - 1] == "chart_v4") {
         $("#construct-row").addClass('d-none');
-        $("#time-window-row").removeClass('d-none');
-        $('#date-from-row').addClass('d-none');
-        $('#date-to-row').addClass('d-none');
+        $('.date-class').addClass('d-none');
+      } else if (url[url.length - 1] == "chart_v3") {
+        $("#construct-row").removeClass('d-none');
+        $('.date-class').removeClass('d-none');
+      } else {
+        $("#construct-row").addClass('d-none');
+        $('.date-class').removeClass('d-none');
       }
 
       $('#select-all-courses').click(function() {
