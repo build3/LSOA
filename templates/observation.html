@@ -329,6 +329,10 @@
           {% else %}
             <button type="button" class="btn btn-primary btn-lg" id="cancel">Cancel</button>
           {% endif %}
+
+          <a href="{% url 'new-observation' %}"
+            class="btn btn-primary btn-lg"
+            id="new-observation">New Observation</a>
         </div>
 
 
@@ -427,6 +431,12 @@
       })
 
       $('.chart-item').click(function() {
+        if (formChanged) {
+          return confirm("You didn't save this observation. Do you want to continue.")
+        }
+      })
+
+      $('#new-observation').click(function() {
         if (formChanged) {
           return confirm("You didn't save this observation. Do you want to continue.")
         }
