@@ -8,7 +8,6 @@ from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
-from kidviz.choices import TIME_WINDOW_CHOICES
 from kidviz.models import Course, LearningConstructSublevel, ContextTag, Observation
 
 
@@ -190,7 +189,6 @@ class DateFilteringForm(forms.Form):
         queryset=Course.objects.all(),
         widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
     )
-    time_window = forms.ChoiceField(required=False, choices=TIME_WINDOW_CHOICES)
 
 
 class DraftObservationForm(ObservationForm):
