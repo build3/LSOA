@@ -3,9 +3,14 @@
  */
 
 (() => {
-    // Merged horizontal columns.
+    const COLORS_DARK = JSON.parse(window.COLORS_DARK);
+
     var horizontalStarChart4 = {};
     var startIndex = 0;
+    window.verticalStarChart = {};
+    window.mergedConstructs = [];
+
+    $('.separateVertical-4').hide();
 
     /**
      * Remake tooltips to create new tooltip after separating merged level.
@@ -366,4 +371,182 @@
 
         remakeTooltips();
     })
+
+    $('.mergeVertical-4').click(function() {
+        const construct = $(this).data('construct');
+        const constructId = construct.split('-')[1];
+        const sublevels = $(this).data('sublevels');
+
+        // Columns with courses names in table.
+        const classesColumn = 1;
+
+        // Create object which let restore removed cells later.
+        createObjectToRestore(constructId, sublevels, classesColumn);
+
+        // Initialize array with 0 for every sublevel.
+        var observationQuantity = initQuantityArray(sublevels);
+        var sublevelsIds = [];
+
+        // Calculate amount of observations per sublevel and append their ids to `sublevelIds` array.
+        for (var i in window.verticalStarChart[constructId]) {
+            for (var j in window.verticalStarChart[constructId][i].quantities) {
+                if (j != "0") {
+                    const stars = window.verticalStarChart[constructId][i].quantities[j].dataset.stars;
+                    observationQuantity[j - 1] += parseInt(stars);
+                    
+                    const sublevel = $(window.verticalStarChart[constructId][i].classes[j]).data('sublevel')
+                    sublevelsIds.push(sublevel);
+                }
+            }
+        }
+
+        // Remove cells stored in `verticalStarChart` object.
+        removeCells(constructId);
+
+        // Append rows with new values to table.
+        var tbody = $(this).parent().parent().parent().next();
+        appendNewRows(observationQuantity, sublevelsIds, tbody, constructId);
+
+        // Save construct id to lookup if it was merged or not.
+        window.mergedConstructs.push(constructId);
+        $(this).hide();
+        $(`#separateVertical-4-${constructId}`).show();
+    })
+
+    /**
+     * Creates array which allow to restore removed cells.
+     * @param {Integer} constructId 
+     * @param {Integer} sublevels - Number of sublevels in construct.
+     * @param {Integer} classesColumn - Number of columns with courses.
+     */
+    function createObjectToRestore(constructId, sublevels, classesColumn) {
+        var classes = $(`.star-chart-4-table-${constructId} .heat-row`).find('td');
+        var quantities = $(`.star-chart-4-table-${constructId} .quantity-row`).find('td');
+
+        classes = partition(classes, sublevels + classesColumn);
+        quantities = partition(quantities, sublevels + classesColumn);
+
+        [...Array(classes.length).keys()].forEach((index) => {
+            if (!window.verticalStarChart.hasOwnProperty(constructId)) {
+                window.verticalStarChart[constructId] = {}
+            }
+            
+            window.verticalStarChart[constructId][index] = {
+                'classes': classes[index],
+                'quantities': quantities[index]
+            }
+        });
+    }
+
+    function initQuantityArray(sublevels) {
+        return [...Array(sublevels).keys()].reduce((acc, number) => {
+            acc.push(0)
+            return acc;
+        }, []);
+    }
+
+    /**
+     * Remove saved cells.
+     * @param {Integer} constructId 
+     */
+    function removeCells(constructId) {
+        for (var i in window.verticalStarChart[constructId]) {
+            for (var j in window.verticalStarChart[constructId][i].quantities) {
+                $(window.verticalStarChart[constructId][i].quantities[j]).remove();
+                $(window.verticalStarChart[constructId][i].classes[j]).remove();
+            }
+        }
+    }
+
+    /**
+     * Appends new rows with td's to tbody.
+     * @param {Array} observationQuantity 
+     * @param {Array} sublevelsIds 
+     * @param {Selector} tbody 
+     * @param {Integer} constructId 
+     */
+    function appendNewRows(observationQuantity, sublevelsIds, tbody, constructId) {
+        $(tbody).find('tr').remove();
+        $(tbody).append(`<tr class="construct-${constructId} merged-row"></tr>`);
+        $(tbody).append(`<tr class="construct-${constructId} merged-row"></tr>`);
+
+        var tr = $(tbody).find('tr');
+        $(tr[0]).append('<td><b>All courses</b></td>');
+        $(tr[1]).append('<td></td>');
+
+        const allStars = [...Array(observationQuantity.length).keys()].reduce((acc, i) =>
+            acc += observationQuantity[i], 0);
+
+        for (var i = 0; i < observationQuantity.length; i++) {
+            const stars = observationQuantity[i];
+            const color = calculateNewColor(stars, allStars);
+            const id = sublevelsIds[i];
+
+            $(tr[0]).append(`<td data-csl-id="" class="text-center heat-merged-${id}"
+                data-color="${color}" bgcolor="${color}"></td>`);
+            $(tr[1]).append(`<td data-csl-id="" data-stars="${stars}"
+                class="text-center stars-merged-${id}"><span>${stars}</span></td>`);
+        }
+    }
+
+    $('.separateVertical-4').click(function() {
+        const construct = $(this).data('construct');
+        const constructId = construct.split('-')[1];
+
+        // Remove all cells from tbody.
+        var tbody = $(this).parent().parent().parent().next();
+        $(tbody).find('tr').remove();
+
+        // Create new rows, append them to tbody and then append td's to rows.
+        for (var i in window.verticalStarChart[constructId]) {
+            var heatRow = $(document.createElement('tr'))
+                .addClass(`construct-${constructId} heat-row`);
+
+            var quantityRow = $(document.createElement('tr'))
+                .addClass(`construct-${constructId} thicker quantity-row`); 
+
+            $(tbody).append(heatRow);
+            $(tbody).append(quantityRow);
+
+            for (var j in window.verticalStarChart[constructId][i].classes) {
+                $(heatRow[0]).append(window.verticalStarChart[constructId][i].classes[j])
+            }
+
+            for (var j in window.verticalStarChart[constructId][i].quantities) {
+                $(quantityRow[0]).append(window.verticalStarChart[constructId][i].quantities[j])
+            }
+        }
+
+        // Remove construct from mergedConstructs.
+        var index = window.mergedConstructs.indexOf(constructId);
+
+        if (index > -1) {
+            window.mergedConstructs.splice(index, 1);
+        }
+
+        $(this).hide();
+        $(`#mergeVertical-4-${constructId}`).show();
+    })
+
+    function partition(array, n) {
+        return array.length ? [array.splice(0, n)].concat(partition(array, n)) : [];
+    }
+
+    function calculateNewColor(starAmount, allStars) {
+        if (starAmount == 0) {
+            return COLORS_DARK["0"];
+        }
+
+        if (starAmount == allStars) {
+            return COLORS_DARK["10"];
+        }
+
+        const percentValue = 100 * starAmount / allStars;
+
+        if (percentValue < 10) {
+            return COLORS_DARK["LESS_THEN_10"]
+        } else {
+            return COLORS_DARK[percentValue.toString()[0]]
+        }
+    }
 })()
