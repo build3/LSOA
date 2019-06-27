@@ -540,8 +540,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                         dot_matrix[construct][observation.course][sublevel].append(observation)
                         star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
+        min_date = Observation.get_min_date_from_observation(observations)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
-                observations, constructs, courses)
+                observations, constructs, courses, min_date)
 
         data = super().get_context_data(**kwargs)
         data.update({
@@ -558,7 +559,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'star_matrix_by_class': star_matrix_by_class,
             'star_chart_4': star_chart_4,
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
-            'min_date': Observation.get_min_date_from_observation(observations),
+            'min_date': min_date,
             'max_date': Observation.get_max_date_from_observations(observations),
             'star_chart_4_dates': json.dumps(star_chart_4_dates)
         })

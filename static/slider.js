@@ -36,15 +36,14 @@
     });
 
     // Set start value to min date available in slider.
-    $('#slider-value').html(`Observations from: ${formatDate($('#date-slider').slider("option", "min"))}
-        to: ${formatDate(dateToTime(window.maxDate))}`);
+    $('#slider-value').html(`Observations
+        to: ${formatDate($('#date-slider').slider("option", "min"))}`);
 
     /**
      * Changes element which displays current date. Called when moving slider.
      */
     function slide(event, ui) {
-        $("#slider-value").html(`Observations from: ${(formatDate(ui.value))}
-            to: ${formatDate(dateToTime(window.maxDate))}`);
+        $("#slider-value").html(`Observations to: ${formatDate(ui.value)}`);
     }
 
     /**
@@ -52,11 +51,13 @@
      * Filters observations by current date on slider.
      */
     function change(event, ui) {
-        const timestamp = dateToTime(ui.value);
-
         var observationsFiltered = {};
         var allStars = {};
         Object.keys(observations).forEach(construct => allStars[construct] = 0);
+
+        // Add 60 seconds here to do get same observations as in start.
+        var timestamp = new Date(ui.value);
+        timestamp = timestamp.setSeconds(timestamp.getSeconds() + 60);
 
         for (var construct in observations) {
             observationsFiltered[construct] = {};
@@ -66,7 +67,7 @@
 
                 for (var sublevel in observations[construct][course]) {
                     observationsFiltered[construct][course][sublevel] = observations[construct][course][sublevel]
-                        .filter(date => dateToTime(date) > timestamp);
+                        .filter(date => date <= timestamp);
 
                     allStars[construct] += observationsFiltered[construct][course][sublevel].length;
                 }
