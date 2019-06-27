@@ -323,7 +323,7 @@ class Observation(TimeStampedModel, OwnerMixin):
         return dot_matrix
 
     @classmethod
-    def create_star_chart_4(cls, observations, constructs, courses):
+    def create_star_chart_4(cls, observations, constructs, courses, min_date):
         star_chart_4 = {}
         star_chart_4_dates = {}
 
@@ -346,7 +346,10 @@ class Observation(TimeStampedModel, OwnerMixin):
 
                 for sublevel in sublevels:
                     construct = sublevel.level.construct
-                    star_chart_4[construct][observation.course][sublevel].append(observation)
+
+                    if observation.observation_date <= min_date:
+                        star_chart_4[construct][observation.course][sublevel].append(observation)
+
                     star_chart_4_dates[construct.id][observation.course.id][sublevel.id].append(
                         datetime.datetime \
                             .combine(observation.observation_date, datetime.datetime.min.time()) \
