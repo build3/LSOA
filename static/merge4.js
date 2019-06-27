@@ -391,10 +391,11 @@
         for (var i in window.verticalStarChart[constructId]) {
             for (var j in window.verticalStarChart[constructId][i].quantities) {
                 if (j != "0") {
-                    observationQuantity[j - 1] += parseInt(
-                        window.verticalStarChart[constructId][i].quantities[j].dataset.stars);
-                    sublevelsIds.push($(window.verticalStarChart[constructId][i].classes[j])
-                        .data('sublevel'));
+                    const stars = window.verticalStarChart[constructId][i].quantities[j].dataset.stars;
+                    observationQuantity[j - 1] += parseInt(stars);
+                    
+                    const sublevel = $(window.verticalStarChart[constructId][i].classes[j]).data('sublevel')
+                    sublevelsIds.push(sublevel);
                 }
             }
         }

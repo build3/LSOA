@@ -209,22 +209,32 @@
     function swapVerticalStarChart(observations, allStars) {
         for (var construct in observations) {
             if (window.mergedConstructs.includes(construct)) {
-                Object.keys(observations[construct]).forEach((course, index) => {
-                    Object.keys(observations[construct][course]).forEach((sublevel, j) => {
-                        const size = observations[construct][course][sublevel].length;
-                        const color = calculateNewColor(size, allStars[construct]);
-                        
-                        let heatElem = window.verticalStarChart[construct][index].classes[j + 1];
-                        let quantityElem = window.verticalStarChart[construct][index].quantities[j + 1];
-
-                        heatElem.dataset.color = color;
-                        heatElem.setAttribute('bgcolor', color);
-
-                        quantityElem.dataset.stars = size;
-                        quantityElem.innerHTML = size;
-                    })
-                })
+                swapData(observations, construct, allStars);
             }
         }
+    }
+
+    /**
+     * Swap data in cells stored inside `window.verticalStarChart` object for specific construct.
+     * @param {Object} observations 
+     * @param {String} construct 
+     * @param {Object} allStars
+     */
+    function swapData(observations, construct, allStars) {
+        Object.keys(observations[construct]).forEach((course, index) => {
+            Object.keys(observations[construct][course]).forEach((sublevel, j) => {
+                const size = observations[construct][course][sublevel].length;
+                const color = calculateNewColor(size, allStars[construct]);
+                
+                let heatElem = window.verticalStarChart[construct][index].classes[j + 1];
+                let quantityElem = window.verticalStarChart[construct][index].quantities[j + 1];
+
+                heatElem.dataset.color = color;
+                heatElem.setAttribute('bgcolor', color);
+
+                quantityElem.dataset.stars = size;
+                quantityElem.innerHTML = size;
+            })
+        })
     }
 })()
