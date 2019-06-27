@@ -16,7 +16,10 @@
  * 
  * 3. When value in slider change, filter parsed `observation` using current
  *   date from slider comparing two timestamps. In addition calculate new quantity of
- *   filtered observations.
+ *   filtered observations. With merge ability it's a little tricky. There is need
+ *   to re-calculate and update merged data when slider's value change in order to provide
+ *   correct merge ability. So right now when construct is merged, updates to `verticalStarChart`
+ *   is needed otherwise wrong values are showed in table.
  * 
  * 4. Use filtered observations and new quantity of observations to calculate new color for cell.
  * 
@@ -26,7 +29,7 @@
 
 (() => {
     const observations = JSON.parse(window.observations) || {};
-    const COLORS_DARK = JSON.parse(window.COLORS_DARK)
+    const COLORS_DARK = JSON.parse(window.COLORS_DARK);
 
     $('#date-slider').slider({
         min: dateToTime(window.minDate),
@@ -53,6 +56,8 @@
     function change(event, ui) {
         var observationsFiltered = {};
         var allStars = {};
+        var courseObservations = {};
+
         Object.keys(observations).forEach(construct => allStars[construct] = 0);
 
         // Add 60 seconds here to do get same observations as in start.
@@ -61,19 +66,52 @@
 
         for (var construct in observations) {
             observationsFiltered[construct] = {};
+            courseObservations[construct] = {};
 
             for (var course in observations[construct]) {
-                observationsFiltered[construct][course] = {}
+                // Check if construct was merged or not to change values
+                // per course or all values inside table.
+                if (window.mergedConstructs.includes(construct)) {
+                    if (!observationsFiltered[construct].hasOwnProperty(0)) {
+                        observationsFiltered[construct][0] = {};
+                    }
 
-                for (var sublevel in observations[construct][course]) {
-                    observationsFiltered[construct][course][sublevel] = observations[construct][course][sublevel]
-                        .filter(date => date <= timestamp);
+                    courseObservations[construct][course] = {};
 
-                    allStars[construct] += observationsFiltered[construct][course][sublevel].length;
+                    for (var sublevel in observations[construct][course]) {
+                        const filtered = observations[construct][course][sublevel]
+                            .filter(date => date <= timestamp);
+
+                        if (observationsFiltered[construct][0][sublevel] === undefined) {
+                            observationsFiltered[construct][0][sublevel] = [];
+                            observationsFiltered[construct][0][sublevel] = filtered;
+                        } else {
+                            observationsFiltered[construct][0][sublevel] =
+                                observationsFiltered[construct][0][sublevel]
+                                    .concat(filtered);
+                        }
+        
+                        courseObservations[construct][course][sublevel] = filtered;
+                        allStars[construct] += filtered.length;
+                    }
+                } else {
+                    observationsFiltered[construct][course] = {};
+
+                    for (var sublevel in observations[construct][course]) {
+                        const filtered = observations[construct][course][sublevel]
+                            .filter(date => date <= timestamp);
+
+                        observationsFiltered[construct][course][sublevel] = filtered;
+                        allStars[construct] += observationsFiltered[construct][course][sublevel].length;
+                    }
                 }
             }
         }
 
+        // Swap verticalStarChart content if any of construct was vertically merged.
+        swapVerticalStarChart(courseObservations, allStars);
+
+        // Change elements in table.
         changeElements(observationsFiltered, allStars);
     }
 
@@ -89,15 +127,14 @@
                     const size = observationsFiltered[construct][course][sublevel].length;
                     const color = calculateNewColor(size, allStars[construct]);
 
-                    let elem = $(`.star-chart-4-table-${construct}`)
-                        .find(`.heat-${course}-${sublevel}`)
-                        .attr('bgcolor', color);
-
-                    elem[0].dataset.color = color;
-
-                    $(`.star-chart-4-table-${construct}`)
-                        .find(`.stars-${course}-${sublevel}`)
-                        .html(size);
+                    // If course is 0 then it means construct was merged.
+                    if (parseInt(course)) {
+                        changeElems(size, color, `.stars-${course}-${sublevel}`,
+                            `.heat-${course}-${sublevel}`, construct);
+                    } else {
+                        changeElems(size, color, `.stars-merged-${sublevel}`,
+                            `.heat-merged-${sublevel}`, construct);
+                    }
                 }
             }
         }
@@ -125,9 +162,9 @@
         const percentValue = 100 * starAmount / allStars;
 
         if (percentValue < 10) {
-            return COLORS_DARK["LESS_THEN_10"]
+            return COLORS_DARK["LESS_THEN_10"];
         } else {
-            return COLORS_DARK[percentValue.toString()[0]]
+            return COLORS_DARK[percentValue.toString()[0]];
         }
     }
 
@@ -142,5 +179,52 @@
 
     function dateToTime(date) {
         return new Date(date).getTime() / 1000;
+    }
+
+    /**
+     * Change heat and star td element for single cell.
+     * @param {Integer} size - Quantity of observations.
+     * @param {String} color - New color for sublevel.
+     * @param {String} starsClass - Class to find star element.
+     * @param {String} heatClass - Class to find heat element.
+     * @param {Integer} construct - ID of current construct.
+     */
+    function changeElems(size, color, starsClass, heatClass, construct) {
+        let elem = $(`.star-chart-4-table-${construct}`)
+            .find(heatClass)
+            .attr('bgcolor', color);
+        elem[0].dataset.color = color;
+
+        elem = $(`.star-chart-4-table-${construct}`)
+            .find(starsClass)
+            .html(size);
+        elem[0].dataset.stars = size;
+    }
+
+    /**
+     * Change values for cells in verticalStarChart map.
+     * @param {Object} observations 
+     * @param {Object} allStars - All observations per construct.
+     */
+    function swapVerticalStarChart(observations, allStars) {
+        for (var construct in observations) {
+            if (window.mergedConstructs.includes(construct)) {
+                Object.keys(observations[construct]).forEach((course, index) => {
+                    Object.keys(observations[construct][course]).forEach((sublevel, j) => {
+                        const size = observations[construct][course][sublevel].length;
+                        const color = calculateNewColor(size, allStars[construct]);
+                        
+                        let heatElem = window.verticalStarChart[construct][index].classes[j + 1];
+                        let quantityElem = window.verticalStarChart[construct][index].quantities[j + 1];
+
+                        heatElem.dataset.color = color;
+                        heatElem.setAttribute('bgcolor', color);
+
+                        quantityElem.dataset.stars = size;
+                        quantityElem.innerHTML = size;
+                    })
+                })
+            }
+        }
     }
 })()

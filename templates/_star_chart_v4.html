@@ -36,9 +36,23 @@
                 {% endfor %}
             </tr>-->
             <tr>
-                <th scope="col">&nbsp;</th>
-
                 {% for sublevel in construct.sublevels %}
+                    {% if forloop.first %}
+                        <th scope="col">
+                            <button 
+                                class="btn btn-primary btn-sm mergeVertical-4"
+                                id="mergeVertical-4-{{ construct.id }}"
+                                data-construct="construct-{{ construct.id }}"
+                                data-sublevels="{{ construct.sublevels.count }}">Merge all courses</button>
+
+                            <button 
+                                class="btn btn-primary btn-sm separateVertical-4"
+                                id="separateVertical-4-{{ construct.id }}"
+                                data-construct="construct-{{ construct.id }}"
+                                data-sublevels="{{ construct.sublevels.count }}">Separate all courses</button>
+                        </th>
+                    {% endif %}
+
                     <th class="align-middle text-center" scope="col"
                         title="{{ sublevel.description }}" data-toggle="tooltip"
                         data-level-id="{{ sublevel.level.id }}">
@@ -52,17 +66,18 @@
         </thead>
         <tbody>
             {% for class, sublevels in classes.items %}
-                <tr class="construct-{{ construct.id }}">
+                <tr class="construct-{{ construct.id }} heat-row">
                     <td><b>{{ class.name }}</b></td>
 
                     {% for sublevel, observations in sublevels.items %}
                         <td data-csl-id="{{ csl_id }}" class="text-center heat-{{ class.id }}-{{ sublevel.id }}"
                             data-color="{% get_color_star_chart_4 sublevel observations construct %}"
-                            bgcolor="{% get_color_star_chart_4 sublevel observations construct %}">
+                            bgcolor="{% get_color_star_chart_4 sublevel observations construct %}"
+                            data-sublevel="{{ sublevel.id }}">
                         </td>
                     {% endfor %}
                 </tr>
-                <tr class="construct-{{ construct.id }} thicker">
+                <tr class="construct-{{ construct.id }} thicker quantity-row">
                     <td></td>
 
                     {% for sublevel, observations in sublevels.items %}
