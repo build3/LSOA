@@ -17,8 +17,7 @@
     <h4 class="text-align-center">{{ construct.abbreviation }}</h4>
     <table class="table table-bordered star-chart-4-table-{{ construct.id }}">
         <thead>
-            <!-- TODO: MERGING LEVELS AND CLASSES -->
-            <!--<tr>
+            <tr>
                 <th scope="col">&nbsp;</th>
 
                 {% for level in construct.levels.all %}
@@ -29,12 +28,12 @@
                             >Merge {{ level }}</button>
 
                         <button class="btn btn-primary btn-sm horizontal-unmerge-4" id="horizontal-back-4-{{ level.id }}"
-                            data-sublevels="{{ level.sublevels.count }}" data-construct="construct-{{ construct.id }}"
+                            data-construct="construct-{{ construct.id }}"
                             data-level-name="{{ level }}" data-levels-count="{{ construct.levels.count }}"
                             >Separate {{ level }}</button>
                     </th>
                 {% endfor %}
-            </tr>-->
+            </tr>
             <tr>
                 {% for sublevel in construct.sublevels %}
                     {% if forloop.first %}
@@ -53,7 +52,7 @@
                         </th>
                     {% endif %}
 
-                    <th class="align-middle text-center" scope="col"
+                    <th class="align-middle text-center sublevel" scope="col"
                         title="{{ sublevel.description }}" data-toggle="tooltip"
                         data-level-id="{{ sublevel.level.id }}">
                         {{ sublevel.short_name }}
@@ -82,7 +81,7 @@
 
                     {% for sublevel, observations in sublevels.items %}
                         <td data-csl-id="{{ csl_id }}" data-stars="{{ observations|length }}"
-                            class="text-center stars-{{ class.id }}-{{ sublevel.id }}">
+                            class="text-center stars-{{ class.id }}-{{ sublevel.id }} stars-amount">
                             <span>{{ observations|length }}</span>
                         </td>
                     {% endfor %}

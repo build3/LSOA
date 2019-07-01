@@ -19,7 +19,9 @@
  *   filtered observations. With merge ability it's a little tricky. There is need
  *   to re-calculate and update merged data when slider's value change in order to provide
  *   correct merge ability. So right now when construct is merged, updates to `verticalStarChart`
- *   is needed otherwise wrong values are showed in table.
+ *   is needed otherwise wrong values are showed in table. Obviously there is a need
+ *   to update also `horizontalStarChart4` which holds cells for restoring horizontal
+ *   level merge.
  * 
  * 4. Use filtered observations and new quantity of observations to calculate new color for cell.
  * 
@@ -57,6 +59,7 @@
         var observationsFiltered = {};
         var allStars = {};
         var courseObservations = {};
+        var horizontalCourse = {};
 
         Object.keys(observations).forEach(construct => allStars[construct] = 0);
 
@@ -67,6 +70,7 @@
         for (var construct in observations) {
             observationsFiltered[construct] = {};
             courseObservations[construct] = {};
+            horizontalCourse[construct] = {};
 
             for (var course in observations[construct]) {
                 // Check if construct was merged or not to change values
@@ -77,6 +81,7 @@
                     }
 
                     courseObservations[construct][course] = {};
+                    horizontalCourse[construct][course] = {};
 
                     for (var sublevel in observations[construct][course]) {
                         const filtered = observations[construct][course][sublevel]
@@ -90,29 +95,33 @@
                                 observationsFiltered[construct][0][sublevel]
                                     .concat(filtered);
                         }
-        
+
                         courseObservations[construct][course][sublevel] = filtered;
+                        horizontalCourse[construct][course][sublevel] = filtered;
                         allStars[construct] += filtered.length;
                     }
                 } else {
                     observationsFiltered[construct][course] = {};
+                    horizontalCourse[construct][course] = {};
 
                     for (var sublevel in observations[construct][course]) {
                         const filtered = observations[construct][course][sublevel]
                             .filter(date => date <= timestamp);
 
                         observationsFiltered[construct][course][sublevel] = filtered;
+                        horizontalCourse[construct][course][sublevel] = filtered;
                         allStars[construct] += observationsFiltered[construct][course][sublevel].length;
                     }
                 }
             }
         }
 
-        // Swap verticalStarChart content if any of construct was vertically merged.
+        // Swap verticalStarChart and horizontalStarChart content if any of construct was merged.
         swapVerticalStarChart(courseObservations, allStars);
+        swapHorizontalStarChart(horizontalCourse, allStars);
 
         // Change elements in table.
-        changeElements(observationsFiltered, allStars);
+        changeElements(observationsFiltered, allStars, joinMergedSublevels(observationsFiltered));
     }
 
     /**
@@ -120,20 +129,59 @@
      * @param {Object} observationsFiltered - Observations filtered by date.
      * @param {Object} allStars - Observations count per construct.
      */
-    function changeElements(observationsFiltered, allStars) {
+    function changeElements(observationsFiltered, allStars, levels) {
         for (var construct in observationsFiltered) {
             for (var course in observationsFiltered[construct]) {
                 for (var sublevel in observationsFiltered[construct][course]) {
-                    const size = observationsFiltered[construct][course][sublevel].length;
-                    const color = calculateNewColor(size, allStars[construct]);
+                    var size = observationsFiltered[construct][course][sublevel].length;
+                    var color = calculateNewColor(size, allStars[construct]);
+                    var observations = observationsFiltered[construct][course][sublevel];
 
                     // If course is 0 then it means construct was merged.
                     if (parseInt(course)) {
-                        changeElems(size, color, `.stars-${course}-${sublevel}`,
-                            `.heat-${course}-${sublevel}`, construct);
+                        if (Array.isArray(observations)) {
+                            changeElems(
+                                size,
+                                color,
+                                `.stars-${course}-${sublevel}`,
+                                `.heat-${course}-${sublevel}`,
+                                construct
+                            );
+                        } else {
+                            const level = observations;
+                            size = levels[level][course].length;
+                            color = calculateNewColor(size, allStars[construct]);
+
+                            changeElems(
+                                size,
+                                color,
+                                `.star-level-${level}-${course}`,
+                                `.heat-level-${level}-${course}`,
+                                construct
+                            );
+                        }
                     } else {
-                        changeElems(size, color, `.stars-merged-${sublevel}`,
-                            `.heat-merged-${sublevel}`, construct);
+                        if (Array.isArray(observations)) {
+                            changeElems(
+                                size,
+                                color,
+                                `.stars-merged-${sublevel}`,
+                                `.heat-merged-${sublevel}`,
+                                construct
+                            );
+                        } else {
+                            const level = observations;
+                            size = levels[level][course].length;
+                            color = calculateNewColor(size, allStars[construct]);
+
+                            changeElems(
+                                size,
+                                color,
+                                `.stars-merged-level-${level}`,
+                                `.heat-merged-level-${level}`,
+                                construct
+                            );
+                        }
                     }
                 }
             }
@@ -221,20 +269,152 @@
      * @param {Object} allStars
      */
     function swapData(observations, construct, allStars) {
+        var levels = joinMergedSublevelsDelete(observations);
+
         Object.keys(observations[construct]).forEach((course, index) => {
             Object.keys(observations[construct][course]).forEach((sublevel, j) => {
-                const size = observations[construct][course][sublevel].length;
-                const color = calculateNewColor(size, allStars[construct]);
-                
-                let heatElem = window.verticalStarChart[construct][index].classes[j + 1];
-                let quantityElem = window.verticalStarChart[construct][index].quantities[j + 1];
+                if (!Array.isArray(observations[construct][course][sublevel])) {
+                    const level = observations[construct][course][sublevel];
+                    const size = levels[level][course].length;
+                    const color = calculateNewColor(size, allStars[construct]);
+                    const classes = window.verticalStarChart[construct][index].classes;
+                    const quantities = window.verticalStarChart[construct][index].quantities;
+                    
+                    let heatElem = classes[[...Array(classes.length).keys()]
+                        .filter(i => $(classes[i]).hasClass(`heat-level-${level}`))[0]];
+                    let quantityElem = quantities[[...Array(quantities.length).keys()]
+                        .filter(i => $(quantities[i]).hasClass(`star-level-${level}`))[0]];
 
-                heatElem.dataset.color = color;
-                heatElem.setAttribute('bgcolor', color);
+                    heatElem.dataset.color = color;
+                    heatElem.setAttribute('bgcolor', color);
 
-                quantityElem.dataset.stars = size;
-                quantityElem.innerHTML = size;
+                    quantityElem.dataset.stars = size;
+                    quantityElem.innerHTML = size;
+                } else {
+                    const size = observations[construct][course][sublevel].length;
+                    const color = calculateNewColor(size, allStars[construct]);
+
+                    let heatElem = window.verticalStarChart[construct][index].classes[j + 1];
+                    let quantityElem = window.verticalStarChart[construct][index].quantities[j + 1];
+
+                    if (heatElem !== undefined) {
+                        heatElem.dataset.color = color;
+                        heatElem.setAttribute('bgcolor', color);
+
+                        quantityElem.dataset.stars = size;
+                        quantityElem.innerHTML = size;
+                    }
+                }
             })
         })
+    }
+
+    /**
+     * Add to sublevel key, value which is a sublevel's level when level was merged.
+     * @param {Object} observationsFiltered 
+     */
+    function joinMergedSublevels(observationsFiltered) {
+        var levels = {};
+
+        for (var construct in observationsFiltered) {
+            var wasMergedHorizontally = window.mergedSublevels[construct] !== undefined
+                && Object.keys(window.mergedSublevels[construct]).length !== 0;
+
+            if (wasMergedHorizontally) {
+                for (var level in window.mergedSublevels[construct]) {
+                    levels[level] = {};
+                    var mLevel = window.mergedSublevels[construct][level];
+
+                    for (course in observationsFiltered[construct]) {
+                        var amount = [];
+
+                        for (var i = 0; i < mLevel.length; i++) {
+                            amount = amount.concat(observationsFiltered[construct][course][mLevel[i]]);
+                            observationsFiltered[construct][course][mLevel[i]] = level;
+                        }
+
+                        levels[level][course] = amount;
+                    }
+                }
+            }
+        }
+
+        return levels;
+    }
+
+    /**
+     * Add to sublevel key, value which is a sublevel's level when level was merged.
+     * Delete sublevel keys when level was used more than one time.
+     * @param {Object} observationsFiltered 
+     */
+    function joinMergedSublevelsDelete(observationsFiltered) {
+        var levels = {};
+
+        for (var construct in observationsFiltered) {
+            var wasMergedHorizontally = window.mergedSublevels[construct] !== undefined
+                && Object.keys(window.mergedSublevels[construct]).length !== 0;
+
+            if (wasMergedHorizontally) {
+                for (var level in window.mergedSublevels[construct]) {
+                    levels[level] = {};
+                    var mLevel = window.mergedSublevels[construct][level];
+
+                    for (course in observationsFiltered[construct]) {
+                        var amount = [];
+
+                        for (var i = 0; i < mLevel.length; i++) {
+                            amount = amount.concat(observationsFiltered[construct][course][mLevel[i]]);
+
+                            if (i === 0) {
+                                observationsFiltered[construct][course][mLevel[i]] = level;
+                            } else {
+                                delete observationsFiltered[construct][course][mLevel[i]]
+                            }
+                        }
+
+                        levels[level][course] = amount;
+                    }
+                }
+            }
+        }
+
+        return levels;
+    }
+
+    function swapHorizontalStarChart(observations, allStars) {
+        for (var construct in observations) {
+            swapHorizontalData(construct, allStars, observations);
+        }
+    }
+
+    /**
+     * Swap data in cells stored inside `window.horizontalStarChart4` object for specific level.
+     * @param {String} construct 
+     * @param {Object} allStars 
+     * @param {Object} observations
+     */
+    function swapHorizontalData(construct, allStars, observations) {
+        for (level in window.mergedSublevels[construct]) {
+            var cells = window.horizontalStarChart4[level].cells
+
+            for (var i = 0; i < cells.length; i++) {
+                var sublevel = window.mergedSublevels[construct][level][i];
+
+                for (var j = 0; j < cells[i].length / 2; j++) {
+                    let heatElem = cells[i][j + j];
+                    let starElem = cells[i][j + j + 1];
+                    const course = $(heatElem).attr('class').split('-')[2];
+
+                    const size = observations[construct][course][sublevel].length;
+                    const color = calculateNewColor(size, allStars[construct]);
+
+                    heatElem.dataset.color = color;
+                    heatElem.setAttribute('bgcolor', color);
+
+                    starElem.dataset.stars = size;
+                    starElem.innerHTML = size;
+                }
+            }
+        }
     }
 })()

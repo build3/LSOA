@@ -4,11 +4,14 @@
 
 (() => {
     const COLORS_DARK = JSON.parse(window.COLORS_DARK);
+    const CLASS_COLUMN = 1;
 
-    var horizontalStarChart4 = {};
     var startIndex = 0;
+
+    window.horizontalStarChart4 = {};
     window.verticalStarChart = {};
     window.mergedConstructs = [];
+    window.mergedSublevels = {};
 
     $('.separateVertical-4').hide();
 
@@ -30,32 +33,11 @@
         }
     }
 
-    /**
-     * Get sublevel data from one of <th> elements.
-     * @param {Selector} header - One of <th> element. 
-     */
-    function getSublevelData(header) {
-        return {
-            'name': header.innerHTML,
-            'description': header.dataset.originalTitle
-        }
-    }
-
-    /**
-     * Generate header when separating merged level.
-     * @param {Object} star 
-     * @param {Integer} levelId 
-     */
-    function genareteHeader(star, levelId) {
-        return `<th scope="col" style="text-align:center;" class="align-middle" ` +
-            `title="${star.description}" data-toggle="tooltip" data-level-id="${levelId}">${star.name}</th>`
-    }
-
     function addHeaderAfter(header, startIndex, levelId, levelName) {
         $(header)
             .find('th')
             .eq(startIndex + 1)
-            .after(`<th style="text-align:center;" class="align-middle" ` +
+            .after(`<th style="text-align:center;" class="align-middle sublevel" ` +
                 `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
     }
 
@@ -63,13 +45,8 @@
         $(header)
             .find('th')
             .eq(startIndex + 1)
-            .before(`<th style="text-align:center;" class="align-middle" ` +
+            .before(`<th style="text-align:center;" class="align-middle sublevel" ` +
                 `scope="col" data-toggle="tooltip" data-level-id="${levelId}">${levelName}</th>`);
-    }
-
-    function initMergedLevel4(levelId, i, headers) {
-        horizontalStarChart4[levelId][i] = {};
-        horizontalStarChart4[levelId][i][0] = getSublevelData(headers[i]);
     }
 
     /**
@@ -79,22 +56,15 @@
      * @param {Integer} constructId 
      * @param {String} construct 
      */
-    function removeColumns4(headers, i, constructId, construct) {
+    function findCells(headers, i, constructId, construct) {
         const cellIndex = headers[i].cellIndex;
 
         if (i == 0) {
             startIndex = cellIndex;
         }
 
-        const cells = $(`.star-chart-4-table-${constructId} .${construct}`)
+        return $(`.star-chart-4-table-${constructId} .${construct}`)
             .find(`td:eq(${cellIndex})`);
-
-        const value = cells;
-
-        headers[i].remove();
-        cells.remove();
-
-        return value;
     }
 
     /**
@@ -104,12 +74,11 @@
      * @param {Integer} constructId 
      * @param {String} construct 
      */
-    function getCells4(headers, levelId, constructId, construct) {
+    function getCells4(headers, constructId, construct) {
         var stars = [];
     
         [...Array(headers.length).keys()].map(i => {
-            initMergedLevel4(levelId, i, headers);
-            stars[i] = removeColumns4(headers, i, constructId, construct);
+            stars[i] = findCells(headers, i, constructId, construct);
         });
     
         return stars;
@@ -141,154 +110,122 @@
         const allHeaders = $(`.star-chart-4-table-${constructId}`)
             .find('th');
 
-        return startIndex + (headers.length) === allHeaders.length - levelCount
+        return startIndex + (headers.length) + CLASS_COLUMN === allHeaders.length - levelCount
     }
 
-    /**
-     * Calculates amount of stars after merge.
-     * @param {Array} stars 
-     */
-    function calculateStars4(stars) {
-        var amount = 0;
-
-        for (var i = 0; i < stars.length; i++) {
-            amount += [...Array(stars[0].length).keys()].reduce((acc, val) => {
-                const observations = $(stars[i][val]).data('stars');
-                return acc += observations === undefined ? 0 : observations;
-            }, 0)
-        }
-
-        return amount
-    }
-
-    /**
-     * Creates and returns array with color and amount of stars for merged cells.
-     * @param {Array} stars
-     */
-    function calculateStarsAndColors4(stars) {
-        var star_amount = {}
-    
-        for (var i = 0; i < stars.length; i++) {
-            star_amount[i] = {}
-
-            for (var j = 0; j < stars[0].length; j++) {
-                const observations = $(stars[i][j]).data('stars');
-                const color = $(stars[i][j]).data('color');
-
-                star_amount[i].observations = observations === undefined ? 0 : observations;
-
-                if (color) {
-                    star_amount[i].color = color;
-                }
-            }
-        }
-    
-        return star_amount;
-    }
-
-    /**
-     * Add cells for merged level to `horizontalStarChart4` object.
-     * @param {Array} stars 
-     * @param {Integer} levelId 
-     */
-    function addMergedLevel4(stars, levelId) {
-        const star_colors = calculateStarsAndColors4(stars)
-
-        for (var i = 0; i < stars.length; i++) {
-            horizontalStarChart4[levelId][i][1] = star_colors[i];
-        }
-    }
-
-    /**
-     * Calculates new color for merged level. To get new color for level
-     * new percent value is calculated. When starAmount is 0 color for 0% is used.
-     * When starAmount is equal to allStars which are inside table then color with `10` key is returned.
-     * If new `percentValue` is less than 10% `LESS_THEN_10` key is used.
-     * Otherwise color is taken from the first digit from new `percentValue`. For example when
-     * `percentValue` is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
-     * @param {Integer} starAmount 
-     * @param {Integer} constructId 
-     */
-    function calculateNewColor4(starAmount, constructId) {
-        if (starAmount == 0) {
-            return window.COLORS_DARK["0"];
-        }
-
+    function getAllStars(constructId) {
         const cells = $(`.star-chart-4-table-${constructId}`).find('.stars-amount');
-        const allStars = [...Array(cells.length).keys()].reduce(
-            (acc, val) => acc += $(cells[val]).data('stars'), starAmount);
-
-        const percentValue = 100 * starAmount / allStars;
-
-        if (percentValue < 10) {
-            return window.COLORS_DARK["LESS_THEN_10"]
-        } else {
-            return window.COLORS_DARK[percentValue.toString()[0]]
-        }
+        return [...Array(cells.length).keys()].reduce(
+                (acc, val) => acc += $(cells[val]).data('stars'), 0);
     }
 
-    function addColumn4(startIndex, starAmount, newColor, isLast, constructId) {
-        const colorsRow = 2;
-        const starsRow = 3;
+    function createNewCells(amount, allStars, i, constructId, levelId, courseId) {
+        const newColor = calculateNewColor(amount, allStars);
+        const heatRow = 2;
+        const starRow = 3;
 
         var heatMapElement = $(document.createElement('td'))
-            .addClass('text-center')
+            .addClass(`text-center heat-level-${levelId} heat-level-${levelId}-${courseId}`)
             .attr('bgcolor', newColor);
 
         heatMapElement[0].dataset.cslId = "";
         heatMapElement[0].dataset.color = newColor;
 
         var starElement = $(document.createElement('td'))
-            .addClass('text-center stars-amount')
-            .append(`<span>${starAmount}</span>`);
+            .addClass(`text-center stars-amount star-level-${levelId} star-level-${levelId}-${courseId}`)
+            .append(`<span>${amount}</span>`);
 
         starElement[0].dataset.cslId = "";
-        starElement[0].dataset.stars = starAmount;
+        starElement[0].dataset.stars = amount;
 
         if (isLast) {
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${colorsRow})`)
+                .find(`tr:eq(${i + heatRow + i})`)
                 .find('td')
                 .eq(startIndex - 1)
                 .after(heatMapElement[0]);
 
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${starsRow})`)
+                .find(`tr:eq(${i + starRow + i})`)
                 .find('td')
                 .eq(startIndex - 1)
                 .after(starElement[0]);
         } else {
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${colorsRow})`)
+                .find(`tr:eq(${i + heatRow + i})`)
                 .find('td')
                 .eq(startIndex)
                 .before(heatMapElement[0]);
 
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${starsRow})`)
+                .find(`tr:eq(${i + starRow + i})`)
                 .find('td')
                 .eq(startIndex)
                 .before(starElement[0]);
+            }
+    }
+
+    function insertOldHeader(isLast, constructId, header) {
+        if (isLast) {
+            $($(`.star-chart-4-table-${constructId} tr:eq(1)`).first())
+                .find('th')
+                .eq(startIndex - 1)
+                .after(header);
+        } else {
+            $($(`.star-chart-4-table-${constructId} tr:eq(1)`).first())
+                .find('th')
+                .eq(startIndex)
+                .before(header);
         }
     }
 
-    function insertMergedColumns4(sublevelsAmount, isLast, constructId, levelId, stars, startIndex) {
-        for (var i = sublevelsAmount - 1; i >= 0; i--) {
-            if (isLast) {
-                $($(`.star-chart-4-table-${constructId} tr:eq(1)`).first())
-                    .find('th')
-                    .eq(startIndex - 1)
-                    .after(genareteHeader(stars[i][0], levelId));
-            } else {
-                $($(`.star-chart-4-table-${constructId} tr:eq(1)`).first())
-                    .find('th')
-                    .eq(startIndex)
-                    .before(genareteHeader(stars[i][0], levelId));
-            }
-
-            addColumn4(startIndex, stars[i][1].observations,
-                stars[i][1].color, isLast, constructId)
+    function insertOldCell(isLast, constructId, cell, row) {
+        if (isLast) {
+            $(`.star-chart-4-table-${constructId}`)
+                .find(`tr:eq(${row})`)
+                .find('td')
+                .eq(startIndex - 1)
+                .after(cell);
+        } else {
+            $(`.star-chart-4-table-${constructId}`)
+                .find(`tr:eq(${row})`)
+                .find('td')
+                .eq(startIndex)
+                .before(cell);
         }
+    }
+
+    function recalculateObservations(amount, headers, constructId, cells) {
+        const total = amount.reduce((acc, val) => acc += val, 0);
+        var newCells = [];
+
+        for (var i = headers.length - 1; i >= 0; i--) {
+            const size = amount[i];
+            const color = calculateNewColor(size, getAllStars(constructId) + total);
+            const sublevelId = $(cells[i][0]).data('sublevel');
+
+            newCells[i] = [];
+
+            var heatMapElement = $(document.createElement('td'))
+                .addClass(`text-center heat-${sublevelId}`)
+                .attr('bgcolor', color);
+
+            heatMapElement[0].dataset.cslId = "";
+            heatMapElement[0].dataset.color = color;
+            heatMapElement[0].dataset.sublevel = sublevelId
+
+            var starElement = $(document.createElement('td'))
+                .addClass(`text-center stars-${sublevelId} stars-amount`)
+                .append(`<span>${size}</span>`);
+
+            starElement[0].dataset.cslId = "";
+            starElement[0].dataset.stars = size;
+
+            newCells[i].push(heatMapElement);
+            newCells[i].push(starElement);
+        }
+
+        return newCells;
     }
 
     $('.horizontal-unmerge-4').hide();
@@ -303,42 +240,83 @@
 
         // No reason to merge when only one sublevel is used.
         if (sublevelsAmount > 1) {
-            // Initialize mergedHorizontalLevels with level ID which is getting merge.
-            horizontalStarChart4[levelId] = {};
-
-            // Get all headers for level.
-            var headers = getAllHeaders4(constructId, levelId);
-
-            // Hide tooltips for merged headers.
-            [...Array(headers.length).keys()].forEach(i => $(headers[i]).tooltip("hide"));
-
-            // Check if merged sublevels are inside last level in table.
-            isLast = isLastLevel4(constructId, construct, headers, levelCount);
-            var stars = getCells4(headers, levelId, constructId, construct);
-
-            // Get first <th> element for specific table.
-            var header = $(`.star-chart-4-table-${constructId} tr:eq(1)`).first();
-
-            // If merged level is last inside table I have to add new header after the last element which left.
-            // Otherwise add new header before sublevel which was first inside table before removing it.
-            if (isLast) {
-                addHeaderAfter(header, startIndex - 2, levelId, levelName);
+            if (window.mergedConstructs.includes(constructId)) {
+                // Just use one case and trigger it all the time
+                // to fully control behaviour of merging with this single case.
+                // It's complicated enough, so let's use one case only instead writing all of them.
+                // This is only needed when two buttons are used simultaneously.
+                $(`#separateVertical-4-${constructId}`).trigger("click");
+                $(this).trigger("click");
+                $(`#mergeVertical-4-${constructId}`).trigger("click");
             } else {
-                addHeaderBefore(header, startIndex - 1, levelId, levelName);
+                // Get all headers for level.
+                var headers = getAllHeaders4(constructId, levelId);
+
+                // Hide tooltips for merged headers.
+                [...Array(headers.length).keys()].forEach(i => $(headers[i]).tooltip("hide"));
+
+                window.horizontalStarChart4[levelId] = {
+                    'headers': headers,
+                    'cells': getCells4(headers, constructId, construct)
+                };
+
+                // Check if merged sublevels are inside last level in table.
+                isLast = isLastLevel4(constructId, construct, headers, levelCount);
+                headers.remove();
+
+                // Get first <th> element for specific table.
+                var header = $(`.star-chart-4-table-${constructId} tr:eq(1)`).first();
+
+                // If merged level is last inside table I have to add new header after the last element which left.
+                // Otherwise add new header before sublevel which was first inside table before removing it.
+                if (isLast) {
+                    addHeaderAfter(header, startIndex - 2, levelId, levelName);
+                } else {
+                    addHeaderBefore(header, startIndex - 1, levelId, levelName);
+                }
+
+                const cells = window.horizontalStarChart4[levelId].cells;
+                const allStars = getAllStars(constructId);
+                const classQuantity = cells[0].length / 2;
+
+                var amount = [...Array(classQuantity).keys()].map(() => 0);
+
+                // Calculate amount of stars per course, and remove unneded cells.
+                for (var i = 0; i < cells.length; i++) {
+                    for (var j = 0; j < classQuantity; j++) {
+                        amount[j] += parseInt(cells[i][j + j + 1].dataset.stars);
+                    }
+
+                    $(cells[i]).remove();
+                }
+
+                const classesIds = [];
+
+                // Createa array with courses id's.
+                for (var i = 0; i < cells[0].length / 2; i++) {
+                    classesIds.push($(cells[i][i + i]).attr('class').split('-')[2]);
+                }
+
+                // Create new cells with colors and calculated earlier amount.
+                for (var i = 0; i < classQuantity; i++) {
+                    createNewCells(amount[i], allStars, i, constructId, levelId, classesIds[i]);
+                }
+
+                // Change colspan of parent th element to 1.
+                $(this).parent().attr('colspan', 1);
+                $(this).hide();
+                $(`#horizontal-back-4-${levelId}`).show();
+
+                var sublevelIds = [...Array(cells.length).keys()].reduce(
+                    (acc, i) => acc.concat($(cells[i][0]).data('sublevel')), []);
+
+                if (window.mergedSublevels.hasOwnProperty(constructId)) {
+                    window.mergedSublevels[constructId][levelId] = sublevelIds;
+                } else {
+                    window.mergedSublevels[constructId] = {};
+                    window.mergedSublevels[constructId][levelId] = sublevelIds;
+                }
             }
-
-            // Initialize dictionary with amout of observations per cell.
-            var starAmount = calculateStars4(stars);
-            var newColor = calculateNewColor4(starAmount, constructId);
-
-            // Add observations to `mergedHorizontalLevels` including all observations.
-            addMergedLevel4(stars, levelId);
-            addColumn4(startIndex, starAmount, newColor, isLast, constructId)
-
-            // Change colspan of parent th element to 1.
-            $(this).parent().attr('colspan', 1);
-            $(this).hide();
-            $(`#horizontal-back-4-${levelId}`).show();
         }
     })
 
@@ -346,22 +324,50 @@
         const levelId = $(this).attr('id').split('-')[3]
         const construct = $(this).data('construct');
         const constructId = construct.split('-')[1];
-        const sublevelsAmount = $(this).data('sublevels');
         const levelCount = $(this).data('levels-count');
 
         var header = $(`.star-chart-4-table-${constructId} tr:eq(1)`)
             .find(`[data-level-id="${levelId}"]`);
-
         var isLast = isLastLevel4(constructId, construct, header, levelCount);
-        removeColumns4(header, 0, constructId, construct);
+
+        findCells(header, 0, constructId, construct).remove();
+        header.remove();
 
         // Get observations which were merged for current levelId.
-        const stars = horizontalStarChart4[levelId];
+        const cells = window.horizontalStarChart4[levelId].cells;
+        const headers = window.horizontalStarChart4[levelId].headers;
 
-        // Creates new columns with observations which were there before merge.
-        insertMergedColumns4(sublevelsAmount, isLast, constructId, levelId, stars, startIndex);
+        // If unmerging when vertical merge is on, recalculate observations for all classes.
+        if (window.mergedConstructs.includes(constructId)) {
+            var amount = [];
 
-        horizontalStarChart4[levelId] = {}
+            // Calculate amount of observations for sublevels in single level.
+            for (var i = 0; i < headers.length; i++) {
+                amount.push(0);
+
+                for (var j = 0; j < cells[0].length / 2; j++) {
+                    amount[i] += $(cells[i][j + j + 1]).data('stars');
+                }
+            }
+
+            const newCells = recalculateObservations(amount, headers, constructId, cells);
+
+            for (var i = headers.length - 1; i >= 0; i--) {
+                insertOldHeader(isLast, constructId, headers[i]);
+    
+                for (var j = 0; j < newCells[i].length; j++) {
+                    insertOldCell(isLast, constructId, newCells[i][j], j + 2);
+                }
+            }
+        } else {
+            for (var i = headers.length - 1; i >= 0; i--) {
+                insertOldHeader(isLast, constructId, headers[i]);
+    
+                for (var j = 0; j < cells[i].length; j++) {
+                    insertOldCell(isLast, constructId, cells[i][j], j + 2);
+                }
+            }
+        }
 
         let parent = $(this).parent();
         parent.attr('colspan', parent.data('sublevels'));
@@ -370,18 +376,57 @@
         $(`#horizontal-4-${levelId}`).show();
 
         remakeTooltips();
+
+        var array = window.verticalStarChart[constructId];
+        var newArray = [];
+        var newArray2 = [];
+
+        if (window.mergedConstructs.includes(constructId)) {
+            // Update state of verticalArray to restore good elements.
+            for (var i in array) {
+                // Get level element.
+                const elem = array[i].classes.filter(elem => $(elem).hasClass(`heat-level-${levelId}`));
+                var index = array[i].classes.indexOf(elem[0]);
+                
+                // Splice arrays by index of level element.
+                array[i].classes.splice(index, 1);
+                array[i].quantities.splice(index, 1);
+
+                // Create new array with spliced elements
+                newArray[i] = array[i].classes.splice(0, index);
+                newArray2[i] = array[i].quantities.splice(0, index);
+            }
+
+            // Push cells into new array.
+            for (var j = 0; j < cells[0].length / 2; j++) {
+                for (var i in cells) {
+                    newArray[j].push(cells[i][j + j]);
+                    newArray2[j].push(cells[i][j + j + 1]);
+                }
+            }
+
+            // Concat old cells with new cells.
+            for (var i in array) {
+                array[i].classes = newArray[i].concat(array[i].classes);
+                array[i].quantities = newArray2[i].concat(array[i].quantities);
+            }
+        }
+
+        delete window.mergedSublevels[constructId][levelId];
     })
+
+    /* ------------------------------------------------------------------------ */
 
     $('.mergeVertical-4').click(function() {
         const construct = $(this).data('construct');
         const constructId = construct.split('-')[1];
-        const sublevels = $(this).data('sublevels');
 
-        // Columns with courses names in table.
-        const classesColumn = 1;
+        // Need to calculate it dynamically.
+        const sublevels = $(`.star-chart-4-table-${constructId}`).find('.sublevel').length;
+        const mergedLevels = window.mergedSublevels[construct];
 
         // Create object which let restore removed cells later.
-        createObjectToRestore(constructId, sublevels, classesColumn);
+        createObjectToRestore(constructId, sublevels);
 
         // Initialize array with 0 for every sublevel.
         var observationQuantity = initQuantityArray(sublevels);
@@ -393,9 +438,18 @@
                 if (j != "0") {
                     const stars = window.verticalStarChart[constructId][i].quantities[j].dataset.stars;
                     observationQuantity[j - 1] += parseInt(stars);
-                    
+
                     const sublevel = $(window.verticalStarChart[constructId][i].classes[j]).data('sublevel')
-                    sublevelsIds.push(sublevel);
+
+                    if (sublevel === undefined) {
+                        var level = $(window.verticalStarChart[constructId][i].classes[j])
+                            .attr('class').split('-')[3];
+                        level = level.split(' ')[0];
+
+                        sublevelsIds.push(`level-${level}`);
+                    } else {
+                        sublevelsIds.push(sublevel);
+                    }
                 }
             }
         }
@@ -419,12 +473,12 @@
      * @param {Integer} sublevels - Number of sublevels in construct.
      * @param {Integer} classesColumn - Number of columns with courses.
      */
-    function createObjectToRestore(constructId, sublevels, classesColumn) {
+    function createObjectToRestore(constructId, sublevels) {
         var classes = $(`.star-chart-4-table-${constructId} .heat-row`).find('td');
         var quantities = $(`.star-chart-4-table-${constructId} .quantity-row`).find('td');
 
-        classes = partition(classes, sublevels + classesColumn);
-        quantities = partition(quantities, sublevels + classesColumn);
+        classes = partition(classes, sublevels + CLASS_COLUMN);
+        quantities = partition(quantities, sublevels + CLASS_COLUMN);
 
         [...Array(classes.length).keys()].forEach((index) => {
             if (!window.verticalStarChart.hasOwnProperty(constructId)) {
@@ -480,12 +534,12 @@
         for (var i = 0; i < observationQuantity.length; i++) {
             const stars = observationQuantity[i];
             const color = calculateNewColor(stars, allStars);
-            const id = sublevelsIds[i];
+            var id = sublevelsIds[i];
 
             $(tr[0]).append(`<td data-csl-id="" class="text-center heat-merged-${id}"
                 data-color="${color}" bgcolor="${color}"></td>`);
             $(tr[1]).append(`<td data-csl-id="" data-stars="${stars}"
-                class="text-center stars-merged-${id}"><span>${stars}</span></td>`);
+                class="text-center stars-merged-${id} stars-amount"><span>${stars}</span></td>`);
         }
     }
 
