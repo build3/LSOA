@@ -6,13 +6,3 @@
 .star-v4 h4 {
     margin-bottom: 25px;
 }
-
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    border: 1px solid #000000;
-    height: 30px;
-    width: 30px;
-    border-radius: 6px;
-    background: #ffffff;
-    cursor: pointer;
-}

@@ -43,10 +43,10 @@ class Course(TimeStampedModel, OwnerMixin):
         value is a `Course` instance.
         """
         if not course_ids:
-            return Course.objects.prefetch_related('students').all()
+            return Course.objects.prefetch_related('students').all().order_by('id')
         else:
             return Course.objects.prefetch_related('students') \
-                .filter(id__in=course_ids)
+                .filter(id__in=course_ids).order_by('id')
 
 
 class Student(TimeStampedModel):
