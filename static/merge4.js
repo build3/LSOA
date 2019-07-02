@@ -74,7 +74,7 @@
      * @param {Integer} constructId 
      * @param {String} construct 
      */
-    function getCells4(headers, constructId, construct) {
+    function getCells(headers, constructId, construct) {
         var stars = [];
     
         [...Array(headers.length).keys()].map(i => {
@@ -101,16 +101,17 @@
      * @param {Array} headers 
      * @param {Integer} levelCount 
      */
-    function isLastLevel4(constructId, construct, headers, levelCount) {
+    function isLastLevel(constructId, headers, levelCount) {
         const cellIndex = headers[0].cellIndex;
 
-        const cells = $(`.star-chart-4-table-${constructId} .${construct}`)
-            .find(`td:eq(0)`);
         startIndex = cellIndex;
         const allHeaders = $(`.star-chart-4-table-${constructId}`)
             .find('th');
 
-        return startIndex + (headers.length) + CLASS_COLUMN === allHeaders.length - levelCount
+        const levelLastCellIndex = startIndex + (headers.length) + CLASS_COLUMN;
+        const constructLastCellIndex = allHeaders.length - levelCount;
+
+        return levelLastCellIndex === constructLastCellIndex;
     }
 
     function getAllStars(constructId) {
@@ -140,32 +141,32 @@
 
         if (isLast) {
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${i + heatRow + i})`)
+                .find(`tr:eq(${2 * i + heatRow})`)
                 .find('td')
                 .eq(startIndex - 1)
                 .after(heatMapElement[0]);
 
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${i + starRow + i})`)
+                .find(`tr:eq(${2 * i + starRow})`)
                 .find('td')
                 .eq(startIndex - 1)
                 .after(starElement[0]);
         } else {
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${i + heatRow + i})`)
+                .find(`tr:eq(${2 * i + heatRow})`)
                 .find('td')
                 .eq(startIndex)
                 .before(heatMapElement[0]);
 
             $(`.star-chart-4-table-${constructId}`)
-                .find(`tr:eq(${i + starRow + i})`)
+                .find(`tr:eq(${2 * i + starRow})`)
                 .find('td')
                 .eq(startIndex)
                 .before(starElement[0]);
-            }
+        }
     }
 
-    function insertOldHeader(isLast, constructId, header) {
+    function restoreSublevelHeader(isLast, constructId, header) {
         if (isLast) {
             $($(`.star-chart-4-table-${constructId} tr:eq(1)`).first())
                 .find('th')
@@ -179,7 +180,7 @@
         }
     }
 
-    function insertOldCell(isLast, constructId, cell, row) {
+    function restoreSublevelCell(isLast, constructId, cell, row) {
         if (isLast) {
             $(`.star-chart-4-table-${constructId}`)
                 .find(`tr:eq(${row})`)
@@ -257,11 +258,11 @@
 
                 window.horizontalStarChart4[levelId] = {
                     'headers': headers,
-                    'cells': getCells4(headers, constructId, construct)
+                    'cells': getCells(headers, constructId, construct)
                 };
 
                 // Check if merged sublevels are inside last level in table.
-                isLast = isLastLevel4(constructId, construct, headers, levelCount);
+                isLast = isLastLevel(constructId, headers, levelCount);
                 headers.remove();
 
                 // Get first <th> element for specific table.
@@ -294,7 +295,7 @@
 
                 // Createa array with courses id's.
                 for (var i = 0; i < cells[0].length / 2; i++) {
-                    classesIds.push($(cells[i][i + i]).attr('class').split('-')[2]);
+                    classesIds.push($(cells[0][2 * i]).attr('class').split('-')[2]);
                 }
 
                 // Create new cells with colors and calculated earlier amount.
@@ -328,7 +329,7 @@
 
         var header = $(`.star-chart-4-table-${constructId} tr:eq(1)`)
             .find(`[data-level-id="${levelId}"]`);
-        var isLast = isLastLevel4(constructId, construct, header, levelCount);
+        var isLast = isLastLevel(constructId, header, levelCount);
 
         findCells(header, 0, constructId, construct).remove();
         header.remove();
@@ -353,18 +354,18 @@
             const newCells = recalculateObservations(amount, headers, constructId, cells);
 
             for (var i = headers.length - 1; i >= 0; i--) {
-                insertOldHeader(isLast, constructId, headers[i]);
+                restoreSublevelHeader(isLast, constructId, headers[i]);
     
                 for (var j = 0; j < newCells[i].length; j++) {
-                    insertOldCell(isLast, constructId, newCells[i][j], j + 2);
+                    restoreSublevelCell(isLast, constructId, newCells[i][j], j + 2);
                 }
             }
         } else {
             for (var i = headers.length - 1; i >= 0; i--) {
-                insertOldHeader(isLast, constructId, headers[i]);
+                restoreSublevelHeader(isLast, constructId, headers[i]);
     
                 for (var j = 0; j < cells[i].length; j++) {
-                    insertOldCell(isLast, constructId, cells[i][j], j + 2);
+                    restoreSublevelCell(isLast, constructId, cells[i][j], j + 2);
                 }
             }
         }
@@ -377,38 +378,42 @@
 
         remakeTooltips();
 
-        var array = window.verticalStarChart[constructId];
-        var newArray = [];
-        var newArray2 = [];
+        var restoreVertical = window.verticalStarChart[constructId];
+        var newClasses = [];
+        var newQuantities = [];
 
         if (window.mergedConstructs.includes(constructId)) {
             // Update state of verticalArray to restore good elements.
-            for (var i in array) {
+            for (var i in restoreVertical) {
                 // Get level element.
-                const elem = array[i].classes.filter(elem => $(elem).hasClass(`heat-level-${levelId}`));
-                var index = array[i].classes.indexOf(elem[0]);
+                const elem = restoreVertical[i].classes
+                    .filter(elem => $(elem).hasClass(`heat-level-${levelId}`));
+                var index = restoreVertical[i].classes.indexOf(elem[0]);
                 
                 // Splice arrays by index of level element.
-                array[i].classes.splice(index, 1);
-                array[i].quantities.splice(index, 1);
+                restoreVertical[i].classes.splice(index, 1);
+                restoreVertical[i].quantities.splice(index, 1);
 
                 // Create new array with spliced elements
-                newArray[i] = array[i].classes.splice(0, index);
-                newArray2[i] = array[i].quantities.splice(0, index);
+                newClasses[i] = restoreVertical[i].classes.splice(0, index);
+                newQuantities[i] = restoreVertical[i].quantities.splice(0, index);
             }
 
             // Push cells into new array.
             for (var j = 0; j < cells[0].length / 2; j++) {
                 for (var i in cells) {
-                    newArray[j].push(cells[i][j + j]);
-                    newArray2[j].push(cells[i][j + j + 1]);
+                    newClasses[j].push(cells[i][j + j]);
+                    newQuantities[j].push(cells[i][j + j + 1]);
                 }
             }
 
             // Concat old cells with new cells.
-            for (var i in array) {
-                array[i].classes = newArray[i].concat(array[i].classes);
-                array[i].quantities = newArray2[i].concat(array[i].quantities);
+            for (var i in restoreVertical) {
+                restoreVertical[i].classes = newClasses[i]
+                    .concat(restoreVertical[i].classes);
+
+                restoreVertical[i].quantities = newQuantities[i]
+                    .concat(restoreVertical[i].quantities);
             }
         }
 
@@ -422,14 +427,14 @@
         const constructId = construct.split('-')[1];
 
         // Need to calculate it dynamically.
-        const sublevels = $(`.star-chart-4-table-${constructId}`).find('.sublevel').length;
+        const sublevelsSize = $(`.star-chart-4-table-${constructId}`).find('.sublevel').length;
         const mergedLevels = window.mergedSublevels[construct];
 
         // Create object which let restore removed cells later.
-        createObjectToRestore(constructId, sublevels);
+        createObjectToRestore(constructId, sublevelsSize);
 
         // Initialize array with 0 for every sublevel.
-        var observationQuantity = initQuantityArray(sublevels);
+        var observationQuantity = initQuantityArray(sublevelsSize);
         var sublevelsIds = [];
 
         // Calculate amount of observations per sublevel and append their ids to `sublevelIds` array.
@@ -473,12 +478,12 @@
      * @param {Integer} sublevels - Number of sublevels in construct.
      * @param {Integer} classesColumn - Number of columns with courses.
      */
-    function createObjectToRestore(constructId, sublevels) {
+    function createObjectToRestore(constructId, sublevelsSize) {
         var classes = $(`.star-chart-4-table-${constructId} .heat-row`).find('td');
         var quantities = $(`.star-chart-4-table-${constructId} .quantity-row`).find('td');
 
-        classes = partition(classes, sublevels + CLASS_COLUMN);
-        quantities = partition(quantities, sublevels + CLASS_COLUMN);
+        classes = partition(classes, sublevelsSize + CLASS_COLUMN);
+        quantities = partition(quantities, sublevelsSize + CLASS_COLUMN);
 
         [...Array(classes.length).keys()].forEach((index) => {
             if (!window.verticalStarChart.hasOwnProperty(constructId)) {
