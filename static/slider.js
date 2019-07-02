@@ -339,7 +339,7 @@
                     const color = calculateNewColor(size, allStars[construct]);
                     const classes = window.verticalStarChart[construct][index].classes;
                     const quantities = window.verticalStarChart[construct][index].quantities;
-                    
+
                     let heatElem = classes[[...Array(classes.length).keys()]
                         .filter(i => $(classes[i]).hasClass(`heat-level-${level}`))[0]];
                     let quantityElem = quantities[[...Array(quantities.length).keys()]
