@@ -137,19 +137,21 @@
         swapHorizontalStarChart(horizontalCourse, allStars);
 
         // Change elements in table.
-        changeElements(observationsFiltered, allStars, joinMergedSublevels(observationsFiltered));
+        updateTable(observationsFiltered, allStars, joinMergedSublevels(observationsFiltered));
     }
 
     /**
-     * Changes colored cells and those with observations count after filtering observations by date.
+     * Update all tables in chart with new colors and numbers of observations
+     * using filtered observations.
+     *
      * @param {Object} observationsFiltered - Observations filtered by date.
      * @param {Object} allStars - Observations count per construct.
      */
-    function changeElements(observationsFiltered, allStars, levels) {
+    function updateTable(observationsFiltered, allStars, levels) {
         for (var construct in observationsFiltered) {
             for (var course in observationsFiltered[construct]) {
                 for (var sublevel in observationsFiltered[construct][course]) {
-                    changeSublevel(
+                    updateElementsInSublevel(
                         observationsFiltered,
                         course,
                         sublevel,
@@ -163,15 +165,18 @@
     }
 
     /**
-     * Change elements for single sublevel or level.
-     * @param {Array or String} observationsFiltered
-     * @param {Integer} course
-     * @param {Integer} sublevel
-     * @param {String} construct
-     * @param {Object} allStars
-     * @param {Object} levels
+     * Changes `<td>` element with number of observations and `td` with color
+     * for specific sublevel (or level), specific course (or 0 if courses were merged)
+     * and for specific construct.
+     *
+     * @param {Object or String} observationsFiltered - filtered observations
+     * @param {String} course - Course ID as string.
+     * @param {String} sublevel - Sublevel ID as string.
+     * @param {String} construct - Construct ID as string.
+     * @param {Object} allStars - Object with all observations count per construct.
+     * @param {Object} levels - Object with observations for merged levels.
      */
-    function changeSublevel(observationsFiltered, course, sublevel, construct, allStars, levels) {
+    function updateElementsInSublevel(observationsFiltered, course, sublevel,construct, allStars, levels) {
         var size = observationsFiltered[construct][course][sublevel].length;
         var color = calculateNewColor(size, allStars[construct]);
         const observations = observationsFiltered[construct][course][sublevel];
@@ -179,26 +184,26 @@
         // If course is 0 then it means construct was merged.
         if (parseInt(course)) {
             if (Array.isArray(observations)) {
-                changeElems(size, color, `.stars-${course}-${sublevel}`,
+                changeValuesInElements(size, color, `.stars-${course}-${sublevel}`,
                     `.heat-${course}-${sublevel}`, construct);
             } else {
                 const level = observations;
                 size = levels[construct][level][course].length;
                 color = calculateNewColor(size, allStars[construct]);
 
-                changeElems(size, color, `.star-level-${level}-${course}`,
+                changeValuesInElements(size, color, `.star-level-${level}-${course}`,
                     `.heat-level-${level}-${course}`, construct);
             }
         } else {
             if (Array.isArray(observations)) {
-                changeElemsUnmerge(size, color, `.stars-merged-${sublevel}`,
+                changeValuesAfterUnmerge(size, color, `.stars-merged-${sublevel}`,
                     `.heat-merged-${sublevel}`, construct, sublevel);
             } else {
                 const level = observations;
                 size = levels[construct][level][course].length;
                 color = calculateNewColor(size, allStars[construct]);
 
-                changeElems(size, color, `.stars-merged-level-${level}`,
+                changeValuesInElements(size, color, `.stars-merged-level-${level}`,
                     `.heat-merged-level-${level}`, construct);
             }
         }
@@ -253,7 +258,7 @@
      * @param {String} heatClass - Class to find heat element.
      * @param {String} construct - ID of current construct.
      */
-    function changeElems(size, color, starsClass, heatClass, construct) {
+    function changeValuesInElements(size, color, starsClass, heatClass, construct) {
         let elem = $(`.star-chart-4-table-${construct}`)
             .find(heatClass)
             .attr('bgcolor', color);
@@ -266,8 +271,9 @@
     }
 
     /**
-     * This is needed when sublevels were merged vertically and horizontally
-     * and then unmerged horizontally.
+     * Changes number of observations and color for sublevel when
+     * vertical merge is on and sublevels aren't merge horizontally.
+     *
      * @param {Integer} size - Quantity of observations.
      * @param {String} color - New color for sublevel.
      * @param {String} starsClass - Class to find star element.
@@ -275,11 +281,14 @@
      * @param {String} construct - ID of current construct.
      * @param {Integer} sublevel - ID of sublevel.
      */
-    function changeElemsUnmerge(size, color, starsClass, heatClass, construct, sublevel) {
+    function changeValuesAfterUnmerge(size, color, starsClass, heatClass, construct, sublevel) {
         var elem = $(`.star-chart-4-table-${construct}`)
             .find(heatClass)
             .attr('bgcolor', color);
 
+        // This is needed when sublevels were merged vertically and horizontally
+        // and then unmerged horizontally because css classes are changing back
+        // so I have to use other classes to find elements for update.
         if (elem[0] === undefined) {
             elem = $(`.star-chart-4-table-${construct}`)
                 .find(`.heat-${sublevel}`)
