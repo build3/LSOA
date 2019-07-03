@@ -1,10 +1,5 @@
 {% extends "base/b4_base.html" %}
-
 {% load static bootstrap4 %}
-
-{% block extrastyles %}
-<link href="{% static 'login.css' %}" rel="stylesheet">
-{% endblock %}
 
 {% block content %}
   <form class="form-horizontal" role="form" action="{% url 'account_login' %}" method="POST">
