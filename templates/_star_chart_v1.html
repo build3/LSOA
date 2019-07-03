@@ -4,7 +4,7 @@
 {% for construct, classes in star_matrix_by_class.items %}
 <div style="overflow-x: scroll;width:100%;">
     <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.abbreviation }}</h4>
-    <table class="table table-bordered star_chart_table-{{ construct.id }}">
+    <table class="table table-bordered star_chart_table-{{ construct.id }} chart" data-construct="{{ construct.id }}">
         <thead>
             <tr>
                 <th scope="col">&nbsp;</th>
@@ -62,7 +62,7 @@
                     
                             {% for sublevel, observations in sublevels.items %}
                                 <td data-csl-id="{{ csl_id }}" style="border-bottom: 3pt solid black;"
-                                    class="text-center thicker"
+                                    class="text-center thicker" data-class="{{ class.id }}"
                                     {% if observations %}
                                         data-modal-launch-observations="{{ observations|observation_pks }}"
                                     {% endif %}>
@@ -88,7 +88,7 @@
                     
                             {% for sublevel, observations in sublevels.items %}
                                 <td data-csl-id="{{ csl_id }}"
-                                    class="text-center"
+                                    class="text-center" data-class="{{ class.id }}"
                                     {% if observations %}
                                         data-modal-launch-observations="{{ observations|observation_pks }}"
                                     {% endif %}>

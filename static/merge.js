@@ -1,41 +1,66 @@
 (() => {
+    // Columns which are not used to display stars (students, buttons).
+    const NOT_STAR_COLUMNS = 2;
+
     // Horizontal sublevels which were merged.
     var mergedHorizontalLevels = {};
 
     // Describes in what position new elements are added to table.
     var startIndex = 0;
 
-    // Number of rows which end class or multiple classes
+    // Number of rows which end class or multiple classes.
     var endClasses = [];
 
-    // Vertical merged students by class;
-    var mergedVertical = {}
+    // Vertical merged students by class.
+    var mergedVertical = {};
+
+    // Status of merged classes.
+    var mergingStatus = {};
+
+    // Status of merged levels.
+    var mergedLevels = {};
+
+    /**
+     * Initialize `mergingStatus` and `mergedLevels` with every construct id in chart.
+     */
+    function initializeMergingStatus() {
+        const tables = $('body').find('.chart');
+
+        [...Array(tables.length).keys()].forEach(i => {
+            mergingStatus[$(tables[i]).data('construct')] = [];
+            mergedLevels[$(tables[i]).data('construct')] = [];
+        });
+    }
+
+    initializeMergingStatus();
 
     /**
      * Adds new column to table.
-     * @param {Array} star_amount - Amount of observation per student.
+     * @param {Array} starAmount - Amount of observation per student.
      * @param {Integer} startIndex - Position inside table where new elements are created.
      * @param {Integer} constructId - ID of construct
      * @param {Integer} i - Index element.
      * @param {Boolean} isLast - Describes if level was last in table.
      */
-    function addColumn(star_amount, startIndex, constructId, i, isLast) {
-        if (star_amount.length !== 0) {
-            addColumnWithStar(startIndex, constructId, star_amount, i, isLast)
+    function addColumn(starAmount, startIndex, constructId, i, isLast, levelId) {
+        if (starAmount.length !== 0) {
+            addColumnWithStar(startIndex, constructId, starAmount, i, isLast, levelId);
         } else if (isLast) {
-            addEmptyCellAfter(constructId, i + 1, startIndex - 2)
+            addEmptyCellAfter(constructId, i + 1, startIndex - NOT_STAR_COLUMNS - 1, levelId);
         } else {
-            addEmptyCellBefore(constructId, i + 1, startIndex - 1);
+            addEmptyCellBefore(constructId, i + 1, startIndex - NOT_STAR_COLUMNS, levelId);
         }
     }
 
-    function addColumnWithStar(startIndex, constructId, stars, rowIndex, isLast) {
+    function addColumnWithStar(startIndex, constructId, stars, rowIndex, isLast, levelId) {
         let span = createSpan(stars);
 
         if (isLast) {
-            starColumnAfter(rowIndex + 1, constructId, startIndex - 2, stars, span);
+            starColumnAfter(rowIndex + 1, constructId,
+                startIndex - NOT_STAR_COLUMNS - 1, stars, span, levelId);
         } else {
-            starColumnBefore(rowIndex + 1, constructId, startIndex - 1, stars, span);
+            starColumnBefore(rowIndex + 1, constructId,
+                startIndex - NOT_STAR_COLUMNS, stars, span, levelId);
         }
     }
 
@@ -47,7 +72,7 @@
      * @param {Integer} constructId 
      * @param {String} construct 
      * @param {Array} headers
-     * @param {} levelCount 
+     * @param {Integer} levelCount 
      */
     function isLastLevel(constructId, construct, headers, levelCount) {
         const cellIndex = headers[0].cellIndex;
@@ -85,16 +110,6 @@
     }
 
     /**
-     * Generate header when separating merged level.
-     * @param {Object} star 
-     * @param {Integer} levelId 
-     */
-    function genareteHeader(star, levelId) {
-        return `<th scope="col" style="text-align:center;" class="align-middle" ` +
-            `title="${star.description}" data-toggle="tooltip" data-level-id="${levelId}">${star.name}</th>`
-    }
-
-    /**
      * Creates `<span>` element with number of observations or add space
      * when there are less than one observation inside `stars` array.
      * @param {Array} stars - Contains observations for single sublevel.
@@ -112,7 +127,7 @@
      * @param {Integer} constructId - ID of clicked construct.
      * @param {String} construct - Name of clicked construct.
      */
-    function removeColumns(headers, i, constructId, construct) {
+    function findCells(headers, i, constructId, construct) {
         const cellIndex = headers[i].cellIndex;
 
         if (i == 0) {
@@ -121,31 +136,13 @@
         
         // Subtract by 2 cause there are two unneded elements which are counted as well
         // (row with students and row with vertical merge buttons).
-        const cells = $(`.star_chart_table-${constructId} .${construct}`)
+        return $(`.star_chart_table-${constructId} .${construct}`)
             .find(`td:eq(${cellIndex - 2})`);
-        
-        const value = cells;
-
-        headers[i].remove();
-        cells.remove();
-
-        return value;
     }
 
-    /**
-     * Get sublevel data from one of <th> elements.
-     * @param {Selector} header - One of <th> element. 
-     */
-    function getSublevelData(header) {
-        return {
-            'name': header.innerHTML,
-            'description': header.dataset.originalTitle
-        }
-    }
-
-    function addEmptyCellBefore(constructId, j, startIndex) {
+    function addEmptyCellBefore(constructId, j, startIndex, levelId) {
         var element = $(document.createElement('td'))
-            .addClass('text-center');
+            .addClass(`text-center level-${levelId}`);
         element[0].dataset.cslId = "";
 
         if (endClasses.includes(j - 1)) {
@@ -159,9 +156,9 @@
             .before(element[0]);
     }
 
-    function addEmptyCellAfter(constructId, j, startIndex) {
+    function addEmptyCellAfter(constructId, j, startIndex, levelId) {
         var element = $(document.createElement('td'))
-            .addClass('text-center');
+            .addClass(`text-center level-${levelId}`);
         element[0].dataset.cslId = "";
 
         if (endClasses.includes(j - 1)) {
@@ -175,9 +172,9 @@
             .after(element[0]);
     }
 
-    function starColumnBefore(rowIndex, constructId, startIndex, stars, span) {
+    function starColumnBefore(rowIndex, constructId, startIndex, stars, span, levelId) {
         var element = $(document.createElement('td'))
-            .addClass('text-center')
+            .addClass(`text-center level-${levelId}`)
             .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
             .append(span);
 
@@ -195,9 +192,9 @@
             .before(element[0]);
     }
 
-    function starColumnAfter(rowIndex, constructId, startIndex, stars, span) {
+    function starColumnAfter(rowIndex, constructId, startIndex, stars, span, levelId) {
         var element = $(document.createElement('td'))
-            .addClass('text-center')
+            .addClass(`text-center level-${levelId}`)
             .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
             .append(span);
 
@@ -245,11 +242,11 @@
      * Returns array with observations id used when merging.
      * @param {Array} stars - Array with <td> elements.
      */
-    function calculate_star_amount(stars) {
-        var star_amount = {}
+    function calculateStarAmount(stars) {
+        var starAmount = {}
 
         for (var i = 0; i < stars[0].length; i++) {
-            star_amount[i] = []
+            starAmount[i] = []
 
             for (var j = 0; j < stars.length; j++) {
                 const observations = $(stars[j][i]).data('modal-launch-observations');
@@ -257,45 +254,17 @@
                 if (observations) {
                     // Add observations and filter reoccurring ones.
                     observations.map(observation => {
-                        if (!star_amount[i].some(star => observation === star)) {
-                            star_amount[i].push(observation);
+                        if (!starAmount[i].some(star => observation === star)) {
+                            starAmount[i].push(observation);
                         }
                     });
                 }
             }
+
+            $(stars[i]).remove();
         }
 
-        return star_amount;
-    }
-
-    /**
-     * Adds merged observations to `mergedHorizontalLevels`.
-     * @param {Array} stars - Array with <td> elements. 
-     * @param {Integer} levelId 
-     */
-    function addMergedLevel(stars, levelId) {
-        for (var i = 0; i < stars.length; i++) {
-            for (var j = 0; j < stars[0].length; j++) {
-                mergedHorizontalLevels[levelId][i][j + 1] = [];
-                const observations = $(stars[i][j]).data('modal-launch-observations');
-                
-                if (observations) {
-                    observations.map(observation =>
-                        mergedHorizontalLevels[levelId][i][j + 1].push(observation));
-                }
-            }
-        }
-    }
-
-    /**
-     * Initializes `mergedHorizontalLevels`.
-     * @param {Integer} levelId
-     * @param {Integer} i - Index from loop.
-     * @param {Array} headers - Array with <th> for specific level.
-     */
-    function initMergedLevel(levelId, i, headers) {
-        mergedHorizontalLevels[levelId][i] = {};
-        mergedHorizontalLevels[levelId][i][0] = getSublevelData(headers[i]);
+        return starAmount;
     }
 
     /**
@@ -304,64 +273,291 @@
      * In addition each sublevel and his observations
      * are added to mergedHorizontalLevels dictionary.
      */
-    function getCells(headers, levelId, constructId, construct) {
+    function getCells(headers, constructId, construct) {
         var stars = [];
 
         [...Array(headers.length).keys()].map(i => {
-            initMergedLevel(levelId, i, headers);
-            stars[i] = removeColumns(headers, i, constructId, construct);
+            stars[i] = findCells(headers, i, constructId, construct);
         });
 
         return stars;
     }
 
-    /**
-     * Insert back merged columns.
-     * @param {Integer} sublevelsAmount
-     * @param {boolean} isLast
-     * @param {Integer} constructId
-     * @param {Integer} levelId
-     * @param {Array} stars
-     * @param {Integer} startIndex
-     */
-    function insertMergedColumns(sublevelsAmount, isLast, constructId, levelId, stars, startIndex) {
-        for (var i = sublevelsAmount - 1; i >= 0; i--) {
-            if (isLast) {
-                $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
-                    .find('th')
-                    .eq(startIndex)
-                    .after(genareteHeader(stars[i][0], levelId));
-            } else {
-                $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
-                    .find('th')
-                    .eq(startIndex + 1)
-                    .before(genareteHeader(stars[i][0], levelId));
-            }
+    function getTdsWhichEndClass(stars) {
+        return [...Array(stars[0].length).keys()].filter(i => $(stars[0][i]).hasClass('thicker'));
+    }
 
-            for (var j = 1; j < Object.keys(stars[i]).length; j++) {
-                if (stars[i][j].length !== 0) {
-                    let span = createSpan(stars[i][j]);
-
-                    if (isLast) {
-                        starColumnAfter(j, constructId,
-                            startIndex - sublevelsAmount + (sublevelsAmount - 2), stars[i][j], span);
-                    } else {
-                        starColumnBefore(j, constructId, startIndex - 1, stars[i][j], span);
-                    }
-                } else {
-                    if (isLast) {
-                        addEmptyCellAfter(constructId, j,
-                            startIndex - sublevelsAmount + (sublevelsAmount - 2));
-                    } else {
-                        addEmptyCellBefore(constructId, j, startIndex - 1);
-                    }
-                }
-            }
+    function restoreSublevelHeader(isLast, constructId, header) {
+        if (isLast) {
+            $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
+                .find('th')
+                .eq(startIndex)
+                .after(header);
+        } else {
+            $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
+                .find('th')
+                .eq(startIndex + 1)
+                .before(header);
         }
     }
 
-    function getTdsWhichEndClass(stars) {
-        return [...Array(stars[0].length).keys()].filter(i => $(stars[0][i]).hasClass('thicker'));
+    function restoreSublevelCell(isLast, constructId, cell, row) {
+        if (isLast) {
+            $(`.star_chart_table-${constructId}`)
+                .find(`tr:eq(${row})`)
+                .find('td')
+                .eq(startIndex - 2)
+                .after(cell);
+        } else {
+            $(`.star_chart_table-${constructId}`)
+                .find(`tr:eq(${row})`)
+                .find('td')
+                .eq(startIndex - 1)
+                .before(cell);
+        }
+    }
+
+    /**
+     * Create new horizontal object to restore when any course in construct is
+     * merged and unmerge for any level is clicked. This is needed cause
+     * `mergedHorizontalLevels` keeps cells for all students in class instead
+     * of all cells for single class.
+     *
+     * @param {Array} mergedClasses - merged courses.
+     * @param {String} levelId - ID of level as string.
+     */
+    function createNewCellsToRestore(mergedCourses, levelId) {
+        var newObservations = {};
+        var newCells = {}
+
+        mergedCourses.forEach(id => newObservations[id] = {});
+
+        var cells = mergedHorizontalLevels[levelId].cells;
+
+        for (var i = 0; i < cells.length; i++) {
+            newCells[i] = [];
+
+            for (var j = 0; j < cells[i].length; j++) {
+                createNewCell(cells, i, j, newObservations, newCells);
+            }
+        }
+
+        return newCells;
+    }
+
+    function createNewCell(cells, i, j, observations, newCells) {
+        const courseId = $(cells[i][j]).data('class');
+        const stars = ($(cells[i][j]).data('modal-launch-observations') || []);
+        const isThicker = $(cells[i][j]).hasClass('thicker');
+
+        if (observations.hasOwnProperty(courseId)) {
+            if (observations[courseId].hasOwnProperty(i)) {
+                observations[courseId][i] = observations[courseId][i].concat(stars);
+
+                if (isThicker) {
+                    addThickerElement(cells, newCells, i, j, observations[courseId][i]);
+                }
+            } else {
+                observations[courseId][i] = [];
+                observations[courseId][i] = observations[courseId][i].concat(stars);
+
+                if (isThicker) {
+                    addThickerElement(cells, newCells, i, j, observations[courseId][i]);
+                }
+            }
+        } else {
+            newCells[i].push(cells[i][j]);
+        }
+    }
+
+    function addThickerElement(cells, newCells, i, j, newObservations) {
+        let observations = Array.from(new Set(newObservations));
+
+        // If observations are empty use saved element. Otherwise
+        // create new one.
+        if (observations.length === 0) {
+            newCells[i].push(cells[i][j]);
+        } else {
+            let element = $(document.createElement('td'))
+                .addClass('text-center thicker')
+                .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+                .append(createSpan(observations))
+                .attr('style', 'border-bottom: 3pt solid black;');
+
+            element[0].dataset.cslId = "";
+            element[0].dataset.modalLaunchObservations = `[${observations}]`;
+
+            newCells[i].push(element[0]);
+        }
+    }
+
+    /**
+     * Recalculate observations for students which are in course
+     * which was merged vertically. This is used when both class and level
+     * merge were used and unmerging horizontal one of levels.
+     *
+     * New observations are created in this way:
+     *
+     * <CourseID>: {
+     *   <Sublevel (`i`)>: [[Student1], [Student2]...]   <- Array containing observations for students per sublevel.
+     * }
+     *
+     * @param {Array} mergedCourses - Array with merged courses.
+     * @param {Object} cells - observations to recalculate.
+     */
+    function recalculateHorizontal(mergedCourses, cells) {
+        var observations = {};
+
+        mergedCourses.forEach((course) => {
+            observations[course] = {};
+
+            for (var i = 0; i < cells.length; i++) {
+                observations[course][i] = [];
+
+                for (var j = 0; j < cells[i].length; j++) {
+                    const courseId = $(cells[i][j]).data('class');
+                    const stars = ($(cells[i][j]).data('modal-launch-observations') || []);
+
+                    if (mergedCourses.indexOf(`${courseId}`) !== -1) {
+                        observations[course][i].push(stars);
+                    }
+                }
+            }
+        })
+
+        return observations;
+    }
+
+    /**
+     * Update `mergedVertical` object for specific course and construct when
+     * unmerging horizontally any level when any course is merged. 
+     *
+     * @param {Array} mergedCourses - Array with merged courses.
+     * @param {String} levelId - level ID as string.
+     * @param {String} constructId - construct ID as string.
+     * @param {Object} observations - Recalculated observations.
+     */
+    function updateVerticalRestore(mergedCourses, levelId, constructId, observations) {
+        mergedCourses.forEach((course) => {
+            var obs = observations[course];
+            var restore = mergedVertical[constructId][course];
+
+            Object.keys(obs).forEach(i => {
+                for (j = 0; j < obs[i].length; j++) {
+                    changeVerticalArray(restore, levelId, obs, course, i, j)
+                }
+            })
+        })
+    }
+
+    /**
+     * Add sublevels elements which contains recalculated observations to `mergedVertical`
+     * object for specific student in specific construct and course.
+     *
+     * To add those sublevels in good place inside an array. I used element
+     * which has `level-{levelID}` class, find his index inside the array,
+     * splice the array from 0 to index element + current sublevel index (`i`) +
+     * 1 (to grab also level element or created earlier sublevel element).
+     * Then I add to spliced array element for every sublevel and `concat` it with original array.
+     *
+     * @param {Object} restore - Object holding reference to `mergedVertical` object.
+     * @param {String} levelId - level ID as string.
+     * @param {Object} obs - Recalculated observations.
+     * @param {String} course - course ID as string.
+     * @param {Integer} i - Sublevel index.
+     * @param {Integer} j - Student index.
+     */
+    function changeVerticalArray(restore, levelId, obs, course, i, j) {
+        restore[j].cells = Array.from(restore[j].cells);
+        
+        const elem = restore[j].cells
+            .filter(elem => $(elem).hasClass(`level-${levelId}`));
+
+        const index = restore[j].cells.indexOf(elem[0]);
+        var splicedArray = restore[j].cells.splice(0, index + parseInt(i) + 1);
+
+        splicedArray.push(createNewElement(obs[i], course, j));
+        restore[j].cells = splicedArray.concat(restore[j].cells);
+    }
+
+    /**
+     * Create new td element for every observation and student in sublevel inside `obs`.
+     *
+     * @param {Object} obs - Recalculated observations.
+     * @param {String} course - One of merged courses.
+     * @param {Integer} j - Student index inside `obs[j]` array.
+     */
+    function createNewElement(obs, course, j) {
+        var element = $(document.createElement('td'));
+
+        // If any observations were created for student create element with star
+        // otherwise create empty element.
+        if (obs[j].length !== 0) {
+            // If last student in class add thicker class.
+            if (obs.length - 1 === j) {
+                element = $(element[0])
+                    .addClass('text-center thicker')
+                    .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+                    .append(createSpan(obs[j]))
+                    .attr('style', 'border-bottom: 3pt solid black;');
+            } else {
+                element = $(element[0])
+                    .addClass('text-center')
+                    .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+                    .append(createSpan(obs[j]));
+            }
+
+            element[0].dataset.cslId = "";
+            element[0].dataset.modalLaunchObservations = `[${obs[j]}]`;
+            element[0].dataset.class = course;
+        } else {
+            var element = null;
+
+            // If last student in class add thicker class.
+            if (obs.length - 1 === j) {
+                element = $(element[0])
+                    .addClass('text-center thicker')
+                    .attr('style', 'border-bottom: 3pt solid black;');
+            } else {
+                element = $(element[0])
+                    .addClass('text-center');
+            }
+                        
+            element[0].dataset.cslId = "";
+            element[0].dataset.class = course;
+            element[0].dataset.modalLaunchObservations = "";
+        }
+
+        return element[0];
+    }
+
+    /**
+     * Remove level element in `mergedVertical` object for every student in merged courses.
+     *
+     * @param {Array} mergedCourses - ID of merged courses per construct. 
+     * @param {Object} observations - ID's of observations per course and per student for merged courses.
+     * @param {String} constructId - ID of construct as string.
+     * @param {String} levelId - ID of level as string
+     */
+    function removeLevelElement(mergedCourses, observations, constructId, levelId) {
+        mergedCourses.forEach((course) => {
+            var restore = mergedVertical[constructId][course];
+            var obs = observations[course];
+
+            Object.keys(obs).forEach(i => {
+                for (j = 0; j < obs[i].length; j++) {
+                    restore[j].cells = Array.from(restore[j].cells);
+                    const elem = restore[j].cells
+                        .filter(elem => $(elem).hasClass(`level-${levelId}`));
+
+                    const index = restore[j].cells.indexOf(elem[0]);
+
+                    if (index !== -1) {
+                        restore[j].cells.splice(index, 1);
+                    }
+                }
+            })
+        })
     }
 
     $('.horizontal-unmerge').hide();
@@ -371,7 +567,7 @@
     $('.horizontal-merge').click(function() {
         var isLast = false;
 
-        const levelId = $(this).attr('id').split('-')[1]
+        const levelId = $(this).attr('id').split('-')[1];
         const sublevelsAmount = $(this).data('sublevels');
         const construct = $(this).data('construct');
         const constructId = construct.split('-')[1];
@@ -380,18 +576,20 @@
 
         // No reason to merge when only one sublevel is used.
         if (sublevelsAmount > 1) {
-            // Initialize mergedHorizontalLevels with level ID which is getting merge.
-            mergedHorizontalLevels[levelId] = {};
-
             // Get all headers for level.
             var headers = getAllHeaders(constructId, levelId);
 
             // Hide tooltips for merged headers.
             [...Array(headers.length).keys()].map(i => $(headers[i]).tooltip("hide"));
 
+            mergedHorizontalLevels[levelId] = {
+                'headers': headers,
+                'cells': getCells(headers, constructId, construct)
+            };
+
             // Check if merged sublevels are inside last level in table.
             isLast = isLastLevel(constructId, construct, headers, levelCount);
-            var stars = getCells(headers, levelId, constructId, construct);
+            headers.remove();
 
             // Get first <th> element for specific table.
             var header = $(`.star_chart_table-${constructId} tr:eq(1)`).first();
@@ -399,51 +597,71 @@
             // If merged level is last inside table I have to add new header after the last element which left.
             // Otherwise add new header before sublevel which was first inside table before removing it.
             if (isLast) {
-                addHeaderAfter(header, startIndex - 1, levelId, levelName);
+                addHeaderAfter(header, startIndex - 2, levelId, levelName);
             } else {
-                addHeaderBefore(header, startIndex, levelId, levelName);
+                addHeaderBefore(header, startIndex - 1, levelId, levelName);
             }
 
+            const cells = mergedHorizontalLevels[levelId].cells;
+
             // Initialize dictionary with amout of observations per cell.
-            var star_amount = calculate_star_amount(stars);
+            var starAmount = calculateStarAmount(cells);
 
             // Gets tds which are end of class.
-            endClasses = getTdsWhichEndClass(stars);
-
-            // Add observations to `mergedHorizontalLevels` including all observations.
-            addMergedLevel(stars, levelId);
+            endClasses = getTdsWhichEndClass(cells);
 
             // Adds new <td>'s to table.
-            [...Array(stars[0].length).keys()].map(
-                i => addColumn(star_amount[i], startIndex, constructId, i, isLast));
+            [...Array(cells[0].length).keys()].map(
+                i => addColumn(starAmount[i], startIndex, constructId, i, isLast, levelId));
 
             // Change colspan of parent th element to 1.
             $(this).parent().attr('colspan', 1);
             $(this).hide();
             $(`#horizontal-back-${levelId}`).show();
+
+            mergedLevels[constructId].push(levelId);
         }
     })
 
     $('.horizontal-unmerge').click(function() {
-        const levelId = $(this).attr('id').split('-')[2]
+        const levelId = $(this).attr('id').split('-')[2];
         const construct = $(this).data('construct');
         const constructId = construct.split('-')[1];
-        const sublevelsAmount = $(this).data('sublevels');
         const levelCount = $(this).data('levels-count');
 
         var header = $(`.star_chart_table-${constructId} tr`)
             .find(`[data-level-id='${levelId}']`);
 
         var isLast = isLastLevel(constructId, construct, header, levelCount);
-        removeColumns(header, 0, constructId, construct);
+        findCells(header, 0, constructId, construct).remove();
+        header.remove();
 
-        // Get observations which were merged for current levelId.
-        const stars = mergedHorizontalLevels[levelId];
+        // Get observations and headers which were merged for current levelId.
+        var cells = mergedHorizontalLevels[levelId].cells;
+        const headers = mergedHorizontalLevels[levelId].headers;
+        const mergedCourses = mergingStatus[constructId];
 
-        // Creates new columns with observations which were there before merge.
-        insertMergedColumns(sublevelsAmount, isLast, constructId, levelId, stars, startIndex);
+        if (mergedCourses.length === 0) {
+            // Restore merged columns.
+            for (var i = headers.length - 1; i >= 0; i--) {
+                restoreSublevelHeader(isLast, constructId, headers[i]);
 
-        mergedHorizontalLevels[levelId] = {}
+                for (var j = 0; j < cells[i].length; j++) {
+                    restoreSublevelCell(isLast, constructId, cells[i][j], j + 2);
+                }
+            }
+        } else {
+            const newCells = createNewCellsToRestore(mergedCourses, levelId);
+
+            // Restore merged columns.
+            for (var i = headers.length - 1; i >= 0; i--) {
+                restoreSublevelHeader(isLast, constructId, headers[i]);
+
+                for (var j = 0; j < cells[i].length; j++) {
+                    restoreSublevelCell(isLast, constructId, newCells[i][j], j + 2);
+                }
+            }
+        }
 
         let parent = $(this).parent();
         parent.attr('colspan', parent.data('sublevels'));
@@ -452,6 +670,26 @@
         $(`#horizontal-${levelId}`).show();
 
         remakeTooltips();
+
+        // Update vertical object when any class in construct is merged.
+        if (mergedCourses.length !== 0) {
+            // Get id's of observations for every student in merged classes.
+            var newObservations = recalculateHorizontal(mergedCourses, cells);
+
+            // Update `mergedVertical` with new elements containing recalculated observations. 
+            updateVerticalRestore(mergedCourses, levelId, constructId, newObservations);
+
+            // Remove level element for students in `mergedVertical` object.
+            removeLevelElement(mergedCourses, newObservations, constructId, levelId);
+        }
+
+        mergedHorizontalLevels[levelId] = {};
+
+        var index = mergedLevels[constructId].indexOf(levelId);
+
+        if (index > -1) {
+            mergedLevels[constructId].splice(index, 1);
+        }
     })
 
     /**
@@ -461,10 +699,10 @@
      * @param {Integer} classId - Merging class ID.
      */
     function calculateStarAmountVerticalByLevel(sublevels, constructId, classId) {
-        var star_amount = [];
+        var starAmount = [];
 
         for (var i = 0; i < sublevels; i++) {
-            star_amount.push([]);
+            starAmount.push([]);
         }
 
         var size = mergedVertical[constructId][classId].length;
@@ -476,18 +714,18 @@
                 if (observations) {
                     // Add observations and filter reoccurring ones.
                     observations.forEach(observation => {
-                        if (!star_amount[j].some(star => observation === star)) {
-                            star_amount[j].push(observation);
+                        if (!starAmount[j].some(star => observation === star)) {
+                            starAmount[j].push(observation);
                         }
                     });
                 }
 
-                $(mergedVertical[constructId][classId][i].student).remove()
-                $(mergedVertical[constructId][classId][i].cells[j]).remove()
+                $(mergedVertical[constructId][classId][i].student).remove();
+                $(mergedVertical[constructId][classId][i].cells[j]).remove();
             }
         }
 
-        return star_amount;
+        return starAmount;
     }
 
     /**
@@ -512,7 +750,7 @@
         mergedVertical[constructId][classId] = []
 
         for (var i = 0; i < students.length; i++) {
-            var cells = $($(students[i]).parent()).find('td')
+            var cells = $($(students[i]).parent()).find('td');
             sublevels = cells.length;
             mergedVertical[constructId][classId].push({'student': students[i], 'cells': cells});
         }
@@ -533,35 +771,37 @@
         const sublevels = saveCells(students, constructId, classId);
 
         // Calculate amount of stars for each level inside merging class.
-        const star_amount = calculateStarAmountVerticalByLevel(sublevels, constructId, classId)
+        const starAmount = calculateStarAmountVerticalByLevel(sublevels, constructId, classId);
 
         // Remove all empty <th> elements which starts row.
-        $(`.star_chart_table-${constructId}`).find(`.class-${classId}`).remove()
+        $(`.star_chart_table-${constructId}`).find(`.class-${classId}`).remove();
 
         var tr = $(this).parent().parent();
 
         // Append <th> with `className` to row which left.
         $(tr).append(`<th scope="row" class="student-${constructId} class-${classId} thicker" ` +
             `style="border-bottom: 3pt solid black; white-space: nowrap; ` +
-            `text-overflow: ellipsis; overflow: hidden; max-width: 150px;">${className}</th>`)
+            `text-overflow: ellipsis; overflow: hidden; max-width: 150px;">${className}</th>`);
 
         // Append to last row of class all stars for each level.
         for (var i = 0; i < sublevels; i++) {
-            if (star_amount[i].length !== 0) {
-                let span = createSpan(star_amount[i]);
+            if (starAmount[i].length !== 0) {
+                let span = createSpan(starAmount[i]);
 
                 $(tr).append(`<td data-csl-id="" style="border-bottom: 3pt solid black;" ` +
                     `class="text-center thicker" ` +
-                    `data-modal-launch-observations="[${star_amount[i]}]">` +
-                    `<i data-toggle="tooltip" title="" class="fa fa-star"></i>${span}</td>`)
+                    `data-modal-launch-observations="[${starAmount[i]}]">` +
+                    `<i data-toggle="tooltip" title="" class="fa fa-star"></i>${span}</td>`);
             } else {
                 $(tr).append('<td data-csl-id="" style="border-bottom: 3pt solid black;" ' +
-                    'class="text-center thicker"></td>')
+                    'class="text-center thicker"></td>');
             }
         }
 
         $(this).hide();
         $(`#class-separate-${classId}-${constructId}`).show();
+
+        mergingStatus[constructId].push(classId);
     })
 
     $('.class-separate').click(function() {
@@ -569,39 +809,55 @@
         const construct = $(this).data('construct');
         const constructId = construct.split('-')[1];
 
-        var tr = $(this).parent().parent();
-        var size = mergedVertical[constructId][classId].length;
-        var cells = $(tr).find('td');
+        const levels = [...mergedLevels[constructId]];
 
-        // Get amount of sublevels used in table.
-        const sublevels = cells.length
+        if (levels.length !== 0) {
+            // Trigger only one case to update objects in one way.
+            levels.forEach(level => $(`#horizontal-back-${level}`).trigger('click'));
+            $(this).trigger('click');
+            levels.forEach(level => $(`#horizontal-${level}`).trigger('click'));
+        } else {
+            var tr = $(this).parent().parent();
+            var size = mergedVertical[constructId][classId].length;
+            var cells = $(tr).find('td');
 
-        // Remove all <td> elements inside created earlier row.
-        cells.remove();
+            // Get amount of sublevels used in table.
+            const sublevels = cells.length;
 
-        // Remove header with class name
-        $(tr).find('th:eq(1)').remove();
+            // Remove all <td> elements inside created earlier row.
+            cells.remove();
 
-        // Append to row with button header with first student <th> element.
-        $(tr).append(mergedVertical[constructId][classId][size - 1].student);
+            // Remove header with class name
+            $(tr).find('th:eq(1)').remove();
 
-        // Append saved <td>s elements to row.
-        [...Array(sublevels).keys()].forEach(
-            i => $(tr).append(mergedVertical[constructId][classId][size - 1].cells[i]));
-
-        // Create new rows and append saved information about students.
-        for (var i = size - 2; i >= 0; i--) {
-            $(tr).before(`<tr class="construct-${constructId} class-${classId}"></tr>`);
-            tr = $(tr).prev();
-            $(tr).append('<th scope="col">&nbsp;</th>');
-            $(tr).append(mergedVertical[constructId][classId][i].student);
+            // Append to row with button header with first student <th> element.
+            $(tr).append(mergedVertical[constructId][classId][size - 1].student);
 
             // Append saved <td>s elements to row.
             [...Array(sublevels).keys()].forEach(
-                j => $(tr).append(mergedVertical[constructId][classId][i].cells[j]));
-        }
+                i => $(tr).append(mergedVertical[constructId][classId][size - 1].cells[i]));
 
-        $(this).hide();
-        $(`#class-merge-${classId}-${constructId}`).show();
+            // Create new rows and append saved information about students.
+            for (var i = size - 2; i >= 0; i--) {
+                $(tr).before(`<tr class="construct-${constructId} class-${classId}"></tr>`);
+                tr = $(tr).prev();
+                $(tr).append('<th scope="col">&nbsp;</th>');
+                $(tr).append(mergedVertical[constructId][classId][i].student);
+
+                // Append saved <td>s elements to row.
+                [...Array(sublevels).keys()].forEach(
+                    j => $(tr).append(mergedVertical[constructId][classId][i].cells[j]));
+            }
+
+            $(this).hide();
+            $(`#class-merge-${classId}-${constructId}`).show();
+
+            // Remove class from mergingStatus inside construct.
+            var index = mergingStatus[constructId].indexOf(classId);
+
+            if (index > -1) {
+                mergingStatus[constructId].splice(index, 1);
+            }
+        }
     })
 })()
