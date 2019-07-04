@@ -587,11 +587,11 @@
             return COLORS_DARK["0"];
         }
 
-        if (starAmount == allStars) {
+        if (starAmount == allStarsCount) {
             return COLORS_DARK["10"];
         }
 
-        const percentValue = 100 * starAmount / allStars;
+        const percentValue = 100 * starAmount / allStarsCount;
 
         if (percentValue < 10) {
             return COLORS_DARK["LESS_THEN_10"]

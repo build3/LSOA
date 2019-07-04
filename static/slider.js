@@ -218,18 +218,17 @@
      * Otherwise color is taken from the first digit from new `percentValue`. For example when
      * `percentValue` is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
      * @param {Integer} starAmount 
-     * @param {Integer} allStars 
      */
     function calculateNewColor(starAmount) {
         if (starAmount == 0) {
             return COLORS_DARK["0"];
         }
 
-        if (starAmount == allStars) {
+        if (starAmount == allStarsCount) {
             return COLORS_DARK["10"];
         }
 
-        const percentValue = 100 * starAmount / allStars;
+        const percentValue = 100 * starAmount / allStarsCount;
 
         if (percentValue < 10) {
             return COLORS_DARK["LESS_THEN_10"];
