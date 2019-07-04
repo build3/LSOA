@@ -561,7 +561,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
             'min_date': min_date,
             'max_date': Observation.get_max_date_from_observations(observations),
-            'star_chart_4_dates': json.dumps(star_chart_4_dates)
+            'star_chart_4_dates': json.dumps(star_chart_4_dates),
+            'observations_count': observations.filter(constructs__isnull=False).count()
         })
         return data
 

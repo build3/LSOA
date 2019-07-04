@@ -47,6 +47,7 @@
 (() => {
     const observations = JSON.parse(window.observations) || {};
     const COLORS_DARK = JSON.parse(window.COLORS_DARK);
+    const allStars = parseInt(window.allObservations);
 
     $('#date-slider').slider({
         min: dateToTime(window.minDate),
@@ -178,7 +179,7 @@
      */
     function updateElementsInSublevel(observationsFiltered, course, sublevel,construct, allStars, levels) {
         var size = observationsFiltered[construct][course][sublevel].length;
-        var color = calculateNewColor(size, allStars[construct]);
+        var color = calculateNewColor(size);
         const observations = observationsFiltered[construct][course][sublevel];
 
         // If course is 0 then it means construct was merged.
@@ -189,7 +190,7 @@
             } else {
                 const level = observations;
                 size = levels[construct][level][course].length;
-                color = calculateNewColor(size, allStars[construct]);
+                color = calculateNewColor(size);
 
                 changeValuesInElements(size, color, `.star-level-${level}-${course}`,
                     `.heat-level-${level}-${course}`, construct);
@@ -201,7 +202,7 @@
             } else {
                 const level = observations;
                 size = levels[construct][level][course].length;
-                color = calculateNewColor(size, allStars[construct]);
+                color = calculateNewColor(size);
 
                 changeValuesInElements(size, color, `.stars-merged-level-${level}`,
                     `.heat-merged-level-${level}`, construct);
@@ -219,7 +220,7 @@
      * @param {Integer} starAmount 
      * @param {Integer} allStars 
      */
-    function calculateNewColor(starAmount, allStars) {
+    function calculateNewColor(starAmount) {
         if (starAmount == 0) {
             return COLORS_DARK["0"];
         }
@@ -336,7 +337,7 @@
                 if (!Array.isArray(observations[construct][course][sublevel])) {
                     const level = observations[construct][course][sublevel];
                     const size = levels[construct][level][course].length;
-                    const color = calculateNewColor(size, allStars[construct]);
+                    const color = calculateNewColor(size);
                     const classes = window.verticalStarChart[construct][index].classes;
                     const quantities = window.verticalStarChart[construct][index].quantities;
 
@@ -352,7 +353,7 @@
                     quantityElem.innerHTML = size;
                 } else {
                     const size = observations[construct][course][sublevel].length;
-                    const color = calculateNewColor(size, allStars[construct]);
+                    const color = calculateNewColor(size);
 
                     let heatElem = window.verticalStarChart[construct][index].classes[j + 1];
                     let quantityElem = window.verticalStarChart[construct][index].quantities[j + 1];
@@ -394,7 +395,7 @@
                     const course = $(heatElem).attr('class').split('-')[2];
 
                     const size = observations[construct][course][sublevel].length;
-                    const color = calculateNewColor(size, allStars[construct]);
+                    const color = calculateNewColor(size);
 
                     heatElem.dataset.color = color;
                     heatElem.setAttribute('bgcolor', color);

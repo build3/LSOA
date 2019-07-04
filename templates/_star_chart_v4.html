@@ -70,8 +70,8 @@
 
                     {% for sublevel, observations in sublevels.items %}
                         <td data-csl-id="{{ csl_id }}" class="text-center heat-{{ class.id }}-{{ sublevel.id }}"
-                            data-color="{% get_color_star_chart_4 sublevel observations construct %}"
-                            bgcolor="{% get_color_star_chart_4 sublevel observations construct %}"
+                            data-color="{% get_color_star_chart_4 sublevel observations %}"
+                            bgcolor="{% get_color_star_chart_4 sublevel observations %}"
                             data-sublevel="{{ sublevel.id }}">
                         </td>
                     {% endfor %}
@@ -98,6 +98,7 @@
     window.minDate = "{{ min_date }}";
     window.maxDate = "{{ max_date }}";
     window.observations = "{{ star_chart_4_dates|escapejs }}";
+    window.allObservations = "{{ observations_count }}";
 </script>
 <script src="{% static 'merge4.js' %}"></script>
 <script src="{% static 'slider.js' %}"></script>
