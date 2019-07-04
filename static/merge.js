@@ -14,10 +14,10 @@
     // Vertical merged students by class.
     var mergedVertical = {};
 
-    // Status of merged classes.
+    // Stores id of merged courses per construct.
     var mergingStatus = {};
 
-    // Status of merged levels.
+    // Stores id of levels which were merged per construct.
     var mergedLevels = {};
 
     /**
@@ -62,6 +62,10 @@
             starColumnBefore(rowIndex + 1, constructId,
                 startIndex - NOT_STAR_COLUMNS, stars, span, levelId);
         }
+    }
+
+    function addTooltip() {
+        return '<i data-toggle="tooltip" title="" class="fa fa-star"></i>';
     }
 
     /**
@@ -146,7 +150,7 @@
         element[0].dataset.cslId = "";
 
         if (endClasses.includes(j - 1)) {
-            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
+            $(element[0]).addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
@@ -162,7 +166,7 @@
         element[0].dataset.cslId = "";
 
         if (endClasses.includes(j - 1)) {
-            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
+            $(element[0]).addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
@@ -175,14 +179,14 @@
     function starColumnBefore(rowIndex, constructId, startIndex, stars, span, levelId) {
         var element = $(document.createElement('td'))
             .addClass(`text-center level-${levelId}`)
-            .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+            .append(addTooltip())
             .append(span);
 
         element[0].dataset.cslId = "";
         element[0].dataset.modalLaunchObservations = `[${stars}]`;
 
         if (endClasses.includes(rowIndex - 1)) {
-            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
+            $(element[0]).addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
@@ -195,14 +199,14 @@
     function starColumnAfter(rowIndex, constructId, startIndex, stars, span, levelId) {
         var element = $(document.createElement('td'))
             .addClass(`text-center level-${levelId}`)
-            .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+            .append(addTooltip())
             .append(span);
 
         element[0].dataset.cslId = "";
         element[0].dataset.modalLaunchObservations = `[${stars}]`;
 
         if (endClasses.includes(rowIndex - 1)) {
-            $(element[0]).css('border-bottom', '3pt solid black').addClass("thicker");
+            $(element[0]).addClass("thicker");
         }
 
         $(`.star_chart_table-${constructId}`)
@@ -288,32 +292,22 @@
     }
 
     function restoreSublevelHeader(isLast, constructId, header) {
+        var elem = $($(`.star_chart_table-${constructId} tr:eq(1)`).first().find('th'));
+
         if (isLast) {
-            $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
-                .find('th')
-                .eq(startIndex)
-                .after(header);
+            $(elem).eq(startIndex).after(header);
         } else {
-            $($(`.star_chart_table-${constructId} tr:eq(1)`).first())
-                .find('th')
-                .eq(startIndex + 1)
-                .before(header);
+            $(elem).eq(startIndex + 1).before(header);
         }
     }
 
     function restoreSublevelCell(isLast, constructId, cell, row) {
+        var elem = $(`.star_chart_table-${constructId}`).find(`tr:eq(${row})`).find('td');
+
         if (isLast) {
-            $(`.star_chart_table-${constructId}`)
-                .find(`tr:eq(${row})`)
-                .find('td')
-                .eq(startIndex - 2)
-                .after(cell);
+            $(elem).eq(startIndex - 2).after(cell);
         } else {
-            $(`.star_chart_table-${constructId}`)
-                .find(`tr:eq(${row})`)
-                .find('td')
-                .eq(startIndex - 1)
-                .before(cell);
+            $(elem).eq(startIndex - 1).before(cell);
         }
     }
 
@@ -380,9 +374,8 @@
         } else {
             let element = $(document.createElement('td'))
                 .addClass('text-center thicker')
-                .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
-                .append(createSpan(observations))
-                .attr('style', 'border-bottom: 3pt solid black;');
+                .append(addTooltip())
+                .append(createSpan(observations));
 
             element[0].dataset.cslId = "";
             element[0].dataset.modalLaunchObservations = `[${observations}]`;
@@ -418,7 +411,7 @@
                     const courseId = $(cells[i][j]).data('class');
                     const stars = ($(cells[i][j]).data('modal-launch-observations') || []);
 
-                    if (mergedCourses.indexOf(`${courseId}`) !== -1) {
+                    if (mergedCourses.indexOf(`${courseId}`) > -1) {
                         observations[course][i].push(stars);
                     }
                 }
@@ -444,7 +437,7 @@
 
             Object.keys(obs).forEach(i => {
                 for (j = 0; j < obs[i].length; j++) {
-                    changeVerticalArray(restore, levelId, obs, course, i, j)
+                    addSublevelsToVerticalRestore(restore, levelId, obs, course, i, j);
                 }
             })
         })
@@ -467,7 +460,7 @@
      * @param {Integer} i - Sublevel index.
      * @param {Integer} j - Student index.
      */
-    function changeVerticalArray(restore, levelId, obs, course, i, j) {
+    function addSublevelsToVerticalRestore(restore, levelId, obs, course, i, j) {
         restore[j].cells = Array.from(restore[j].cells);
         
         const elem = restore[j].cells
@@ -476,7 +469,7 @@
         const index = restore[j].cells.indexOf(elem[0]);
         var splicedArray = restore[j].cells.splice(0, index + parseInt(i) + 1);
 
-        splicedArray.push(createNewElement(obs[i], course, j));
+        splicedArray.push(createNewRestoreCell(obs[i], course, j));
         restore[j].cells = splicedArray.concat(restore[j].cells);
     }
 
@@ -487,7 +480,7 @@
      * @param {String} course - One of merged courses.
      * @param {Integer} j - Student index inside `obs[j]` array.
      */
-    function createNewElement(obs, course, j) {
+    function createNewRestoreCell(obs, course, j) {
         var element = $(document.createElement('td'));
 
         // If any observations were created for student create element with star
@@ -497,13 +490,12 @@
             if (obs.length - 1 === j) {
                 element = $(element[0])
                     .addClass('text-center thicker')
-                    .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
-                    .append(createSpan(obs[j]))
-                    .attr('style', 'border-bottom: 3pt solid black;');
+                    .append(addTooltip())
+                    .append(createSpan(obs[j]));
             } else {
                 element = $(element[0])
                     .addClass('text-center')
-                    .append('<i data-toggle="tooltip" title="" class="fa fa-star"></i>')
+                    .append(addTooltip())
                     .append(createSpan(obs[j]));
             }
 
@@ -516,8 +508,7 @@
             // If last student in class add thicker class.
             if (obs.length - 1 === j) {
                 element = $(element[0])
-                    .addClass('text-center thicker')
-                    .attr('style', 'border-bottom: 3pt solid black;');
+                    .addClass('text-center thicker');
             } else {
                 element = $(element[0])
                     .addClass('text-center');
@@ -641,25 +632,18 @@
         const headers = mergedHorizontalLevels[levelId].headers;
         const mergedCourses = mergingStatus[constructId];
 
-        if (mergedCourses.length === 0) {
-            // Restore merged columns.
-            for (var i = headers.length - 1; i >= 0; i--) {
-                restoreSublevelHeader(isLast, constructId, headers[i]);
+        var newCells = cells;
 
-                for (var j = 0; j < cells[i].length; j++) {
-                    restoreSublevelCell(isLast, constructId, cells[i][j], j + 2);
-                }
-            }
-        } else {
-            const newCells = createNewCellsToRestore(mergedCourses, levelId);
+        if (mergedCourses.length !== 0) {
+            newCells = createNewCellsToRestore(mergedCourses, levelId);
+        }
 
-            // Restore merged columns.
-            for (var i = headers.length - 1; i >= 0; i--) {
-                restoreSublevelHeader(isLast, constructId, headers[i]);
+        // Restore merged columns.
+        for (var i = headers.length - 1; i >= 0; i--) {
+            restoreSublevelHeader(isLast, constructId, headers[i]);
 
-                for (var j = 0; j < cells[i].length; j++) {
-                    restoreSublevelCell(isLast, constructId, newCells[i][j], j + 2);
-                }
+            for (var j = 0; j < cells[i].length; j++) {
+                restoreSublevelCell(isLast, constructId, newCells[i][j], j + 2);
             }
         }
 
@@ -779,22 +763,19 @@
         var tr = $(this).parent().parent();
 
         // Append <th> with `className` to row which left.
-        $(tr).append(`<th scope="row" class="student-${constructId} class-${classId} thicker" ` +
-            `style="border-bottom: 3pt solid black; white-space: nowrap; ` +
-            `text-overflow: ellipsis; overflow: hidden; max-width: 150px;">${className}</th>`);
+        $(tr).append(`<th scope="row" class="student-${constructId} class-${classId}
+            thicker student-cell">${className}</th>`);
 
         // Append to last row of class all stars for each level.
         for (var i = 0; i < sublevels; i++) {
             if (starAmount[i].length !== 0) {
                 let span = createSpan(starAmount[i]);
 
-                $(tr).append(`<td data-csl-id="" style="border-bottom: 3pt solid black;" ` +
-                    `class="text-center thicker" ` +
-                    `data-modal-launch-observations="[${starAmount[i]}]">` +
-                    `<i data-toggle="tooltip" title="" class="fa fa-star"></i>${span}</td>`);
+                $(tr).append(`<td data-csl-id="" class="text-center thicker"
+                    data-modal-launch-observations="[${starAmount[i]}]">
+                    ${addTooltip()}${span}</td>`);
             } else {
-                $(tr).append('<td data-csl-id="" style="border-bottom: 3pt solid black;" ' +
-                    'class="text-center thicker"></td>');
+                $(tr).append('<td data-csl-id="" class="text-center thicker"></td>');
             }
         }
 

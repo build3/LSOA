@@ -48,5 +48,12 @@ input[type="date"] {
 }
 
 .thicker {
-    border-bottom: 2pt solid black;
+    border-bottom: 2pt solid black !important;
+}
+
+.student-cell {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 150px;
 }
