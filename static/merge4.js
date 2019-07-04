@@ -5,6 +5,7 @@
 (() => {
     const COLORS_DARK = JSON.parse(window.COLORS_DARK);
     const CLASS_COLUMN = 1;
+    const allStarsCount = parseInt(window.allObservations);
 
     var startIndex = 0;
 
@@ -114,14 +115,8 @@
         return levelLastCellIndex === constructLastCellIndex;
     }
 
-    function getAllStars(constructId) {
-        const cells = $(`.star-chart-4-table-${constructId}`).find('.stars-amount');
-        return [...Array(cells.length).keys()].reduce(
-                (acc, val) => acc += $(cells[val]).data('stars'), 0);
-    }
-
-    function createNewCells(amount, allStars, i, constructId, levelId, courseId) {
-        const newColor = calculateNewColor(amount, allStars);
+    function createNewCells(amount, i, constructId, levelId, courseId) {
+        const newColor = calculateNewColor(amount);
         const heatRow = 2;
         const starRow = 3;
 
@@ -202,7 +197,7 @@
 
         for (var i = headers.length - 1; i >= 0; i--) {
             const size = amount[i];
-            const color = calculateNewColor(size, getAllStars(constructId) + total);
+            const color = calculateNewColor(size);
             const sublevelId = $(cells[i][0]).data('sublevel');
 
             newCells[i] = [];
@@ -277,7 +272,6 @@
                 }
 
                 const cells = window.horizontalStarChart4[levelId].cells;
-                const allStars = getAllStars(constructId);
                 const classQuantity = cells[0].length / 2;
 
                 var amount = [...Array(classQuantity).keys()].map(() => 0);
@@ -300,7 +294,7 @@
 
                 // Create new cells with colors and calculated earlier amount.
                 for (var i = 0; i < classQuantity; i++) {
-                    createNewCells(amount[i], allStars, i, constructId, levelId, classesIds[i]);
+                    createNewCells(amount[i], i, constructId, levelId, classesIds[i]);
                 }
 
                 // Change colspan of parent th element to 1.
@@ -533,12 +527,9 @@
         $(tr[0]).append('<td><b>All courses</b></td>');
         $(tr[1]).append('<td></td>');
 
-        const allStars = [...Array(observationQuantity.length).keys()].reduce((acc, i) =>
-            acc += observationQuantity[i], 0);
-
         for (var i = 0; i < observationQuantity.length; i++) {
             const stars = observationQuantity[i];
-            const color = calculateNewColor(stars, allStars);
+            const color = calculateNewColor(stars);
             var id = sublevelsIds[i];
 
             $(tr[0]).append(`<td data-csl-id="" class="text-center heat-merged-${id}"
@@ -591,7 +582,7 @@
         return array.length ? [array.splice(0, n)].concat(partition(array, n)) : [];
     }
 
-    function calculateNewColor(starAmount, allStars) {
+    function calculateNewColor(starAmount) {
         if (starAmount == 0) {
             return COLORS_DARK["0"];
         }
