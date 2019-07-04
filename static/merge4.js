@@ -5,7 +5,7 @@
 (() => {
     const COLORS_DARK = JSON.parse(window.COLORS_DARK);
     const CLASS_COLUMN = 1;
-    const allStars = parseInt(window.allObservations);
+    const allStarsCount = parseInt(window.allObservations);
 
     var startIndex = 0;
 
@@ -586,9 +586,6 @@
         if (starAmount == 0) {
             return COLORS_DARK["0"];
         }
-
-        console.log(allStars)
-        console.log(starAmount)
 
         if (starAmount == allStars) {
             return COLORS_DARK["10"];

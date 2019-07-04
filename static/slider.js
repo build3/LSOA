@@ -47,7 +47,7 @@
 (() => {
     const observations = JSON.parse(window.observations) || {};
     const COLORS_DARK = JSON.parse(window.COLORS_DARK);
-    const allStars = parseInt(window.allObservations);
+    const allStarsCount = parseInt(window.allObservations);
 
     $('#date-slider').slider({
         min: dateToTime(window.minDate),
