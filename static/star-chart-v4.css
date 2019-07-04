@@ -13,7 +13,7 @@
 }
 
 .push {
-    height: 120px;
+    height: 150px;
 }
 
 .footer {
@@ -24,5 +24,6 @@
     bottom: 0;
     width: 100%;
     height: 100px;
-    background-color: rgba(169, 169, 169, 0.7);
+    border: 4px solid black;
+    box-shadow: 10px 10px 5px #aaaaaa;
 }
