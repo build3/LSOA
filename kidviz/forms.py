@@ -91,7 +91,7 @@ class ObservationForm(forms.ModelForm):
             'students', 'constructs', 'tag_choices', 'tags', 'annotation_data',
             'original_image', 'video', 'observation_date', 'no_constructs',
             'notes', 'video_notes', 'parent', 'owner', 'name', 'course',
-            'grouping', 'construct_choices', 'curricular_focus'
+            'grouping', 'construct_choices', 'curricular_focus', 'is_draft'
         ]
         widgets = {
             'course': forms.HiddenInput(),
@@ -105,7 +105,10 @@ class ObservationForm(forms.ModelForm):
                 'class': 'datepicker form-control',
                 'data-format': 'yyyy-mm-dd'
             }),
-            'curricular_focus': forms.HiddenInput()
+            'curricular_focus': forms.HiddenInput(),
+            'video_notes': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
+            'video': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
+            'original_image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
@@ -181,3 +184,16 @@ class DateFilteringForm(forms.Form):
         required=False,
         queryset=LearningConstructSublevel.objects.all()
     )
+    courses = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=Course.objects.all(),
+        widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
+    )
+
+
+class DraftObservationForm(ObservationForm):
+    """This form is used to save draft observation without any validation."""
+    
+    def clean(self):
+        """Remove validation from parent form."""
+        return self.cleaned_data

@@ -5,56 +5,7 @@
 
 {% block extrastyles %}
   <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
-  <style>
-    [role="tooltip"] {
-      z-index: 9999999;
-    }
-
-    table, .ios .page {
-      background-color: #fff !important;
-    }
-
-    .modal.show {
-      z-index: 5010;
-    }
-
-    [data-modal-launch-observations] {
-      cursor: pointer;
-    }
-
-    [data-modal-launch-observations] i {
-      color: goldenrod;
-    }
-
-    [data-modal-launch-observations]:hover i {
-      color: darkgoldenrod;
-    }
-
-    .star-number {
-      font-size: 12px;
-    }
-
-    .dot {
-      height: 25px;
-      width: 25px;
-      background-color: #f2a287;
-      border-radius: 50%;
-      display: inline-block;
-      margin: 3px auto;
-    }
-
-    .dot:hover {
-      background-color: #cb6634;
-    }
-
-    /*
-     * Height of date input is broken if there is no value. It have been
-     * solved in higher version of bootstrap.
-     */
-    input[type="date"] {
-	     height: 2.375rem;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'observations.css' %}">
 {% endblock %}
 
 {% block extrascripts %}
@@ -68,6 +19,19 @@
       $("#id_tags").select2({
         tokenSeparators: [',', '\n']
       });
+      $("#id_courses").select2({
+        tokenSeparators: [',', '\n']
+      });
+
+      var course_id = "{{ course_id }}";
+
+      if (course_id !== "None") {
+        course_id = JSON.parse(course_id);
+
+        if (typeof(course_id) === "number") {
+          $('#id_courses').val(`${course_id}`).trigger('change');
+        }
+      }
     }
 
     function loadAllowedConstructs() {
@@ -111,8 +75,16 @@
       initSelect2();
       loadAllowedConstructs();
       $('.datepicker').datepicker({
-          uiLibrary: 'bootstrap4'
+          uiLibrary: 'bootstrap4',
       });
+
+      $('#filtering-submit').prop('disabled', true)
+
+      $('#filterForm :input').on('change input', function() {
+        $('#filtering-submit').removeAttr('disabled');
+      });
+
+      $('.datepicker').prop('readonly', true);
     });
 
     function registerUpdateConstructsListener(id) {
@@ -132,6 +104,7 @@
             var link = $video.value;
             var $videoContainer = $('#' + key + '-' + id)[0];
             var $videoElement = $('<video />', {
+                style: 'width: 100%; height: 100%;',
                 src: link,
                 type: 'video/mp4',
                 controls: true
@@ -241,7 +214,7 @@
       });
 
       // Launch modals
-      $('[data-modal-launch-observations]').on('click', function (e) {
+      $('body').on('click', '[data-modal-launch-observations]', function (e) {
         var observationIds = $(this).data('modal-launch-observations');
 
         $('#the-modal .modal-body').html('');
@@ -261,25 +234,61 @@
         });
       });
 
-      $('#courseSelector').on('change', function(e) {
-        var course_id = this.value;
-        window.location = '{% url "observations_all" %}' + course_id;
-      });
-
       $('.nav-link').on('click', function (e) {
         var chart_href = $(this).attr('href');
         var chart_id = chart_href.substr(1);
-        $('#filtering-submit').attr('name', chart_id);
+
+        if (chart_href !== "#") {
+          $('#filtering-submit').attr('name', chart_id);
+        }
+        
         if (chart_id == "chart_v3") {
           $("#construct-row").removeClass('d-none');
+          $('.date-class').removeClass('d-none');
+
           initSelect2();
           loadAllowedConstructs();
-        } else {
+        } else if (chart_id === "chart_v4") {
           $("#construct-row").addClass('d-none');
+          $('.date-class').addClass('d-none');
+        } else {
+          $(".swapping").addClass('d-none');
+          $('.date-class').removeClass('d-none');
         }
-
       });
 
+      $('.nav-tabs a').on('shown.bs.tab', function (e) {
+        // Mark current position to don't scroll after changing tab.
+        const src = window.pageYOffset;
+        window.location.hash = e.target.hash;
+        window.scrollTo(0, src);
+      })
+
+      // Select chart after refresh or back.
+      let url = window.location.href.split('/');
+      url = url[url.length - 1].split('#');
+      $(`#chartTab a[href="#${url[url.length - 1]}"]`).tab('show');
+      window.scrollTo(0, 0);
+
+      if (url[url.length - 1] == "chart_v4") {
+        $("#construct-row").addClass('d-none');
+        $('.date-class').addClass('d-none');
+      } else if (url[url.length - 1] == "chart_v3") {
+        $("#construct-row").removeClass('d-none');
+        $('.date-class').removeClass('d-none');
+      } else {
+        $("#construct-row").addClass('d-none');
+        $('.date-class').removeClass('d-none');
+      }
+
+      $('#select-all-courses').click(function() {
+        $('#id_courses').find('option').removeAttr('selected');
+        $('#id_courses').find('option').prop('selected', true);
+        $('#id_courses').select2();
+        $('#filtering-submit').removeAttr('disabled');
+      })
+
+      $('#id_time_window').addClass('form-control');
     });
   </script>
 {% endblock %}
@@ -293,15 +302,26 @@
 
           {% include "_base_filtering.html" %}
 
-          <ul class="nav nav-tabs" role="tablist">
+          <ul class="nav nav-tabs" id="chartTab" role="tablist">
             <li class="nav-item">
               <a class="nav-link {% if selected_chart == "chart_v1" %} active {% endif %}" data-toggle="tab" href="#chart_v1">Star Chart v1</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if selected_chart == "chart_v1_vertical" %} active {% endif %}" data-toggle="tab" href="#chart_v1_vertical">Star Chart v1 - Vertical Collapse All</a>
             </li>
             <li class="nav-item">
               <a class="nav-link {% if selected_chart == "chart_v2" %} active {% endif %}" data-toggle="tab" href="#chart_v2">Star Chart v2</a>
             </li>
             <li class="nav-item">
+              <a class="nav-link {% if selected_chart == "heat_map" %} active {% endif %}"
+                data-toggle="tab" href="#heat_map">Star Chart v2 Heat Map</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link {% if selected_chart == "chart_v3" %} active {% endif %}" data-toggle="tab" href="#chart_v3">Star Chart v3</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if selected_chart == "chart_v4" %} active {% endif %}"
+                data-toggle="tab" href="#chart_v4">Star Chart v4</a>
             </li>
           </ul>
 
@@ -309,11 +329,20 @@
             <div class="tab-pane {% if selected_chart == "chart_v1" %} active {% else %} fade {% endif %}" id="chart_v1">
               {% include "_star_chart_v1.html" %}
             </div>
+            <div class="tab-pane {% if selected_chart == "chart_v1_vertical" %} active {% else %} fade {% endif %}" id="chart_v1_vertical">
+              {% include "_star_chart_vertical_v1.html" %}
+            </div>
             <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="chart_v2">
               {% include "_star_chart_v2.html" %}
             </div>
+            <div class="tab-pane {% if selected_chart == "heat_map" %} active {% else %} fade {% endif %}" id="heat_map">
+              {% include "_star_chart_heat_map.html" %}
+            </div>
             <div class="tab-pane {% if selected_chart == "chart_v3" %} active {% else %} fade {% endif %}" id="chart_v3">
               {% include "_star_chart_v3.html" %}
+            </div>
+            <div class="tab-pane {% if selected_chart == "chart_v4" %} active {% else %} fade {% endif %}" id="chart_v4">
+              {% include "_star_chart_v4.html" %}
             </div>
           </div>
         </div>
@@ -333,7 +362,7 @@
                     Observation #{{ observation.id }}
                 {% endif %}
             </a>
-            <a href="{% url 'observation_detail_view' pk=observation.id %}" class=" btn btn-primary pull-right">Edit</a>
+            <a href="{% url 'observation_detail_view' pk=observation.id %}" class="btn btn-primary pull-right">Edit</a>
           </h3>
           <small class="d-block"><b>Constructs:</b> {{ observation.constructs.all|join:', ' }}</small>
           <small class="d-block"><b>Observation date:</b> {{ observation.observation_date }}</small>

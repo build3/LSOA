@@ -1,4 +1,4 @@
-{% load staticfiles tz_detect %}
+{% load staticfiles tz_detect raven %}
 <!DOCTYPE html>
 <html lang="en" class="h-100">
 <head>
@@ -14,8 +14,15 @@
   <link href="{% static 'vendor/toastr/toastr.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/datepicker/css/gijgo.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/common/css/common.css' %}" rel="stylesheet">
+  <link href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+  <link href="{% static 'base.css' %}" rel="stylesheet">
   {% block extrastyles %}{% endblock %}
+  <script src="https://cdn.ravenjs.com/3.26.4/raven.min.js" crossorigin="anonymous"></script>
+  <script>Raven.config('{% sentry_public_dsn %}').install()</script>
   <script type="text/javascript" src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script type="text/javascript"
+    src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 </head>
 <body class="h-100">
 {% block base-content %}
@@ -31,6 +38,7 @@
         src="{% static 'vendor/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/toastr/toastr.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'vendor/datepicker/js/gijgo.js' %}"></script>
+<script type="text/javascript" src="{% static 'dropdown.js' %}"></script> 
 <script>
   $( document ).ready(function() {
       $('.datepicker').each(function (i, picker) {

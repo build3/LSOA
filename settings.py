@@ -52,6 +52,7 @@ BACKEND_THIRD_PARTY_APPS = [
     'allauth.account',  # Authentication/Registration
     'formtools',  # for wizard views
     'storages',  # for S3-backed media
+    's3file', # for S3 direct upload
     'anymail',  # for mailgun emails
 ]
 
@@ -74,6 +75,7 @@ if DEBUG:
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'kidviz.middleware.S3FileMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

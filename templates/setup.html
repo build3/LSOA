@@ -13,25 +13,32 @@
   <script>
     $( document ).ready(function() {
       $('#id_context_tags').select2({
-        tokenSeparators: [',', '\n']
+        tokenSeparators: [',', '\n'],
       });
       $('#grouping_link').click(dumpFormData);
       $('#edit_grouping_link').click(dumpFormData);
       $('#add_tag').click(dumpFormData);
-
       $('#id_context_tags').on('select2:select', function(e) {
         var data = e.params.data;
-
         if (e.params.data.id == '{{ curricular_focus_id }}') {
           $('#curricular-focus-modal').modal();
         }
       });
-
       $('#curricularFocusInput').change(function() {
         $('#id_curricular_focus').val($(this).val());
       });
-    });
 
+      /** Hide `course` field when `re_setup` is 'True'. */
+      function hideCourseForReconfiguration() {
+        const re_setup = "{{ re_setup }}";
+
+        if (re_setup === 'True') {
+          $('#id_course').attr("style", "pointer-events: none;")
+        }
+      }
+
+      hideCourseForReconfiguration();
+    });
     function updateAddGroupLink() {
       var $gLink = $('#grouping_link');
       var $courseField = $('#id_course');
@@ -41,7 +48,6 @@
         $gLink.removeAttr('href');
       }
     }
-
     function updateEditGroupLink() {
       var $gLink = $('#edit_grouping_link');
       var $courseField = $('#id_course');
@@ -53,7 +59,6 @@
         $gLink.removeAttr('href');
       }
     }
-
     function updateDefaultCourseVisibility() {
       var $courseField = $('#id_course');
       var $setDefaultButton = $('#set_default_course');
@@ -63,7 +68,6 @@
         $setDefaultButton.hide();
       }
     }
-
     function setDefaultCourse() {
       var $courseField = $('#id_course');
       var course = $courseField.val();
@@ -84,42 +88,32 @@
         }
       });
     }
-
     function registerSelectListeners(id, func) {
       var listeners = ['click', 'update', 'change', 'focus', 'unfocus'];
       listeners.forEach(function(listener) {
         $(id).on(listener, func);
       });
     }
-
     function registerSelectListenersWithReady(id, func) {
       $(document).ready(func);
       registerSelectListeners(id, func);
     }
-
     registerSelectListenersWithReady('#id_course', updateAddGroupLink);
     registerSelectListenersWithReady('#id_grouping', updateAddGroupLink);
-
     registerSelectListenersWithReady('#id_course', updateEditGroupLink);
     registerSelectListenersWithReady('#id_grouping', updateEditGroupLink);
-
     registerSelectListeners('#id_course', updateDefaultCourseVisibility);
-
     $('#set_default_course').on('click', setDefaultCourse);
-
     $('[data-modal-sublevel]').on('click', function (e) {
       var exampleId = $(this).data('modal-sublevel');
       var modal_content = $('#examples-' + exampleId).clone();
-
       $('#examples-modal .modal-body').html(modal_content);
-
       var modal = $('#examples-modal');
       modal.modal({
         size: 'lg',
         fade: true
       });
     });
-
     function forceTagsReset() {
       $('#id_context_tags').val('').trigger('change');
       $('.form-check-input').attr("checked", false).trigger("change");
@@ -132,14 +126,13 @@
         data: $('#setupForm').serialize()
       });
     }
-
   </script>
 {% endblock %}
 
 {% block content %}
   <div class="row">
     <div class="col-6 offset-3">
-      <h1>{% block title %}KidViz: Setup{% endblock %}</h1>
+      <h1>{% block title %}KidViz: {% if re_setup %}Reconfiguration{% else %}Setup{% endif %}{% endblock %}</h1>
     </div>
   </div>
   <div class="row">
@@ -160,34 +153,33 @@
             {# pass, because we'll manually render that field later #}
 
           {% else %}
-
             <div class="form-group {% if field.errors %}has-errors  text-danger {% endif %}small">
               {% if field.name != "curricular_focus" %}
-              <div data-form-label="{{ field.auto_id }}">
-                <label for="{{ field.auto_id }}">{{ field.label }}</label>
-              </div>
+                <div data-form-label="{{ field.auto_id }}">
+                  <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                </div>
               {% endif %}
               {{ field }}
               {% if field.name == "course" %}
-              <div class="d-flex flex-row-reverse">
-                <a id="set_default_course" class="btn btn-primary btn-sm mt-1 ml-1" href="#">
-                  <i class="fa fa-paperclip"></i> Set as default course
-                </a>
-              </div>
+                <div class="d-flex flex-row-reverse">
+                  <a id="set_default_course" class="btn btn-primary btn-sm mt-1 ml-1" href="#">
+                    <i class="fa fa-paperclip"></i> Set as default course
+                  </a>
+                </div>
               {% endif %}
               {% if field.name == "grouping" %}
-                  <div class="d-flex flex-row-reverse">
-                    <a id="edit_grouping_link" class="btn btn-primary btn-sm mt-1 ml-1">
-                      <i class="fa fa-edit"></i> Edit Grouping
-                    </a>
-                    <a id="grouping_link" class="btn btn-primary btn-sm mt-1">
-                      <i class="fa fa-plus"></i> Add New Grouping
-                    </a>
+                <div class="d-flex flex-row-reverse">
+                  <a id="edit_grouping_link" class="btn btn-primary btn-sm mt-1 ml-1">
+                    <i class="fa fa-edit"></i> Edit Grouping
+                  </a>
+                  <a id="grouping_link" class="btn btn-primary btn-sm mt-1">
+                    <i class="fa fa-plus"></i> Add New Grouping
+                  </a>
                 </div>
               {% endif %}
 
               {% if field.name == "context_tags" %}
-                  <a id="add_tag" href="{% url 'create_tag' %}">+ Add New Tag</a>
+                <a id="add_tag" href="{% url 'create_tag' %}">+ Add New Tag</a>
               {% endif %}
             </div>
             {% if field.errors %}
@@ -196,9 +188,7 @@
               {% endfor %}
             {% endif %}
           {% endif %}
-
         {% endfor %}
-
 
         <div class="item-content">
           <div class="item-title  {% if form.constructs.errors %}text-danger{% endif %}">Select Learning Constructs
@@ -314,17 +304,14 @@
     .select2-container.select2-container--default.select2-container--open {
       z-index: 99999999;
     }
-
     [value="make-new-grouping"] ~ .item-inner .item-title {
       position: relative;
       top: -2px;
       color: #1b9a59;
     }
-
     [value="make-new-grouping"] ~ .icon.icon-radio {
       display: none;
     }
-
     [value="make-new-grouping"] ~ .item-inner .item-title:before {
       content: '+';
       position: relative;
@@ -333,16 +320,13 @@
       margin-right: 5px;
       display: inline-block;
     }
-
     .hidden {
       display: none;
     }
-
     .example-image {
       max-height: 280px;
       max-width: 20vw;
     }
-
     .top {
       vertical-align: top
     }

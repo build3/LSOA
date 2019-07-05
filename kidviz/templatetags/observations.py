@@ -18,3 +18,13 @@ def observation_pks(observations):
 @register.filter
 def course_from_session_or_first(request):
     return request.session.get('course') or Course.objects.order_by('id').first().pk
+
+
+@register.filter
+def get_color_for_sublevel(obj, observations):
+    return obj.get_color(len(observations))
+
+
+@register.simple_tag(takes_context=True)
+def get_color_star_chart_4(context, sublevel, level_observations):
+    return sublevel.get_color_dark(len(level_observations), context['observations_count'])

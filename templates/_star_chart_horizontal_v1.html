@@ -1,0 +1,76 @@
+{% load observations %}
+
+{% for construct, value in star_matrix_horizontal.items %}
+<div style="overflow-x: scroll;width:100%;">
+    <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.abbreviation }}</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">&nbsp;</th>
+
+                {% for level in construct.levels.all %}
+                    <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
+                        {{ level }}
+                        {% if level.description|length > 0 %}
+                            <span><i class="fa fa-info-circle"></i></span>
+                        {% endif %}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for student, student_value in value.items %}
+                <tr>
+                    <th scope="row" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 150px;">{{ student }}{% if not student.consented_to_research and not perms.kidviz.can_view_nonconsent_observations %}*{% endif %}</th>
+
+                    {% for level, observations in student_value.items%}
+                        <td data-csl-id="{{ csl_id }}"
+                            class="text-center"
+                            {% if observations|length > 0 %}
+                                data-modal-launch-observations="{{ observations|observation_pks }}"
+                            {% endif %}>
+
+                            {% if observations|length > 0 %}
+                                <i data-toggle="tooltip" title="" class="fa fa-star"></i>
+                            {% endif %}
+                            {% if observations|length > 1 %}
+                                <span class="star-number">({{ observations|length }})</span>
+                            {% else %}
+                                &nbsp;
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endfor %}
+
+<div style="overflow-x: scroll;width:100%;">
+    <h4 class="text-align-center" style="margin-bottom: 25px;">Observations without constructs</h4>
+    <table class="table table-bordered">
+        <tbody>
+            {% for student, observations in obseravtion_without_construct.items %}
+                <tr>
+                    <th scope="row">{{ student }}</th>
+                    <td data-csl-id="{{ csl_id }}"
+                        class="text-center"
+                        {% if observations|length > 0 %}
+                            data-modal-launch-observations="{{ observations|observation_pks }}"
+                        {% endif %}>
+
+                        {% if observations|length > 0 %}
+                            <i data-toggle="tooltip" title="" class="fa fa-star"></i>
+                        {% endif %}
+                        {% if observations|length > 1 %}
+                            <span class="star-number">({{ observations|length }})</span>
+                        {% else %}
+                            &nbsp;
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

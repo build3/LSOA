@@ -1,3 +1,5 @@
+import datetime
+import json
 import os
 from uuid import uuid4
 
@@ -33,6 +35,18 @@ class Course(TimeStampedModel, OwnerMixin):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_courses(cls, course_ids):
+        """
+        Creates and returns dict with courses where key is course's `id` and
+        value is a `Course` instance.
+        """
+        if not course_ids:
+            return Course.objects.prefetch_related('students').all().order_by('id')
+        else:
+            return Course.objects.prefetch_related('students') \
+                .filter(id__in=course_ids).order_by('id')
 
 
 class Student(TimeStampedModel):
@@ -113,6 +127,15 @@ class Student(TimeStampedModel):
 
         return new_student
 
+    @classmethod
+    def get_students_by_course(cls, course_id):
+        all_students = Student.objects.filter(status=Student.ACTIVE)
+
+        if course_id:
+            all_students = all_students.filter(course__in=course_id)
+
+        return all_students
+
 
 class StudentGroup(TimeStampedModel):
     """
@@ -157,8 +180,8 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     course = models.ForeignKey('kidviz.Course', blank=True, null=True, on_delete=models.PROTECT)
     grouping = models.ForeignKey('kidviz.StudentGrouping', blank=True, null=True, on_delete=models.SET_NULL)
-    construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
-    tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=[])
+    construct_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=list)
+    tag_choices = ArrayField(base_field=models.PositiveIntegerField(), null=True, blank=True, default=list)
 
     # since focus is assigned per-observation, ih has to be stored here and not on the tag's side
     curricular_focus = models.CharField(max_length=255, blank=True, null=True)
@@ -179,6 +202,7 @@ class Observation(TimeStampedModel, OwnerMixin):
     video_notes = models.FileField(upload_to=UploadToPathAndRename('video_notes/'), blank=True, null=True)
 
     observation_date = models.DateField(default=now)
+    is_draft = models.BooleanField(default=False)
 
     @property
     def allowed_students(self):
@@ -191,6 +215,155 @@ class Observation(TimeStampedModel, OwnerMixin):
             students.update(list(group.students.all()))
 
         return list(students)
+
+    def update_draft_media(self, image, video):
+        """Updates media for `Observation`.
+
+        Args:
+            image(File or None): `original_image` from request.
+            video(File or None): `video` from request.
+        """
+        if self.video and image:
+            self.video = None
+            self.save()
+
+        if self.original_image and video:
+            self.original_image = None
+            self.save()
+
+    def reset_media(self):
+        """Reset `video` and `original_image` for `Observation`."""
+        self.video = None
+        self.original_image = None
+        self.save()
+
+    @classmethod
+    def get_observations(cls, course_id, date_from, date_to, tags):
+        observations = Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs') \
+            .prefetch_related('tags') \
+            .prefetch_related('constructs__level') \
+            .prefetch_related('constructs__level__construct') \
+            .prefetch_related('course') \
+            .all()
+
+        if course_id:
+            observations = observations.filter(course__in=course_id)
+
+        if date_from:
+            observations = observations.filter(observation_date__gte=date_from)
+
+        if date_to:
+            observations = observations.filter(observation_date__lte=date_to)
+
+        if tags:
+            observations = observations.filter(tags__in=tags)
+
+        return observations
+
+    @classmethod
+    def get_vertical_stars(cls, star_matrix):
+        star_matrix_vertical = {}
+
+        # I had to divide it into two for loops because there was a bug which added new observation
+        # for student in star_matrix.
+        for construct in star_matrix:
+            star_matrix_vertical[construct] = {}
+
+            for student in star_matrix[construct]:
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        # Set is used here to remove same observations from collection.
+                        star_matrix_vertical[construct][sublevel] = set()
+
+        for construct in star_matrix:
+            for student in star_matrix[construct]:
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        # Join sets to remove same observations.
+                        star_matrix_vertical[construct][sublevel] \
+                            .update(set(star_matrix[construct][student][sublevel]))
+
+        return star_matrix_vertical
+
+    @classmethod
+    def initialize_star_matrix_by_class(cls, constructs, courses):
+        star_matrix_by_class = {}
+
+        for construct in constructs:
+            star_matrix_by_class[construct] = {}
+
+            for course in courses:
+                star_matrix_by_class[construct][course] = {}
+                
+                for student in course.students.all():
+                    star_matrix_by_class[construct][course][student] = {}
+                        
+                    for level in construct.levels.all():
+                        for sublevel in level.sublevels.all():
+                            star_matrix_by_class[construct][course][student][sublevel] = []
+
+        return star_matrix_by_class
+
+    @classmethod
+    def initialize_dot_matrix_by_class(cls, constructs, courses):
+        dot_matrix = {}
+
+        for construct in constructs:
+            dot_matrix[construct] = {}
+
+            for course in courses:
+                dot_matrix[construct][course] = {}
+
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        dot_matrix[construct][course][sublevel] = []
+
+        return dot_matrix
+
+    @classmethod
+    def create_star_chart_4(cls, observations, constructs, courses, min_date):
+        star_chart_4 = {}
+        star_chart_4_dates = {}
+
+        for construct in constructs:
+            star_chart_4[construct] = {}
+            star_chart_4_dates[construct.id] = {}
+
+            for course in courses:
+                star_chart_4[construct][course] = {}
+                star_chart_4_dates[construct.id][course.id] = {}
+
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        star_chart_4[construct][course][sublevel] = []
+                        star_chart_4_dates[construct.id][course.id][sublevel.id] = []
+
+        for observation in observations:
+            if observation.course:
+                sublevels = observation.constructs.all()
+
+                for sublevel in sublevels:
+                    construct = sublevel.level.construct
+
+                    if observation.observation_date <= min_date:
+                        star_chart_4[construct][observation.course][sublevel].append(observation)
+
+                    star_chart_4_dates[construct.id][observation.course.id][sublevel.id].append(
+                        datetime.datetime \
+                            .combine(observation.observation_date, datetime.datetime.min.time()) \
+                            .timestamp())
+
+        return (star_chart_4, star_chart_4_dates)
+
+    @classmethod
+    def get_min_date_from_observation(cls, observations):
+        return observations.aggregate(models.Min('observation_date'))['observation_date__min']
+
+    @classmethod
+    def get_max_date_from_observations(cls, observations):
+        return observations.aggregate(models.Max('observation_date'))['observation_date__max']
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)
@@ -237,11 +410,75 @@ class LearningConstructSublevel(TimeStampedModel):
     name = models.CharField(max_length=255)
     description = models.TextField()
 
+    COLORS = {
+        "ZERO": "#FFFFFF",
+        "LESS_THAN_THREE": "#E6E6FF",
+        "LESS_THAN_FIVE": "#B3B3FF",
+        "FIVE": "#9999FF",
+        "LESS_THAN_EIGHT": "#6666FF",
+        "LESS_THAN_TEN": "#3333FF",
+        "TEN_AND_MORE": "#0000FF"
+    }
+
+    COLORS_DARK = {
+        "0": "#FFFFFF",  # == 0%
+        "LESS_THEN_10": "#E6E6E6", # < 10%
+        "1": "#CCCCCC", # < 20%
+        "2": "#B3B3B3", # < 30%
+        "3": "#999999", # < 40%
+        "4": "#808080", # < 50%
+        "5": "#666666", # < 60%
+        "6": "#4D4D4D", # < 70%
+        "7": "#333333", # < 80%
+ 		"8": "#1A1A1A", # < 90%
+        "9": "#0D0D0D", # < 100%
+        "10": "#000000" # == 100%
+    }
+
     def short_name(self):
         try:
             return '{}'.format(self.name.split()[1])
         except:
             return '{}'.format(self.name)
+
+    def get_color(self, observation_count):
+        if not observation_count:
+            return self.COLORS["ZERO"]
+        elif observation_count < 3:
+            return self.COLORS["LESS_THAN_THREE"]
+        elif observation_count < 5:
+            return self.COLORS["LESS_THAN_FIVE"]
+        elif observation_count == 5:
+            return self.COLORS["FIVE"]
+        elif observation_count < 8:
+            return self.COLORS["LESS_THAN_EIGHT"]
+        elif observation_count < 10:
+            return self.COLORS["LESS_THAN_TEN"]
+        else:
+            return self.COLORS["TEN_AND_MORE"]
+
+    def get_color_dark(self, observation_count, all_observations):
+        """
+        Calculates new color for merged level. To get new color for level
+        new percent value is calculated. When `observation_count` is 0 color for 0% is used.
+        When `observation_count` is equal to `all_observations` which are inside
+        table then color with `10` key is returned. If new `percent_value` is
+        less than 10% `LESS_THEN_10` key is used. Otherwise color is taken from
+        the first digit from new `percent_value`. For example when `percent_value`
+        is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
+        """
+        if not observation_count:
+            return self.COLORS_DARK['0']
+
+        if observation_count == all_observations:
+            return self.COLORS_DARK['10']
+
+        percent_usage = 100 * observation_count / all_observations
+
+        if percent_usage < 10:
+            return self.COLORS_DARK["LESS_THEN_10"]
+        else:
+            return self.COLORS_DARK[str(percent_usage)[:1]]
 
     def __str__(self):
         return '{}'.format(self.name)

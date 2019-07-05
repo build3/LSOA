@@ -9,17 +9,27 @@
 {% block extrascripts %}
   <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
   <script src="{% static 'vendor/lightbox2/js/lightbox-plus-jquery.min.js' %}"></script>
+  <script src="{% static 's3.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/npm/gijgo@1.9.10/js/gijgo.min.js" type="text/javascript"></script>
   <script>
     lightbox.option({
       'albumLabel': ''
     })
   </script>
+  {% if draft_observation.video_notes %}
+    <script>
+      window.video_notes = true;
+    </script>
+  {% else %}
+    <script>
+      window.video_notes = false;
+    </script>
+  {% endif %}
 {% endblock %}
 
 {% block extranav %}
   <li class="nav-item text-info" data-toggle="tooltip" data-html="true" title="{{ header }}">
-      {{ header|truncatechars:20 }}
+      {{ header|truncatechars:40 }}
       {% if created %}
         {% if is_today %}
           <span class="text-info float-right">{{ created|localtime|date:"g:i A" }}</span>
@@ -30,6 +40,14 @@
   </li>
 {% endblock %}
 {% block content %}
+  <div id="loader-frame" class="loader-frame">
+    <div class="loader"></div>
+  </div>
+  <form id="get-recent-observation-form" method="post" name="use_recent_observation">
+    {% csrf_token %}
+    <input type="hidden" name="use_recent_observation" value="True">
+  </form>
+
   {% if form.non_field_errors %}
     <div role="alert" class="alert alert-danger">
       {{ form.non_field_errors }}
@@ -61,16 +79,21 @@
           {# "#image.src => url", button-rows => image_taken_no_reset() #}
           {# 9. Edit observation, video (can't replace) #}
           {# "#image => hidden", "#video => url", button-rows => none() #}
-
           {% if recent_observation.original_image and use_last_sample %}
             <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
           {% elif recent_observation.video and use_last_sample %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
-            <video id="recorded" style="width: 100%;" src="{{ recent_observation.video.url }}" controls playsinline/>
+            <video id="recorded" style="width: 100%; height: 332px;" src="{{ recent_observation.video.url }}#t=0.1" controls playsinline/>
+          {% elif draft_observation.original_image %}
+            <img id="image" src="{{ draft_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
+            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
+          {% elif draft_observation.video %}
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
+            <video id="recorded" style="width: 100%; height: 332px;" src="{{ draft_observation.video.url }}#t=0.1" controls playsinline/>
           {% else %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
           {% endif %}
 
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
@@ -78,21 +101,20 @@
         </div>
 
         <div class="btn-group-lg text-center mt-1" id="buttons-capture">
-          <label class="btn btn-primary mb-0" for="photoUpload">Take photo
-            <input name="original_image" hidden
-                   type="file" accept="image/*"
-                   id="photoUpload"></label>
-          <label class="btn btn-primary mb-0" for="videoUpload">Take video
-            <input name="video" style="display:none;" type="file"
-                   accept="video/*"
-                   id="videoUpload"></label>
+          <label class="btn btn-primary mb-0" for="id_original_image">Take photo
+              <div hidden>{{ form.original_image }}</div>
+          </label>
+          <label class="btn btn-primary mb-0" for="id_video">Take video
+                <div hidden>{{ form.video }}</div>
+          </label>
           {% if recent_observation and not view.kwargs.pk %}
-            <button class="btn btn-primary mb-0"
-                    type="submit"
+            <button class="btn btn-primary mb-0 use-last-sample"
+                    type="button"
                     name="use_recent_observation" value="True">Use Last Sample
             </button>
           {% endif %}
         </div>
+
         <div class="btn-group-lg text-center mt-1" id="buttons-draw-or-reset" style="display:none;">
           <a class="btn btn-primary mb-0 text-white" data-toggle="modal" data-target="#confirmModal">Reset</a>
           <a id="enable-draw" class="btn btn-primary mb-0 enab disabled text-white">
@@ -100,7 +122,7 @@
             <span class="disa">Clear</span> Drawing</a>
           <a id="drawing-color-button" class="disabled btn btn-primary mb-0 text-white">Change Color <span
             id="drawing-color"></span></a>
-          <a>
+          <a id="erase-drawing" class="btn btn-primary mb-0 text-white">Erase Drawing</a>
           <div class="dropdown show" style="padding-top: 2px">
             <a id="brush-size-button"
                class="btn btn-primary mb-0 text-white"
@@ -180,7 +202,7 @@
             {{ form.observation_date.errors }}
           </div>
         {% endif %}
-        <div>{{ form.observation_date }}</div>
+        <div id="date-frame">{{ form.observation_date }}</div>
         {# TAGS SECTION #}
         <div class="text-center">
           {% for tag in tags %}
@@ -198,10 +220,15 @@
           {% endfor %}
         </div>
         <h4 style="text-align: center; margin: 0;">Notes</h4>
-        <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
-        <input name="video_notes" style="display:none;" type="file" accept="video/*" id="videoNoteUpload">
-        <label class="btn btn-primary w-100" for="videoNoteUpload"><span id="videoNoteUploadVerb">Add</span> Video/Audio
-          note</label>
+        {% if draft_observation.video_notes %}
+          <video id="recorded" style="width: 100%;" src="{{ draft_observation.video_notes.url }}" controls playsinline></video>
+        {% else %}
+          <video id="recordedNote" style="display:none;width: 100%; height: 150px" controls playsinline></video>
+        {% endif %}
+        <label class="btn btn-primary w-100" for="id_video_notes">
+            <div hidden>{{ form.video_notes }}</div>
+            <span id="id_video_notes_verb">Add</span> Video/Audio note
+        </label>
         <div>{{ form.notes }}</div>
         <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
         <div id="sublevel-examples" style="height: 150px">
@@ -248,6 +275,8 @@
             {{ form.students.errors }}
           </div>
         {% endif %}
+        {# required to insert django-like error alert on client side #}
+        <div id="student-empty-frame"></div>
         {% if grouping %}
           {% for group in grouping.groups.all %}
             <div class="card">
@@ -283,14 +312,65 @@
     </div>
     <div class="row">
       <div class="col-12 d-flex justify-content-between">
-        {% if last_observation_url %}
-          <a href="{{ last_observation_url }}" class="btn-primary btn-lg">View Last Observation</a>
-        {% else %}
-          <a href="{% url 'observation_view' %}" class="btn-primary btn-lg">Cancel</a>
-        {% endif %}
-        <a href="#" class="btn-primary btn-lg" onclick="document.getElementById('form').submit()">
-          &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
-        </a>
+        <div>
+          <button type="submit" id="re-setup-btn" class="btn btn-primary btn-lg">Return to Observation Setup</button>
+
+          {% if draft_observation and last_observation_url %}
+            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Discard</button>
+            <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
+          {% elif draft_observation %}
+            <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#dismissModal">Discard</button>
+          {% elif last_observation_url %}
+            <a href="{{ last_observation_url }}"><button class="btn btn-primary btn-lg" type="button">View Last Observation</button></a>
+          {% endif %}
+
+          {% if use_draft %}
+            <a href="{% url 'observation_view' %}" class="btn btn-primary btn-lg" id="cancel">Cancel</a>
+          {% else %}
+            <button type="button" class="btn btn-primary btn-lg" id="cancel">Cancel</button>
+          {% endif %}
+
+          <a href="{% url 'new-observation' %}"
+            class="btn btn-primary btn-lg"
+            id="new-observation">New Observation</a>
+        </div>
+
+
+        <div class="modal fade" id="dismissModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4>Dismiss</h4>
+              </div>
+              <div class="modal-body">
+                Are you sure to dismiss this observation draft?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href={% url 'dismiss_draft' %} class="btn btn-primary" id="dismiss-draft">Discard</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          {% if draft_observation %}
+            <button type="submit" id="draft-btn" class="btn-primary btn-lg">Update draft</button>
+          {% elif use_draft %}
+            <button type="submit" id="draft-btn" class="btn-primary btn-lg">Save as draft</button>
+          {% endif %}
+
+          <button
+            id="save-button"
+            type="submit"
+            class="btn-primary btn-lg"
+            style="margin-right: 0px;">
+            &nbsp;<i class="fa fa-floppy-o "></i>&nbsp;
+          </button>
+          <input id="draft-hidden" name="is_draft" value="False" type="hidden">
+          <input id="back-to-setup" name="back_to_setup" value="False" type="hidden">
+        </div>
+
       </div>
     </div>
     {% for hidden in form.hidden_fields %}
@@ -338,11 +418,108 @@
 
   <script>
     $(document).ready(function () {
+      var formChanged = false;
+
+      $('#form :input').on('change input', function() {
+        formChanged = true;
+      });
+
+      $('.nav-link').click(function() {
+        if (formChanged && !$(this).hasClass('not-confirm')) {
+          return confirm("You didn't save this observation. Do you want to continue.")
+        }
+      })
+
+      $('.chart-item').click(function() {
+        if (formChanged) {
+          return confirm("You didn't save this observation. Do you want to continue.")
+        }
+      })
+
+      $('#new-observation').click(function() {
+        if (formChanged) {
+          return confirm("You didn't save this observation. Do you want to continue.")
+        }
+      })
+
+      $('#cancel').click(function() {
+        window.history.back()
+      })
+
+      {# DRAFT OBSERVATION SECTION #}
+
+      $('#draft-btn').click(function() {
+        $('#draft-hidden').val('True');
+
+        const draft = "{{ draft_observation }}";
+
+        if (draft && !window.media_updated) {
+          window.draft_update = true
+        } else {
+          window.draft_update = false
+        }
+      })
+
+      $('#re-setup-btn').click(function() {
+        $('#draft-hidden').val('True');
+        $('#back-to-setup').val('True');
+
+        const draft = "{{ draft_observation }}";
+
+        if (draft && !window.media_updated) {
+          window.draft_update = true
+        } else {
+          window.draft_update = false
+        }
+      })
+
+      $('#save-button').click(function() {
+        $('#draft-hidden').val('False');
+      })
+
+      changeStateOfNotes();
+
+      function changeStateOfNotes() {
+        if (window.video_notes) {
+          $('#id_notes').hide()
+          $('#id_video_notes_verb').text('Replace')
+        }
+      }
+
+      var enableDisableDraw = document.querySelector('a#enable-draw');
+
+      shouldDisplayReset();
+
+      function shouldDisplayReset() {
+        const image = "{{ draft_observation.original_image }}"
+        const video = "{{ draft_observation.video }}"
+
+        if (image !== '') {
+          $("#recorded").hide();
+          $("#id_video").val('');
+
+          $("#buttons-capture").hide();
+          $("#buttons-draw-or-reset").show();
+
+          enableDisableDraw.classList.remove('disabled');
+        } else if (video !== '') {
+          $("#image").hide();
+          $("#id_original_image").val('');
+
+          $("#buttons-capture").hide();
+          $("#buttons-draw-or-reset").show();
+        }
+      }
+
       {# THIS SECTION HANDLES THE STUDENT/CONSTRUCT TOGGLING #}
 
       var checkedStudents = {};
       var checkedConstructs = {};
       var checkedTags = {};
+
+      $('.use-last-sample').click(function () {
+        $('#get-recent-observation-form').submit()
+      })
 
       var toggleStudent = function (studentId) {
         $('[data-student-id="' + studentId + '"]').toggleClass('bg-warning');
@@ -452,22 +629,27 @@
       $('.construct').on('click', function (e) {
         toggleConstruct($(this).data('construct-id'));
         $('#sublevel-description').html($(this).find('.sublevel-desc').html());
+        formChanged = true;
       });
 
       $('#id_no_constructs').on('click', function (e) {
-        handleConstructsSelection()
+        handleConstructsSelection();
+        formChanged = true;
       })
 
       $('.student').on('click', function (e) {
         toggleStudent($(this).data('student-id'));
+        formChanged = true;
       });
 
       $('.tag').on('click', function (e) {
         toggleTags($(this).data('tag-id'));
+        formChanged = true;
       });
 
       $('#curricularFocusInput').change(function() {
         $('#id_curricular_focus').val($(this).val());
+        formChanged = true;
       });
 
       // INITIALIZE STUDENTS/CONSTRUCTS IF "View/Edit Observation" PAGE
@@ -479,11 +661,12 @@
       {# THIS SECTION IS THE VIDEO NOTE CODE #}
 
       var recordedVideoNote = document.querySelector('video#recordedNote'); // TODO change to jquery
-      $('#videoNoteUpload').on('change', function (e) {
+      $('#id_video_notes').on('change', function (e) {
         $('#id_notes').hide()
         recordedVideoNote.src = URL.createObjectURL(this.files[0]);
         recordedVideoNote.style.display = '';
-        $('#videoNoteUploadVerb').text('Replace')
+        window.media_updated = true
+        $('#id_video_notes_verb').text('Replace')
       });
 
       {# THIS SECTION IS THE IMAGE/VIDEO SAMPLE CODE #}
@@ -514,10 +697,11 @@
       {# CAN START IN STATES 1, 5, 7, 8, and 9 #}
 
       {# THIS HANDLES STATE 1 TO STATE 2 #}
-      $("#photoUpload").on("change", function (e) {
+      $("#id_original_image").on("change", function (e) {
         $("#image").attr("src", URL.createObjectURL(this.files[0])).show();
         $("#recorded").hide();
-        $("#videoUpload").val('');
+        $("#id_video").val('');
+        window.media_updated = true
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -526,10 +710,12 @@
       });
 
       {# THIS HANDLES STATE 1 TO STATE 4 #}
-      $("#videoUpload").on("change", function (e) {
-        $("#recorded").attr("src", URL.createObjectURL(this.files[0])).show();
+      $("#id_video").on("change", function (e) {
+        $("#recorded").attr("src", URL.createObjectURL(this.files[0])).show().trigger("play").trigger("pause")
+
         $("#image").hide();
-        $("#photoUpload").val('');
+        $("#id_original_image").val('');
+        window.media_updated = true
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -540,15 +726,16 @@
         $("#buttons-capture").show();
         $("#buttons-draw-or-reset").hide();
         $("#image").attr("src", '{% static "images/photo-placeholder.svg" %}').show();
+        window.media_updated = true
         $("#recorded").hide();
-        $("#videoUpload").val('');
+        $("#id_video").val('');
 
         enableDisableDraw.classList.add('disabled');
         hideStage();
         stage.clear();
 
-        $("#photoUpload").val('');
-        $("#videoUpload").val('');
+        $("#id_original_image").val('');
+        $("#id_video").val('');
         $("#useMostRecentMedia").prop('checked', false);
       });
 
@@ -559,17 +746,21 @@
         $("#image").attr("src", '{% if object.original_image %}{{ object.original_image.url|safe }}{% endif %}').show();
         $("#recorded").hide();
         $("#buttons-capture").hide();
-        $("#buttons-draw-or-reset").hide(); // TODO show this and show previous annotation with ability to edit it
+        $("#buttons-draw-or-reset").show(); // TODO show this and show previous annotation with ability to edit it
+        window.media_updated = true
+        enableDisableDraw.classList.remove('disabled');
       }
 
       if ("{% if object.video %}{{ object.video.url }}{% endif %}") {
         {# this if block is goofy but otherwise it throws an error #}
         $("#recorded").attr("src", '{% if object.video %}{{ object.video.url|safe }}{% endif %}').show();
         $("#image").hide();
-        $("#photoUpload").val('');
+        $("#id_original_image").val('');
         $("#buttons-capture").hide();
-        $("#buttons-draw-or-reset").hide();
+        $("#buttons-draw-or-reset").show();
+        window.media_updated = true
         setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
+        enableDisableDraw.classList.remove('disabled');
       }
 
 
@@ -585,7 +776,7 @@
 
       var annotationInput = document.querySelector('#annotated-image');
 
-      var enableDisableDraw = document.querySelector('a#enable-draw');
+      
       var drawingColorButton = document.querySelector('a#drawing-color-button');
       var drawingColorDisplay = document.querySelector('#drawing-color');
       var color;
@@ -593,6 +784,12 @@
         isDrawingMode: false,
         selection: false
       });
+
+      $('#erase-drawing').click(function() {
+        hideStage();
+        stage.clear();
+        updateAnnotationJson();
+      })
 
       var index = parseInt(Math.random() * 100);
       var colors = [
@@ -604,6 +801,8 @@
       ];
 
       var image = document.getElementById('image');
+      // This is needed always call setUpEasel when image is loaded.
+      image.src = image.src
       image.onload = setUpEasel;
 
       function setUpEasel() {
@@ -616,7 +815,7 @@
       }
 
       function drawAnnotation() {
-        var ctx = JSON.parse("{{ form.annotation_data.value|default_if_none:'{}' }}".replace(/&quot;/g,'"'));
+        var ctx = JSON.parse(("{{ form.annotation_data.value|escapejs }}" || "{}"));
         var height = $('#image').height();
         var originalHeight = parseFloat(ctx['originalHeight']);
         if (isNaN(originalHeight)) {
@@ -640,6 +839,7 @@
 
       function updateAnnotationJson() {
         annotationInput.value = getEaselData();
+        formChanged = true;
       }
 
       function hideStage() {
@@ -686,6 +886,7 @@
             stage.setHeight($image.height());
             stage.setWidth($image.width());
 
+            $('#erase-drawing').hide();
           }
           else if (enableDisableDraw.classList.contains('disa')) {
             // Disable drawing
@@ -693,6 +894,8 @@
             enableDisableDraw.classList.remove('disa');
             drawingColorButton.classList.add('disabled');
             stage.clear();
+
+            $('#erase-drawing').show();
           }
           updateAnnotationJson();
           stage.isDrawingMode = !stage.isDrawingMode;
@@ -707,8 +910,8 @@
         }
         return null;
       }
-
     });
 
   </script>
+
 {% endblock %}

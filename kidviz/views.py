@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -28,7 +28,7 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    DateFilteringForm
+    DateFilteringForm, DraftObservationForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -56,6 +56,15 @@ class SetupView(LoginRequiredMixin, FormView):
             'context_tags': self.request.session.get('context_tags'),
             'request': self.request
         })
+
+        if self.request.session.get('re_setup', False):
+            draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
+                .order_by('-id') \
+                .first()
+
+            if draft_observation:
+                initial['course'] = draft_observation.course
+
         return initial
 
     def form_valid(self, form):
@@ -69,6 +78,15 @@ class SetupView(LoginRequiredMixin, FormView):
         self.request.session['constructs'] = [c.id for c in constructs]
         self.request.session['context_tags'] = [t.id for t in tags]
         self.request.session['curricular_focus'] = d['curricular_focus']
+
+        if self.request.session.pop('reconfigure', None):
+            tags = [tag.id for tag in tags]
+            constructs = [construct.id for construct in get_constructs(pk_list=constructs)]
+            draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
+                .update(construct_choices=constructs, tag_choices=tags)
+        else:
+            self.request.session['create_new'] = True
+
         return HttpResponseRedirect(reverse_lazy('observation_view'))
 
     def get_context_data(self, **kwargs):
@@ -103,6 +121,12 @@ class SetupView(LoginRequiredMixin, FormView):
             text='Curricular Focus',
             curricular_focus=True
         )[0].id
+
+        if self.request.session.pop('re_setup', None):
+            r['re_setup'] = True
+            self.request.session['reconfigure'] = True
+        else:
+            self.request.session.pop('reconfigure', None)
 
         return r
 
@@ -155,10 +179,47 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if self.request.POST.get('use_recent_observation'):
+        if request.POST.get('use_recent_observation'):
             return self.get(request, *args, **kwargs)
         else:
-            return super().post(request, *args, **kwargs)
+            draft_observation = Observation.objects.filter(is_draft=True, owner=request.user) \
+                .order_by('-id') \
+                .first()
+
+            original_image = request.POST.get('original_image', None)
+            video = request.POST.get('video', None)
+
+            # This is needed to update video or original_image when one of them is already set
+            # and user want to change to the opposite.
+            if draft_observation:
+                draft_observation.update_draft_media(original_image, video)
+
+            if request.POST.get('is_draft', None) == 'True':
+                if request.session.get('create_new', None):
+                    form = DraftObservationForm(request.POST, request.FILES)
+                else:
+                    form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+
+                form.is_valid()
+
+                # Not doing commit=False to save manyToMany relations.
+                obj = form.save()
+
+                # When user reset image or video to default state and then updates draft.
+                if not 'original_image' in request.POST and not 'video' in request.POST:
+                    obj.reset_media()
+
+                request.session.pop('create_new', None)
+
+                if request.POST.get('back_to_setup', None) == 'True':
+                    request.session['re_setup'] = True
+                    return HttpResponseRedirect(reverse_lazy('setup'))
+
+                messages.add_message(request, messages.SUCCESS, 'Draft Created.')
+                return HttpResponseRedirect(self.get_success_url())
+            else:
+                form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
+                return self.form_valid(form)
 
     def get_context_data(self, **kwargs):
         session_course = self.request.session.get('course')
@@ -167,6 +228,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         session_tags = self.request.session.get('context_tags') or []
         session_focus = self.request.session.get('curricular_focus') or ''
         last_observation_id = self.request.session.get('last_observation_id')
+        create_new = self.request.session.get('create_new', False)
 
         course = Course.objects.filter(pk=session_course).first()
         grouping = None
@@ -206,12 +268,44 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if self.request.POST.get('use_recent_observation'):
             kwargs['use_last_sample'] = True
             kwargs['form'] = ObservationForm(initial=self.initial)
+        
+        if not self.request.POST.get('use_recent_observation') and not create_new:
+            draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
+                .order_by('-id') \
+                .prefetch_related('students') \
+                .prefetch_related('constructs') \
+                .prefetch_related('tags') \
+                .first()
 
+            if draft_observation:
+                kwargs.update({
+                    'draft_observation': draft_observation,
+                    'chosen_students': json.dumps(
+                        list(map(lambda student: student.pk, draft_observation.students.all()))), 
+                    'chosen_tags': list(map(lambda tag: tag.pk, draft_observation.tags.all())),
+                    'chosen_constructs': list(map(
+                        lambda construct: construct.pk, draft_observation.constructs.all())),
+                    'form': ObservationForm(instance=draft_observation)
+                })
+
+                created = timezone.localtime(draft_observation.created)
+                is_today = created.day == datetime.date.today().day
+
+                if is_today:
+                    kwargs['header'] = 'Draft observation {}'.format(created.strftime('%-I:%-M %p'))
+                else:
+                    kwargs['header'] = 'Draft observation {}'.format(created.strftime('%-m-%-d-%y %-I:%-M %p'))
+
+        kwargs['use_draft'] = True
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
         obj = form.save()
-        self.request.session['last_observation_id'] = obj.id
+
+        # Do not add draft observation to session.
+        if self.request.POST.get('is_draft', 'False') == 'False':
+            self.request.session['last_observation_id'] = obj.id
+
         return super().form_valid(form)
 
 
@@ -233,6 +327,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
         kwargs['chosen_tags'] = list(self.object.tags.all().values_list('id', flat=True))
+        kwargs['use_draft'] = False
 
         return super().get_context_data(**kwargs)
 
@@ -373,7 +468,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def selected_chart(self):
         get = self.request.GET or {}
-        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3']
+        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3',
+            'chart_v1_vertical', 'heat_map', 'chart_v4']
         for key in chart_keys:
             if key in get:
                 return key
@@ -382,7 +478,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         course_id = kwargs.get('course_id')
-        date_filtering_form = DateFilteringForm(self.request.GET)
+        date_filtering_form = self._init_filter_form(self.request.GET)
+
         date_from = None
         date_to = None
         selected_constructs = None
@@ -393,47 +490,37 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
+            courses = date_filtering_form.cleaned_data['courses']
 
-        observations = Observation.objects \
-            .prefetch_related('students') \
-            .prefetch_related('constructs') \
-            .prefetch_related('tags') \
-            .prefetch_related('constructs__level') \
-            .prefetch_related('constructs__level__construct') \
-            .all()
+            # If there aren't any query params use default course.
+            if self.request.GET:
+                if courses:
+                    course_id = [course.id for course in courses]
+                else:
+                    course_id = None
 
-        if course_id:
-            observations = observations.filter(course=course_id)
-
-        if date_from:
-            observations = observations.filter(observation_date__gte=date_from)
-
-        if date_to:
-            observations = observations.filter(observation_date__lte=date_to)
-
-        if tags:
-            tag_ids = [tag.id for tag in tags]
-            observations = observations.filter(tags__in=tag_ids)
+        observations = Observation.get_observations(
+            course_id, date_from, date_to, tags)
 
         constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
-
-        all_students = Student.objects.filter(status=Student.ACTIVE)
-        if course_id:
-            all_students = all_students.filter(course=course_id)
+        all_students = Student.get_students_by_course(course_id)
+        courses = Course.get_courses(course_id)
 
         star_matrix = {}
-        dot_matrix = {}
+        dot_matrix = Observation.initialize_dot_matrix_by_class(constructs, courses)
         observation_without_construct = {}
+        star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, courses)
+
         for construct in constructs:
             star_matrix[construct] = {}
-            dot_matrix[construct] = {}
+
             for student in all_students:
                 star_matrix[construct][student] = {}
                 observation_without_construct[student] = []
+
                 for level in construct.levels.all():
                     for sublevel in level.sublevels.all():
                         star_matrix[construct][student][sublevel] = []
-                        dot_matrix[construct][sublevel] = []
 
         for observation in observations:
             students = observation.students.all()
@@ -448,7 +535,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 for sublevel in sublevels:
                     construct = sublevel.level.construct
                     star_matrix[construct][student][sublevel].append(observation)
-                    dot_matrix[construct][sublevel].append(observation)
+
+                    if observation.course:
+                        dot_matrix[construct][observation.course][sublevel].append(observation)
+                        star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
+
+        min_date = Observation.get_min_date_from_observation(observations)
+        star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
+                observations, constructs, courses, min_date)
 
         data = super().get_context_data(**kwargs)
         data.update({
@@ -460,9 +554,26 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'courses': Course.objects.all(),
             'course_id': course_id,
             'filtering_form': date_filtering_form,
-            'selected_chart': self.selected_chart()
+            'selected_chart': self.selected_chart(),
+            'star_matrix_vertical': Observation.get_vertical_stars(star_matrix),
+            'star_matrix_by_class': star_matrix_by_class,
+            'star_chart_4': star_chart_4,
+            'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
+            'min_date': min_date,
+            'max_date': Observation.get_max_date_from_observations(observations),
+            'star_chart_4_dates': json.dumps(star_chart_4_dates),
+            'observations_count': observations.filter(constructs__isnull=False).count()
         })
         return data
+
+    def _init_filter_form(self, GET_DATA):
+        return DateFilteringForm(GET_DATA, initial={
+            'course': GET_DATA.get('course', None),
+            'date_from': GET_DATA.get('date_from', None),
+            'date_to': GET_DATA.get('date_to', None),
+            'constructs': GET_DATA.get('constructs', None),
+            'tags': GET_DATA.get('tags', None)
+        })
 
 
 class TeacherObservationView(LoginRequiredMixin, TemplateView):
@@ -484,6 +595,14 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
+            courses = date_filtering_form.cleaned_data['courses']
+
+            # If there aren't any query params use default course.
+            if self.request.GET:
+                if courses:
+                    course_id = [course.id for course in courses]
+                else:
+                    course_id = None
 
         observations = Observation.objects \
             .prefetch_related('students') \
@@ -495,7 +614,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             .all()
 
         if course_id:
-            observations = observations.filter(course=course_id)
+            observations = observations.filter(course__in=course_id)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -511,7 +630,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
 
         all_students = Student.objects.filter(status=Student.ACTIVE)
         if course_id:
-            all_students = all_students.filter(course=course_id)
+            all_students = all_students.filter(course__in=course_id)
 
         dot_matrix = {}
 
@@ -869,3 +988,40 @@ class StudentReportAjax(View):
                 })
 
         return HttpResponseBadRequest()
+
+
+class DismissDraft(LoginRequiredMixin, View):
+    """View used to dismiss draft."""
+
+    def get(self, request, *args, **kwargs):
+        Observation.objects.filter(is_draft=True) \
+            .order_by('-id') \
+            .first() \
+            .delete()
+
+        messages.add_message(self.request, messages.SUCCESS, 'Draft Dismissed.')
+        return HttpResponseRedirect(reverse_lazy('observation_view'))
+
+
+class WorkQueue(LoginRequiredMixin, ListView):
+    """View used to display work queue."""
+    template_name = 'work_queue.html'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return Observation.objects \
+            .prefetch_related('students') \
+            .filter(owner=self.request.user, constructs=None)
+            
+
+class RemoveDraft(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        Observation.objects.filter(pk=pk, is_draft=True, owner=request.user).delete()
+        messages.add_message(self.request, messages.SUCCESS, 'Draft removed.')
+        return HttpResponseRedirect(reverse_lazy('work-queue'))
+
+
+class StartNewObservation(LoginRequiredMixin, View):
+    def get(self, request):
+        self.request.session['create_new'] = True
+        return HttpResponseRedirect(reverse_lazy('observation_view'))

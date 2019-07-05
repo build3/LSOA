@@ -27,6 +27,9 @@ urlpatterns = [
     url(r'^observations-teachers/$', kidviz.views.TeacherObservationView.as_view(), name='observations_teachers'),
     url(r'^observations-teachers/(?P<course_id>\d+)/$', kidviz.views.TeacherObservationView.as_view(),
         name='observations_teachers_specific'),
+    url(r'^observations-work-queue/$', kidviz.views.WorkQueue.as_view(), name='work-queue'),
+    url(r'^observations-remove-draft/(?P<pk>\d+)/$', kidviz.views.RemoveDraft.as_view(), name='remove-draft'),
+    url(r'^observation-new/$', kidviz.views.StartNewObservation.as_view(), name='new-observation'),
 
     # pending/approved/denied users (for admins only)
     url(r'^users/', include('users.urls')),
@@ -37,6 +40,7 @@ urlpatterns = [
     # observation view - the main screen of the application
     url(r'^observation/$', kidviz.views.ObservationCreateView.as_view(), name='observation_view'),
     url(r'^observation/(?P<pk>\d+)/$', kidviz.views.ObservationDetailView.as_view(), name='observation_detail_view'),
+    url(r'^observation/dismiss-draft/$', kidviz.views.DismissDraft.as_view(), name='dismiss_draft'),
     url(r'^current-observation/$', kidviz.views.current_observation, name='current_observation'),
 
     # tag management
