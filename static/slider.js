@@ -49,22 +49,38 @@
     const COLORS_DARK = JSON.parse(window.COLORS_DARK);
     const allStarsCount = parseInt(window.allObservations);
 
+    var start = new Date();
+
+    // Describes how much time have to pass between `recalculateAll` call (in milliseconds).
+    const time = 1000;
+
     $('#date-slider').slider({
         min: dateToTime(window.minDate),
         max: dateToTime(window.maxDate),
         change: change,
-        slide: slide
+        slide: slide,
+        stop: stop
     });
 
     // Set start value to min date available in slider.
     $('#slider-value').html(`Observations
         to: ${formatDate($('#date-slider').slider("option", "min"))}`);
 
+    function stop(event, ui) {
+        recalculateAll(ui);
+    }
+
     /**
      * Changes element which displays current date. Called when moving slider.
      */
     function slide(event, ui) {
         $("#slider-value").html(`Observations to: ${formatDate(ui.value)}`);
+
+        if (new Date() - start > time) {
+            recalculateAll(ui);
+
+            start = new Date();
+        }
     }
 
     /**
@@ -72,12 +88,13 @@
      * Filters observations by current date on slider.
      */
     function change(event, ui) {
+        recalculateAll(ui);
+    }
+
+    function recalculateAll(ui) {
         var observationsFiltered = {};
-        var allStars = {};
         var courseObservations = {};
         var horizontalCourse = {};
-
-        Object.keys(observations).forEach(construct => allStars[construct] = 0);
 
         // Add 60 seconds here to do get same observations as in start.
         var timestamp = new Date(ui.value);
@@ -115,7 +132,6 @@
 
                         courseObservations[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
-                        allStars[construct] += filtered.length;
                     }
                 } else {
                     observationsFiltered[construct][course] = {};
@@ -127,18 +143,17 @@
 
                         observationsFiltered[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
-                        allStars[construct] += observationsFiltered[construct][course][sublevel].length;
                     }
                 }
             }
         }
 
         // Swap verticalStarChart and horizontalStarChart content if any of construct was merged.
-        swapVerticalStarChart(courseObservations, allStars);
-        swapHorizontalStarChart(horizontalCourse, allStars);
+        swapVerticalStarChart(courseObservations);
+        swapHorizontalStarChart(horizontalCourse);
 
         // Change elements in table.
-        updateTable(observationsFiltered, allStars, joinMergedSublevels(observationsFiltered));
+        updateTable(observationsFiltered, joinMergedSublevels(observationsFiltered));
     }
 
     /**
@@ -146,9 +161,9 @@
      * using filtered observations.
      *
      * @param {Object} observationsFiltered - Observations filtered by date.
-     * @param {Object} allStars - Observations count per construct.
+     * @param {Array} levels - merged Levels horizontally.
      */
-    function updateTable(observationsFiltered, allStars, levels) {
+    function updateTable(observationsFiltered, levels) {
         for (var construct in observationsFiltered) {
             for (var course in observationsFiltered[construct]) {
                 for (var sublevel in observationsFiltered[construct][course]) {
@@ -157,7 +172,6 @@
                         course,
                         sublevel,
                         construct,
-                        allStars,
                         levels
                     );
                 }
@@ -174,10 +188,9 @@
      * @param {String} course - Course ID as string.
      * @param {String} sublevel - Sublevel ID as string.
      * @param {String} construct - Construct ID as string.
-     * @param {Object} allStars - Object with all observations count per construct.
      * @param {Object} levels - Object with observations for merged levels.
      */
-    function updateElementsInSublevel(observationsFiltered, course, sublevel,construct, allStars, levels) {
+    function updateElementsInSublevel(observationsFiltered, course, sublevel,construct, levels) {
         var size = observationsFiltered[construct][course][sublevel].length;
         var color = calculateNewColor(size);
         const observations = observationsFiltered[construct][course][sublevel];
@@ -213,7 +226,7 @@
     /**
      * Calculates new color when value in slider change. To get new color for level
      * new percent value is calculated. When starAmount is 0 color for 0% is used.
-     * When starAmount is equal to allStars which are inside table then color with `10` key is returned.
+     * When starAmount is equal to `allStarsCount` then color with `10` key is returned.
      * If new `percentValue` is less than 10% `LESS_THEN_10` key is used.
      * Otherwise color is taken from the first digit from new `percentValue`. For example when
      * `percentValue` is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
@@ -312,12 +325,11 @@
     /**
      * Change values for cells in verticalStarChart map.
      * @param {Object} observations
-     * @param {Object} allStars - All observations per construct.
      */
-    function swapVerticalStarChart(observations, allStars) {
+    function swapVerticalStarChart(observations) {
         for (var construct in observations) {
             if (window.mergedConstructs.includes(construct)) {
-                swapData(observations, construct, allStars);
+                swapData(observations, construct);
             }
         }
     }
@@ -326,9 +338,8 @@
      * Swap data in cells stored inside `window.verticalStarChart` object for specific construct.
      * @param {Object} observations
      * @param {String} construct
-     * @param {Object} allStars
      */
-    function swapData(observations, construct, allStars) {
+    function swapData(observations, construct) {
         var levels = joinMergedSublevelsDelete(observations);
 
         Object.keys(observations[construct]).forEach((course, index) => {
@@ -369,19 +380,18 @@
         })
     }
 
-    function swapHorizontalStarChart(observations, allStars) {
+    function swapHorizontalStarChart(observations) {
         for (var construct in observations) {
-            swapHorizontalData(construct, allStars, observations);
+            swapHorizontalData(construct, observations);
         }
     }
 
     /**
      * Swap data in cells stored inside `window.horizontalStarChart4` object for specific level.
      * @param {String} construct
-     * @param {Object} allStars
      * @param {Object} observations
      */
-    function swapHorizontalData(construct, allStars, observations) {
+    function swapHorizontalData(construct, observations) {
         for (level in window.mergedSublevels[construct]) {
             var cells = window.horizontalStarChart4[level].cells
 
