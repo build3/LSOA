@@ -7,6 +7,9 @@
     const CLASS_COLUMN = 1;
     const allStarsCount = parseInt(window.allObservations);
 
+    // This is used to markup cells which were merged vertically and any course isn't assigned.
+    const NO_COURSE_INDEX = 0;
+
     var startIndex = 0;
 
     window.horizontalStarChart4 = {};
@@ -115,24 +118,30 @@
         return levelLastCellIndex === constructLastCellIndex;
     }
 
-    function createNewCells(amount, i, constructId, levelId, courseId) {
+    function createNewCells(amount, i, constructId, levelId, courseId, sublevelIds) {
         const newColor = calculateNewColor(amount);
         const heatRow = 2;
         const starRow = 3;
 
         var heatMapElement = $(document.createElement('td'))
-            .addClass(`text-center heat-level-${levelId} heat-level-${levelId}-${courseId}`)
+            .addClass(`text-center heat-level-${levelId} heat-level-${levelId}-${courseId}
+                heatmap-elem heat-elem`)
             .attr('bgcolor', newColor);
 
         heatMapElement[0].dataset.cslId = "";
         heatMapElement[0].dataset.color = newColor;
+        heatMapElement[0].dataset.elem = `heat-${constructId}-${courseId}-${levelId}`;
+        heatMapElement[0].dataset.levels = sublevelIds[0]
 
         var starElement = $(document.createElement('td'))
-            .addClass(`text-center stars-amount star-level-${levelId} star-level-${levelId}-${courseId}`)
+            .addClass(`text-center stars-amount star-level-${levelId}
+                star-level-${levelId}-${courseId} heatmap-elem`)
             .append(`<span>${amount}</span>`);
 
         starElement[0].dataset.cslId = "";
         starElement[0].dataset.stars = amount;
+        starElement[0].dataset.elem = `star-${constructId}-${courseId}-${levelId}`;
+        starElement[0].dataset.levels = sublevelIds[0]
 
         if (isLast) {
             $(`.star-chart-4-table-${constructId}`)
@@ -192,7 +201,6 @@
     }
 
     function recalculateObservations(amount, headers, constructId, cells) {
-        const total = amount.reduce((acc, val) => acc += val, 0);
         var newCells = [];
 
         for (var i = headers.length - 1; i >= 0; i--) {
@@ -203,19 +211,22 @@
             newCells[i] = [];
 
             var heatMapElement = $(document.createElement('td'))
-                .addClass(`text-center heat-${sublevelId}`)
+                .addClass(`text-center heat-${sublevelId} heatmap-elem heat-elem`)
                 .attr('bgcolor', color);
 
             heatMapElement[0].dataset.cslId = "";
             heatMapElement[0].dataset.color = color;
-            heatMapElement[0].dataset.sublevel = sublevelId
+            heatMapElement[0].dataset.sublevel = sublevelId;
+            heatMapElement[0].dataset.elem = `heat-${constructId}-${NO_COURSE_INDEX}-${sublevelId}`;
 
             var starElement = $(document.createElement('td'))
-                .addClass(`text-center stars-${sublevelId} stars-amount`)
+                .addClass(`text-center stars-${sublevelId} stars-amount heatmap-elem`)
                 .append(`<span>${size}</span>`);
 
             starElement[0].dataset.cslId = "";
             starElement[0].dataset.stars = size;
+            starElement[0].dataset.sublevel = sublevelId;
+            starElement[0].dataset.elem = `heat-${constructId}-${NO_COURSE_INDEX}-${sublevelId}`;
 
             newCells[i].push(heatMapElement);
             newCells[i].push(starElement);
@@ -292,18 +303,18 @@
                     classesIds.push($(cells[0][2 * i]).attr('class').split('-')[2]);
                 }
 
+                var sublevelIds = [...Array(cells.length).keys()].reduce(
+                    (acc, i) => acc.concat($(cells[i][0]).data('sublevel')), []);
+
                 // Create new cells with colors and calculated earlier amount.
                 for (var i = 0; i < classQuantity; i++) {
-                    createNewCells(amount[i], i, constructId, levelId, classesIds[i]);
+                    createNewCells(amount[i], i, constructId, levelId, classesIds[i], sublevelIds);
                 }
 
                 // Change colspan of parent th element to 1.
                 $(this).parent().attr('colspan', 1);
                 $(this).hide();
                 $(`#horizontal-back-4-${levelId}`).show();
-
-                var sublevelIds = [...Array(cells.length).keys()].reduce(
-                    (acc, i) => acc.concat($(cells[i][0]).data('sublevel')), []);
 
                 if (window.mergedSublevels.hasOwnProperty(constructId)) {
                     window.mergedSublevels[constructId][levelId] = sublevelIds;
@@ -422,7 +433,6 @@
 
         // Need to calculate it dynamically.
         const sublevelsSize = $(`.star-chart-4-table-${constructId}`).find('.sublevel').length;
-        const mergedLevels = window.mergedSublevels[construct];
 
         // Create object which let restore removed cells later.
         createObjectToRestore(constructId, sublevelsSize);
@@ -532,10 +542,14 @@
             const color = calculateNewColor(stars);
             var id = sublevelsIds[i];
 
-            $(tr[0]).append(`<td data-csl-id="" class="text-center heat-merged-${id}"
-                data-color="${color}" bgcolor="${color}"></td>`);
+            $(tr[0]).append(`<td data-csl-id="" class="text-center heat-merged-${id}
+                heatmap-elem heat-elem" data-color="${color}"
+                data-elem="heat-${constructId}-${NO_COURSE_INDEX}-${id}" bgcolor="${color}"
+                data-sublevel="${id}"></td>`);
             $(tr[1]).append(`<td data-csl-id="" data-stars="${stars}"
-                class="text-center stars-merged-${id} stars-amount"><span>${stars}</span></td>`);
+                data-elem="star-${constructId}-${NO_COURSE_INDEX}-${id}"
+                class="text-center stars-merged-${id} stars-amount heatmap-elem"
+                data-sublevel="${id}"><span>${stars}</span></td>`);
         }
     }
 

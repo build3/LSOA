@@ -52,23 +52,18 @@
     var start = new Date();
 
     // Describes how much time have to pass between `recalculateAll` call (in milliseconds).
-    const time = 1000;
+    const time = 100;
 
     $('#date-slider').slider({
         min: dateToTime(window.minDate),
         max: dateToTime(window.maxDate),
         change: change,
-        slide: slide,
-        stop: stop
+        slide: slide
     });
 
     // Set start value to min date available in slider.
     $('#slider-value').html(`Observations
         to: ${formatDate($('#date-slider').slider("option", "min"))}`);
-
-    function stop(event, ui) {
-        recalculateAll(ui);
-    }
 
     /**
      * Changes element which displays current date. Called when moving slider.
@@ -164,61 +159,36 @@
      * @param {Array} levels - merged Levels horizontally.
      */
     function updateTable(observationsFiltered, levels) {
-        for (var construct in observationsFiltered) {
-            for (var course in observationsFiltered[construct]) {
-                for (var sublevel in observationsFiltered[construct][course]) {
-                    updateElementsInSublevel(
-                        observationsFiltered,
-                        course,
-                        sublevel,
-                        construct,
-                        levels
-                    );
+        var elements = $('.chart-4').find('.heatmap-elem');
+
+        for (var i = 0; i < elements.length; i++) {
+            var elem = elements[i];
+
+            const dataElem = elem.dataset.elem.split('-');
+            const construct = dataElem[1];
+            const course = dataElem[2];
+
+            var sublevel = dataElem[3];
+            var size = 0;
+
+            if (elem.dataset.sublevel === undefined || elem.dataset.sublevel.includes('level')) {
+                if (sublevel === 'level') {
+                    sublevel = dataElem[4];
                 }
-            }
-        }
-    }
 
-    /**
-     * Changes `<td>` element with number of observations and `td` with color
-     * for specific sublevel (or level), specific course (or 0 if courses were merged)
-     * and for specific construct.
-     *
-     * @param {Object or String} observationsFiltered - filtered observations
-     * @param {String} course - Course ID as string.
-     * @param {String} sublevel - Sublevel ID as string.
-     * @param {String} construct - Construct ID as string.
-     * @param {Object} levels - Object with observations for merged levels.
-     */
-    function updateElementsInSublevel(observationsFiltered, course, sublevel,construct, levels) {
-        var size = observationsFiltered[construct][course][sublevel].length;
-        var color = calculateNewColor(size);
-        const observations = observationsFiltered[construct][course][sublevel];
-
-        // If course is 0 then it means construct was merged.
-        if (parseInt(course)) {
-            if (Array.isArray(observations)) {
-                changeValuesInElements(size, color, `.stars-${course}-${sublevel}`,
-                    `.heat-${course}-${sublevel}`, construct);
+                size = levels[construct][sublevel][course].length;
             } else {
-                const level = observations;
-                size = levels[construct][level][course].length;
-                color = calculateNewColor(size);
-
-                changeValuesInElements(size, color, `.star-level-${level}-${course}`,
-                    `.heat-level-${level}-${course}`, construct);
+                size = observationsFiltered[construct][course][sublevel].length;
             }
-        } else {
-            if (Array.isArray(observations)) {
-                changeValuesAfterUnmerge(size, color, `.stars-merged-${sublevel}`,
-                    `.heat-merged-${sublevel}`, construct, sublevel);
-            } else {
-                const level = observations;
-                size = levels[construct][level][course].length;
-                color = calculateNewColor(size);
 
-                changeValuesInElements(size, color, `.stars-merged-level-${level}`,
-                    `.heat-merged-level-${level}`, construct);
+            const color = calculateNewColor(size);
+
+            if ($(elem).hasClass('heat-elem')) {
+                $(elem).attr('bgcolor', color);
+                elem.dataset.color = color;
+            } else {
+                $(elem).html(size);
+                elem.dataset.stars = size;
             }
         }
     }
@@ -261,65 +231,6 @@
 
     function dateToTime(date) {
         return new Date(date).getTime() / 1000;
-    }
-
-    /**
-     * Change heat and star td element for single cell.
-     * @param {Integer} size - Quantity of observations.
-     * @param {String} color - New color for sublevel.
-     * @param {String} starsClass - Class to find star element.
-     * @param {String} heatClass - Class to find heat element.
-     * @param {String} construct - ID of current construct.
-     */
-    function changeValuesInElements(size, color, starsClass, heatClass, construct) {
-        let elem = $(`.star-chart-4-table-${construct}`)
-            .find(heatClass)
-            .attr('bgcolor', color);
-        elem[0].dataset.color = color;
-
-        elem = $(`.star-chart-4-table-${construct}`)
-            .find(starsClass)
-            .html(size);
-        elem[0].dataset.stars = size;
-    }
-
-    /**
-     * Changes number of observations and color for sublevel when
-     * vertical merge is on and sublevels aren't merge horizontally.
-     *
-     * @param {Integer} size - Quantity of observations.
-     * @param {String} color - New color for sublevel.
-     * @param {String} starsClass - Class to find star element.
-     * @param {String} heatClass - Class to find heat element.
-     * @param {String} construct - ID of current construct.
-     * @param {Integer} sublevel - ID of sublevel.
-     */
-    function changeValuesAfterUnmerge(size, color, starsClass, heatClass, construct, sublevel) {
-        var elem = $(`.star-chart-4-table-${construct}`)
-            .find(heatClass)
-            .attr('bgcolor', color);
-
-        // This is needed when sublevels were merged vertically and horizontally
-        // and then unmerged horizontally because css classes are changing back
-        // so I have to use other classes to find elements for update.
-        if (elem[0] === undefined) {
-            elem = $(`.star-chart-4-table-${construct}`)
-                .find(`.heat-${sublevel}`)
-                .attr('bgcolor', color);
-            elem[0].dataset.color = color;
-
-            elem = $(`.star-chart-4-table-${construct}`)
-                .find(`.stars-${sublevel}`)
-                .html(size);
-            elem[0].dataset.stars = size;
-        } else {
-            elem[0].dataset.color = color;
-
-            elem = $(`.star-chart-4-table-${construct}`)
-                .find(starsClass)
-                .html(size);
-            elem[0].dataset.stars = size;
-        }
     }
 
     /**
