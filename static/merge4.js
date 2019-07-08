@@ -131,7 +131,8 @@
         heatMapElement[0].dataset.cslId = "";
         heatMapElement[0].dataset.color = newColor;
         heatMapElement[0].dataset.elem = `heat-${constructId}-${courseId}-${levelId}`;
-        heatMapElement[0].dataset.levels = sublevelIds[0]
+        heatMapElement[0].dataset.levels = sublevelIds[0];
+        heatMapElement[0].dataset.stars = amount;
 
         var starElement = $(document.createElement('td'))
             .addClass(`text-center stars-amount star-level-${levelId}
@@ -218,6 +219,7 @@
             heatMapElement[0].dataset.color = color;
             heatMapElement[0].dataset.sublevel = sublevelId;
             heatMapElement[0].dataset.elem = `heat-${constructId}-${NO_COURSE_INDEX}-${sublevelId}`;
+            heatMapElement[0].dataset.stars = size;
 
             var starElement = $(document.createElement('td'))
                 .addClass(`text-center stars-${sublevelId} stars-amount heatmap-elem`)
@@ -549,7 +551,7 @@
             $(tr[0]).append(`<td data-csl-id="" class="text-center heat-merged-${id}
                 heatmap-elem heat-elem" data-color="${color}"
                 data-elem="heat-${constructId}-${NO_COURSE_INDEX}-${id}" bgcolor="${color}"
-                data-sublevel="${id}"></td>`);
+                data-sublevel="${id}" data-stars="${stars}"></td>`);
             $(tr[1]).append(`<td data-csl-id="" data-stars="${stars}"
                 data-elem="star-${constructId}-${NO_COURSE_INDEX}-${id}"
                 class="text-center stars-merged-${id} stars-amount heatmap-elem"

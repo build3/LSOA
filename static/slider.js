@@ -55,6 +55,8 @@
 
     // Describes how much time have to pass between `recalculateAll` call (in milliseconds).
     const time = 100;
+    var newValue = 0;
+    var oldValue = 0;
 
     $('#date-slider').slider({
         orientation: 'horizontal',
@@ -74,6 +76,7 @@
     function slide(event, ui) {
         $("#slider-value").html(`Observations to: ${formatDate(ui.value)}`);
 
+        // Start recalculating cells after some time
         if (new Date() - start > time) {
             recalculateAll(ui);
 
@@ -130,6 +133,7 @@
 
                         courseObservations[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
+                        newValue += filtered.length;
                     }
                 } else {
                     observationsFiltered[construct][course] = {};
@@ -141,6 +145,7 @@
 
                         observationsFiltered[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
+                        newValue += filtered.length;
                     }
                 }
             }
@@ -150,8 +155,12 @@
         swapVerticalStarChart(courseObservations);
         swapHorizontalStarChart(horizontalCourse);
 
-        // Change elements in table.
-        updateTable(observationsFiltered, joinMergedSublevels(observationsFiltered));
+        // Change elements in table when something changed.
+        if (newValue !== oldValue) {
+            updateTable(observationsFiltered, joinMergedSublevels(observationsFiltered));
+
+            oldValue = newValue;
+        }
     }
 
     /**
@@ -166,9 +175,7 @@
             elements = $('.chart-4').find('.heatmap-elem');
         }
 
-        for (var i = 0; i < elements.length; i++) {
-            var elem = elements[i];
-
+        async.each(elements, function(elem, callback) {
             const dataElem = elem.dataset.elem.split('-');
             const construct = dataElem[1];
             const course = dataElem[2];
@@ -186,16 +193,18 @@
                 size = observationsFiltered[construct][course][sublevel].length;
             }
 
-            const color = calculateNewColor(size);
+            if (size !== elem.dataset.stars) {
+                const color = calculateNewColor(size);
 
-            if ($(elem).hasClass('heat-elem')) {
-                $(elem).attr('bgcolor', color);
-                elem.dataset.color = color;
-            } else {
-                $(elem).html(size);
-                elem.dataset.stars = size;
+                if (elem.classList.contains('heat-elem')) {
+                    elem.setAttribute('bgcolor', color);
+                    elem.dataset.color = color;
+                } else {
+                    elem.innerHTML = size;
+                    elem.dataset.stars = size;
+                }
             }
-        }
+        })
 
         window.chartChanged = false;
     }
