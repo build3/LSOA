@@ -268,7 +268,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if self.request.POST.get('use_recent_observation'):
             kwargs['use_last_sample'] = True
             kwargs['form'] = ObservationForm(initial=self.initial)
-        
+
         if not self.request.POST.get('use_recent_observation') and not create_new:
             draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \
                 .order_by('-id') \
@@ -281,7 +281,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 kwargs.update({
                     'draft_observation': draft_observation,
                     'chosen_students': json.dumps(
-                        list(map(lambda student: student.pk, draft_observation.students.all()))), 
+                        list(map(lambda student: student.pk, draft_observation.students.all()))),
                     'chosen_tags': list(map(lambda tag: tag.pk, draft_observation.tags.all())),
                     'chosen_constructs': list(map(
                         lambda construct: construct.pk, draft_observation.constructs.all())),
@@ -496,8 +496,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             if self.request.GET:
                 if courses:
                     course_id = [course.id for course in courses]
-                else:
-                    course_id = None
 
         observations = Observation.get_observations(
             course_id, date_from, date_to, tags)
@@ -1024,7 +1022,7 @@ class WorkQueue(LoginRequiredMixin, ListView):
         return Observation.objects \
             .prefetch_related('students') \
             .filter(owner=self.request.user, constructs=None)
-            
+
 
 class RemoveDraft(LoginRequiredMixin, View):
     def post(self, request, pk):

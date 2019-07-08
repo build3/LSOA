@@ -63,7 +63,6 @@
           $.each(data, function(index, option) {
             $('#id_constructs').append( new Option(option.value, option.id) );
           });
-          $('#id_constructs').val(selected).trigger('change');
         },
         error: function (xhr, status, e) {
 
@@ -156,7 +155,7 @@
                 }
                 var scale = originalHeight / height;
                 canvas.loadFromJSON(ctx);
-                
+
                 var offset = cWidthFull - cWidth - 45;
 
                 canvas.forEachObject(function (object) {
@@ -241,7 +240,7 @@
         if (chart_href !== "#") {
           $('#filtering-submit').attr('name', chart_id);
         }
-        
+
         if (chart_id == "chart_v3") {
           $("#construct-row").removeClass('d-none');
           $('.date-class').removeClass('d-none');
