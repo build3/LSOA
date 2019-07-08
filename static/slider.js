@@ -50,6 +50,8 @@
     const allStarsCount = parseInt(window.allObservations);
 
     var start = new Date();
+    var elements = $('.chart-4').find('.heatmap-elem');
+    window.chartChanged = false;
 
     // Describes how much time have to pass between `recalculateAll` call (in milliseconds).
     const time = 100;
@@ -160,7 +162,9 @@
      * @param {Array} levels - merged Levels horizontally.
      */
     function updateTable(observationsFiltered, levels) {
-        var elements = $('.chart-4').find('.heatmap-elem');
+        if (window.chartChanged) {
+            elements = $('.chart-4').find('.heatmap-elem');
+        }
 
         for (var i = 0; i < elements.length; i++) {
             var elem = elements[i];
@@ -192,6 +196,8 @@
                 elem.dataset.stars = size;
             }
         }
+
+        window.chartChanged = false;
     }
 
     /**

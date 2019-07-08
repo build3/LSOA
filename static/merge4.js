@@ -323,6 +323,8 @@
                     window.mergedSublevels[constructId][levelId] = sublevelIds;
                 }
             }
+
+            window.chartChanged = true;
         }
     })
 
@@ -423,6 +425,7 @@
         }
 
         delete window.mergedSublevels[constructId][levelId];
+        window.chartChanged = true;
     })
 
     /* ------------------------------------------------------------------------ */
@@ -474,6 +477,7 @@
         window.mergedConstructs.push(constructId);
         $(this).hide();
         $(`#separateVertical-4-${constructId}`).show();
+        window.chartChanged = true;
     })
 
     /**
@@ -590,6 +594,7 @@
 
         $(this).hide();
         $(`#mergeVertical-4-${constructId}`).show();
+        window.chartChanged = true;
     })
 
     function partition(array, n) {
