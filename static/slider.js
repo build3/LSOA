@@ -55,6 +55,7 @@
     const time = 100;
 
     $('#date-slider').slider({
+        orientation: 'horizontal',
         min: dateToTime(window.minDate),
         max: dateToTime(window.maxDate),
         change: change,
