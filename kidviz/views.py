@@ -538,7 +538,19 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                     if observation.course:
                         dot_matrix[construct][observation.course][sublevel].append(observation)
-                        star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
+
+                        # If star_matrix_by_class does not contains key with student initialize it.
+                        # This can happen when user changed student's course and observation stayed with old one.
+                        try:
+                            star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
+                        except KeyError:
+                            star_matrix_by_class[construct][observation.course][student] = {}
+
+                            for level in construct.levels.all():
+                                for sub in level.sublevels.all():
+                                    star_matrix_by_class[construct][observation.course][student][sub] = []
+
+                            star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
         min_date = Observation.get_min_date_from_observation(observations)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(

@@ -296,10 +296,10 @@ class Observation(TimeStampedModel, OwnerMixin):
 
             for course in courses:
                 star_matrix_by_class[construct][course] = {}
-                
+
                 for student in course.students.all():
                     star_matrix_by_class[construct][course][student] = {}
-                        
+
                     for level in construct.levels.all():
                         for sublevel in level.sublevels.all():
                             star_matrix_by_class[construct][course][student][sublevel] = []
