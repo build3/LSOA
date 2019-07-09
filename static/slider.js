@@ -49,22 +49,43 @@
     const COLORS_DARK = JSON.parse(window.COLORS_DARK);
     const allStarsCount = parseInt(window.allObservations);
 
+    var start = new Date();
+    var elements = $('.chart-4').find('.heatmap-elem');
+    window.chartChanged = false;
+
+    // Describes how much time have to pass between `recalculateAll` call (in milliseconds).
+    const time = 100;
+    var newValue = 0;
+    var oldValue = 0;
+
     $('#date-slider').slider({
+        orientation: 'horizontal',
         min: dateToTime(window.minDate),
         max: dateToTime(window.maxDate),
         change: change,
         slide: slide
     });
 
-    // Set start value to min date available in slider.
-    $('#slider-value').html(`Observations
-        to: ${formatDate($('#date-slider').slider("option", "min"))}`);
+    if (window.minDate === "None") {
+        $('#slider-value').html("No available observations for selected courses.");
+    } else {
+        // Set start value to min date available in slider.
+        $('#slider-value').html(`Observations
+            to: ${formatDate($('#date-slider').slider("option", "min"))}`);
+    }
 
     /**
      * Changes element which displays current date. Called when moving slider.
      */
     function slide(event, ui) {
         $("#slider-value").html(`Observations to: ${formatDate(ui.value)}`);
+
+        // Start recalculating cells after some time
+        if (new Date() - start > time) {
+            recalculateAll(ui);
+
+            start = new Date();
+        }
     }
 
     /**
@@ -72,12 +93,13 @@
      * Filters observations by current date on slider.
      */
     function change(event, ui) {
+        recalculateAll(ui);
+    }
+
+    function recalculateAll(ui) {
         var observationsFiltered = {};
-        var allStars = {};
         var courseObservations = {};
         var horizontalCourse = {};
-
-        Object.keys(observations).forEach(construct => allStars[construct] = 0);
 
         // Add 60 seconds here to do get same observations as in start.
         var timestamp = new Date(ui.value);
@@ -115,7 +137,7 @@
 
                         courseObservations[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
-                        allStars[construct] += filtered.length;
+                        newValue += filtered.length;
                     }
                 } else {
                     observationsFiltered[construct][course] = {};
@@ -127,18 +149,22 @@
 
                         observationsFiltered[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
-                        allStars[construct] += observationsFiltered[construct][course][sublevel].length;
+                        newValue += filtered.length;
                     }
                 }
             }
         }
 
         // Swap verticalStarChart and horizontalStarChart content if any of construct was merged.
-        swapVerticalStarChart(courseObservations, allStars);
-        swapHorizontalStarChart(horizontalCourse, allStars);
+        swapVerticalStarChart(courseObservations);
+        swapHorizontalStarChart(horizontalCourse);
 
-        // Change elements in table.
-        updateTable(observationsFiltered, allStars, joinMergedSublevels(observationsFiltered));
+        // Change elements in table when something changed.
+        if (newValue !== oldValue) {
+            updateTable(observationsFiltered, joinMergedSublevels(observationsFiltered));
+
+            oldValue = newValue;
+        }
     }
 
     /**
@@ -146,74 +172,51 @@
      * using filtered observations.
      *
      * @param {Object} observationsFiltered - Observations filtered by date.
-     * @param {Object} allStars - Observations count per construct.
+     * @param {Array} levels - merged Levels horizontally.
      */
-    function updateTable(observationsFiltered, allStars, levels) {
-        for (var construct in observationsFiltered) {
-            for (var course in observationsFiltered[construct]) {
-                for (var sublevel in observationsFiltered[construct][course]) {
-                    updateElementsInSublevel(
-                        observationsFiltered,
-                        course,
-                        sublevel,
-                        construct,
-                        allStars,
-                        levels
-                    );
+    function updateTable(observationsFiltered, levels) {
+        if (window.chartChanged) {
+            elements = $('.chart-4').find('.heatmap-elem');
+        }
+
+        async.each(elements, function(elem, callback) {
+            const dataElem = elem.dataset.elem.split('-');
+            const construct = dataElem[1];
+            const course = dataElem[2];
+
+            var sublevel = dataElem[3];
+            var size = 0;
+
+            if (elem.dataset.sublevel === undefined || elem.dataset.sublevel.includes('level')) {
+                if (sublevel === 'level') {
+                    sublevel = dataElem[4];
+                }
+
+                size = levels[construct][sublevel][course].length;
+            } else {
+                size = observationsFiltered[construct][course][sublevel].length;
+            }
+
+            if (size !== elem.dataset.stars) {
+                const color = calculateNewColor(size);
+
+                if (elem.classList.contains('heat-elem')) {
+                    elem.setAttribute('bgcolor', color);
+                    elem.dataset.color = color;
+                } else {
+                    elem.innerHTML = size;
+                    elem.dataset.stars = size;
                 }
             }
-        }
-    }
+        })
 
-    /**
-     * Changes `<td>` element with number of observations and `td` with color
-     * for specific sublevel (or level), specific course (or 0 if courses were merged)
-     * and for specific construct.
-     *
-     * @param {Object or String} observationsFiltered - filtered observations
-     * @param {String} course - Course ID as string.
-     * @param {String} sublevel - Sublevel ID as string.
-     * @param {String} construct - Construct ID as string.
-     * @param {Object} allStars - Object with all observations count per construct.
-     * @param {Object} levels - Object with observations for merged levels.
-     */
-    function updateElementsInSublevel(observationsFiltered, course, sublevel,construct, allStars, levels) {
-        var size = observationsFiltered[construct][course][sublevel].length;
-        var color = calculateNewColor(size);
-        const observations = observationsFiltered[construct][course][sublevel];
-
-        // If course is 0 then it means construct was merged.
-        if (parseInt(course)) {
-            if (Array.isArray(observations)) {
-                changeValuesInElements(size, color, `.stars-${course}-${sublevel}`,
-                    `.heat-${course}-${sublevel}`, construct);
-            } else {
-                const level = observations;
-                size = levels[construct][level][course].length;
-                color = calculateNewColor(size);
-
-                changeValuesInElements(size, color, `.star-level-${level}-${course}`,
-                    `.heat-level-${level}-${course}`, construct);
-            }
-        } else {
-            if (Array.isArray(observations)) {
-                changeValuesAfterUnmerge(size, color, `.stars-merged-${sublevel}`,
-                    `.heat-merged-${sublevel}`, construct, sublevel);
-            } else {
-                const level = observations;
-                size = levels[construct][level][course].length;
-                color = calculateNewColor(size);
-
-                changeValuesInElements(size, color, `.stars-merged-level-${level}`,
-                    `.heat-merged-level-${level}`, construct);
-            }
-        }
+        window.chartChanged = false;
     }
 
     /**
      * Calculates new color when value in slider change. To get new color for level
      * new percent value is calculated. When starAmount is 0 color for 0% is used.
-     * When starAmount is equal to allStars which are inside table then color with `10` key is returned.
+     * When starAmount is equal to `allStarsCount` then color with `10` key is returned.
      * If new `percentValue` is less than 10% `LESS_THEN_10` key is used.
      * Otherwise color is taken from the first digit from new `percentValue`. For example when
      * `percentValue` is 73% the first digit is 7 and `7` key is used to get value from `COLORS_DARK` dict.
@@ -251,73 +254,13 @@
     }
 
     /**
-     * Change heat and star td element for single cell.
-     * @param {Integer} size - Quantity of observations.
-     * @param {String} color - New color for sublevel.
-     * @param {String} starsClass - Class to find star element.
-     * @param {String} heatClass - Class to find heat element.
-     * @param {String} construct - ID of current construct.
-     */
-    function changeValuesInElements(size, color, starsClass, heatClass, construct) {
-        let elem = $(`.star-chart-4-table-${construct}`)
-            .find(heatClass)
-            .attr('bgcolor', color);
-        elem[0].dataset.color = color;
-
-        elem = $(`.star-chart-4-table-${construct}`)
-            .find(starsClass)
-            .html(size);
-        elem[0].dataset.stars = size;
-    }
-
-    /**
-     * Changes number of observations and color for sublevel when
-     * vertical merge is on and sublevels aren't merge horizontally.
-     *
-     * @param {Integer} size - Quantity of observations.
-     * @param {String} color - New color for sublevel.
-     * @param {String} starsClass - Class to find star element.
-     * @param {String} heatClass - Class to find heat element.
-     * @param {String} construct - ID of current construct.
-     * @param {Integer} sublevel - ID of sublevel.
-     */
-    function changeValuesAfterUnmerge(size, color, starsClass, heatClass, construct, sublevel) {
-        var elem = $(`.star-chart-4-table-${construct}`)
-            .find(heatClass)
-            .attr('bgcolor', color);
-
-        // This is needed when sublevels were merged vertically and horizontally
-        // and then unmerged horizontally because css classes are changing back
-        // so I have to use other classes to find elements for update.
-        if (elem[0] === undefined) {
-            elem = $(`.star-chart-4-table-${construct}`)
-                .find(`.heat-${sublevel}`)
-                .attr('bgcolor', color);
-            elem[0].dataset.color = color;
-
-            elem = $(`.star-chart-4-table-${construct}`)
-                .find(`.stars-${sublevel}`)
-                .html(size);
-            elem[0].dataset.stars = size;
-        } else {
-            elem[0].dataset.color = color;
-
-            elem = $(`.star-chart-4-table-${construct}`)
-                .find(starsClass)
-                .html(size);
-            elem[0].dataset.stars = size;
-        }
-    }
-
-    /**
      * Change values for cells in verticalStarChart map.
      * @param {Object} observations
-     * @param {Object} allStars - All observations per construct.
      */
-    function swapVerticalStarChart(observations, allStars) {
+    function swapVerticalStarChart(observations) {
         for (var construct in observations) {
             if (window.mergedConstructs.includes(construct)) {
-                swapData(observations, construct, allStars);
+                swapData(observations, construct);
             }
         }
     }
@@ -326,9 +269,8 @@
      * Swap data in cells stored inside `window.verticalStarChart` object for specific construct.
      * @param {Object} observations
      * @param {String} construct
-     * @param {Object} allStars
      */
-    function swapData(observations, construct, allStars) {
+    function swapData(observations, construct) {
         var levels = joinMergedSublevelsDelete(observations);
 
         Object.keys(observations[construct]).forEach((course, index) => {
@@ -369,19 +311,18 @@
         })
     }
 
-    function swapHorizontalStarChart(observations, allStars) {
+    function swapHorizontalStarChart(observations) {
         for (var construct in observations) {
-            swapHorizontalData(construct, allStars, observations);
+            swapHorizontalData(construct, observations);
         }
     }
 
     /**
      * Swap data in cells stored inside `window.horizontalStarChart4` object for specific level.
      * @param {String} construct
-     * @param {Object} allStars
      * @param {Object} observations
      */
-    function swapHorizontalData(construct, allStars, observations) {
+    function swapHorizontalData(construct, observations) {
         for (level in window.mergedSublevels[construct]) {
             var cells = window.horizontalStarChart4[level].cells
 

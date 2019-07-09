@@ -9,10 +9,12 @@
         <hr>
       </div>
     </div>
-    <div class="col-md-6 offset-md-3">
-      {% if form.non_field_errors %}
-        {% bootstrap_form_errors form %}
-      {% endif %}
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% if form.non_field_errors %}
+          {% bootstrap_form_errors form %}
+        {% endif %}
+      </div>
     </div>
     <div class="row">
       <div class="col-md-6 offset-md-3">
@@ -55,4 +57,8 @@
       </div>
     </div>
   </form>
+
+  <script>
+    $('#id_remember').removeClass('form-check-input');
+  </script>
 {% endblock %}

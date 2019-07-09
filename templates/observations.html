@@ -74,8 +74,20 @@
       initSelect2();
       loadAllowedConstructs();
       $('.datepicker').datepicker({
-          uiLibrary: 'bootstrap4',
+          uiLibrary: 'bootstrap4'
       });
+
+      $('.gj-datepicker').append(`<span class="clearInput" role="right-icon">
+          <button btn btn-outline-secondary border-left-0 type="button"><i class="fa fa-close"></i></button></span>`)
+
+      $('.clearInput').click(function() {
+        var datepicker = $($(this).parent().find('input')).datepicker();
+
+        if (datepicker.value() !== '') {
+          $(datepicker.val(''));
+          $('#filtering-submit').removeAttr('disabled');
+        }
+      })
 
       $('#filtering-submit').prop('disabled', true)
 

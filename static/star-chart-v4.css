@@ -27,3 +27,33 @@
     border-top: 3px solid black;
     background-color: white;
 }
+
+.ui-slider.ui-corner-all,
+.ui-slider .ui-corner-all {
+  border-radius: 0;
+}
+
+.ui-slider.ui-slider {
+  border-radius: 7px;
+}
+
+.ui-slider.ui-slider-horizontal {
+  height: 10px;
+}
+
+.ui-slider .ui-slider-handle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.ui-slider.ui-slider-horizontal .ui-slider-handle {
+  top: 50%;
+  margin-top: -15px;
+}
+
+.ui-slider .ui-slider-handle:hover {
+  opacity: .8;
+}
