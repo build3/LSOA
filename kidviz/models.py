@@ -248,8 +248,11 @@ class Observation(TimeStampedModel, OwnerMixin):
             .prefetch_related('course') \
             .all()
 
+        all_observations_for_chart_4 = observations
+
         if course_id:
             observations = observations.filter(course__in=course_id)
+            all_observations_for_chart_4 = observations
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -260,7 +263,7 @@ class Observation(TimeStampedModel, OwnerMixin):
         if tags:
             observations = observations.filter(tags__in=tags)
 
-        return observations
+        return (observations, all_observations_for_chart_4)
 
     @classmethod
     def get_vertical_stars(cls, star_matrix):

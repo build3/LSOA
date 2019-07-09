@@ -66,9 +66,13 @@
         slide: slide
     });
 
-    // Set start value to min date available in slider.
-    $('#slider-value').html(`Observations
-        to: ${formatDate($('#date-slider').slider("option", "min"))}`);
+    if (window.minDate === "None") {
+        $('#slider-value').html("No available observations for selected courses.");
+    } else {
+        // Set start value to min date available in slider.
+        $('#slider-value').html(`Observations
+            to: ${formatDate($('#date-slider').slider("option", "min"))}`);
+    }
 
     /**
      * Changes element which displays current date. Called when moving slider.

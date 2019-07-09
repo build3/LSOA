@@ -497,7 +497,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 if courses:
                     course_id = [course.id for course in courses]
 
-        observations = Observation.get_observations(
+        (observations, star_chart_4_obs) = Observation.get_observations(
             course_id, date_from, date_to, tags)
 
         constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
@@ -550,9 +550,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                             star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
-        min_date = Observation.get_min_date_from_observation(observations)
+        min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
-                observations, constructs, courses, min_date)
+                star_chart_4_obs, constructs, courses, min_date)
 
         data = super().get_context_data(**kwargs)
         data.update({
@@ -570,10 +570,11 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'star_chart_4': star_chart_4,
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
             'min_date': min_date,
-            'max_date': Observation.get_max_date_from_observations(observations),
+            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
-            'observations_count': observations.filter(constructs__isnull=False).count()
+            'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count(),
         })
+
         return data
 
     def _init_filter_form(self, GET_DATA):
