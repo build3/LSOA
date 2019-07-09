@@ -263,9 +263,11 @@
                         }
                     });
                 }
-            }
 
-            $(stars[i]).remove();
+                if (i === 0) {
+                    $(stars[j]).remove();
+                }
+            }
         }
 
         return starAmount;
