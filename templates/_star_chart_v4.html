@@ -8,7 +8,7 @@
 {% for construct, classes in star_chart_4.items %}
 <div class="star-v4">
     <h4 class="text-align-center">{{ construct.abbreviation }}</h4>
-    <table class="table table-bordered star-chart-4-table-{{ construct.id }}">
+    <table class="table table-bordered star-chart-4-table-{{ construct.id }} chart-4">
         <thead>
             <tr>
                 <th scope="col">&nbsp;</th>
@@ -62,10 +62,11 @@
                     <td><b>{{ class.name }}</b></td>
 
                     {% for sublevel, observations in sublevels.items %}
-                        <td data-csl-id="{{ csl_id }}" class="text-center heat-{{ class.id }}-{{ sublevel.id }}"
+                        <td data-csl-id="{{ csl_id }}" class="text-center heat-{{ class.id }}-{{ sublevel.id }} heat-elem heatmap-elem"
                             data-color="{% get_color_star_chart_4 sublevel observations %}"
+                            data-elem="heat-{{ construct.id }}-{{ class.id }}-{{ sublevel.id }}"
                             bgcolor="{% get_color_star_chart_4 sublevel observations %}"
-                            data-sublevel="{{ sublevel.id }}">
+                            data-sublevel="{{ sublevel.id }}" data-stars={{ observations|length }}>
                         </td>
                     {% endfor %}
                 </tr>
@@ -74,7 +75,9 @@
 
                     {% for sublevel, observations in sublevels.items %}
                         <td data-csl-id="{{ csl_id }}" data-stars="{{ observations|length }}"
-                            class="text-center stars-{{ class.id }}-{{ sublevel.id }} stars-amount">
+                            data-elem="star-{{ construct.id }}-{{ class.id }}-{{ sublevel.id }}"
+                            data-sublevel="{{ sublevel.id }}"
+                            class="text-center stars-{{ class.id }}-{{ sublevel.id }} stars-amount heatmap-elem">
                             <span>{{ observations|length }}</span>
                         </td>
                     {% endfor %}
@@ -89,16 +92,17 @@
     <div class="push"></div>
 </div>
 
-<div class="footer shadow-lg p-3">
+<div class="footer shadow-lg pl-3 pr-3">
     <div class="row mt-4">
         <div class="col-12 text-center" id="slider-value"></div>
     </div>
-    <div class="row mb-4 mr-1 ml-1 mt-2">
+    <div class="row mb-5 mr-1 ml-1 mt-2 pb-5">
         <div class="col-12" id="date-slider"></div>
     </div>
 </div>
 
 {% block extrascripts %}
+<script src="https://cdn.jsdelivr.net/npm/async@3.1.0/dist/async.min.js"></script>
 <script>
     window.COLORS_DARK = "{{ COLORS_DARK|escapejs }}";
     window.minDate = "{{ min_date }}";
