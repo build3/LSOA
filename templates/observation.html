@@ -733,6 +733,8 @@
         enableDisableDraw.classList.add('disabled');
         hideStage();
         stage.clear();
+        updateAnnotationJson();
+        stage.isDrawingMode = !stage.isDrawingMode;
 
         $("#id_original_image").val('');
         $("#id_video").val('');
