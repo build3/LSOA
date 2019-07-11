@@ -572,7 +572,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'min_date': min_date,
             'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
-            'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count(),
+            'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count()
         })
 
         return data
@@ -594,7 +594,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
     template_name = 'teachers_observations.html'
 
     def get_context_data(self, **kwargs):
-        course_id = kwargs.get('course_id')
         date_filtering_form = DateFilteringForm(self.request.GET)
         date_from = None
         date_to = None
@@ -606,14 +605,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
-            courses = date_filtering_form.cleaned_data['courses']
-
-            # If there aren't any query params use default course.
-            if self.request.GET:
-                if courses:
-                    course_id = [course.id for course in courses]
-                else:
-                    course_id = None
 
         observations = Observation.objects \
             .prefetch_related('students') \
@@ -623,9 +614,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             .prefetch_related('constructs__level__construct') \
             .order_by('owner', 'constructs') \
             .all()
-
-        if course_id:
-            observations = observations.filter(course__in=course_id)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -638,10 +626,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             observations = observations.filter(tags__in=tag_ids)
 
         constructs = LearningConstruct.objects.all()
-
         all_students = Student.objects.filter(status=Student.ACTIVE)
-        if course_id:
-            all_students = all_students.filter(course__in=course_id)
 
         dot_matrix = {}
 
@@ -672,7 +657,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             'all_observations': observations,
             'selected_constructs': selected_constructs,
             'courses': Course.objects.all(),
-            'course_id': course_id,
+            'course_id': None,
             'filtering_form': date_filtering_form
         })
         return data
