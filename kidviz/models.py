@@ -196,6 +196,7 @@ class Observation(TimeStampedModel, OwnerMixin):
     annotation_data = models.TextField(default='', null=True, blank=True)
     original_image = models.FileField(upload_to=UploadToPathAndRename('original_images/'), blank=True, null=True)
     video = models.FileField(upload_to=UploadToPathAndRename('videos/'), blank=True, null=True)
+    video_url = models.URLField(max_length=200, blank=True, null=True)
 
     # the end user can type notes or take an AV sample and just talk into the mic
     notes = models.TextField(blank=True)

@@ -107,6 +107,7 @@
           <label class="btn btn-primary mb-0" for="id_video">Take video
                 <div hidden>{{ form.video }}</div>
           </label>
+
           {% if recent_observation and not view.kwargs.pk %}
             <button class="btn btn-primary mb-0 use-last-sample"
                     type="button"
@@ -230,6 +231,12 @@
             <span id="id_video_notes_verb">Add</span> Video/Audio note
         </label>
         <div>{{ form.notes }}</div>
+
+        <div class="mb-5">
+          <h4 class="text-center">Add URL to video</h4>
+          {{ form.video_url }}
+        </div>
+
         <h4 style="text-align: center; margin: 0;">Learning Construct Examples</h4>
         <div id="sublevel-examples" style="height: 150px">
           <div id="sublevelExampleControls"
@@ -406,6 +413,24 @@
             <label for="curricularFocusInput">Describe the curricular focus</label>
             <input type="text" class="form-control"
               id="curricularFocusInput" value="{{ curricular_focus }}">
+          </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="videoURLModal" tabindex="-2" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="curricularFocusInput">Add URL</label>
+            <input type="text" class="form-control"
+              id="video-url-modal" value="">
+            <button type="button" class="btn btn-primary float-right mt-3" id="submit-video-url">Submit</button>
           </div>
         </div>
         <div class="modal-footer">

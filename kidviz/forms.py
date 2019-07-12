@@ -91,7 +91,7 @@ class ObservationForm(forms.ModelForm):
             'students', 'constructs', 'tag_choices', 'tags', 'annotation_data',
             'original_image', 'video', 'observation_date', 'no_constructs',
             'notes', 'video_notes', 'parent', 'owner', 'name', 'course',
-            'grouping', 'construct_choices', 'curricular_focus', 'is_draft'
+            'grouping', 'construct_choices', 'curricular_focus', 'is_draft', 'video_url'
         ]
         widgets = {
             'course': forms.HiddenInput(),
@@ -109,6 +109,7 @@ class ObservationForm(forms.ModelForm):
             'video_notes': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
             'video': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
             'original_image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'video_url': forms.TextInput(attrs={'class': 'form-control'})
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
