@@ -12,17 +12,17 @@
       <ul class="navbar-nav mr-auto">
         {% if request.session.course and perms.kidviz.add_observation %}
           <li class="nav-item {% active_link 'observation_view' %}">
-            <a class="nav-link" href="{% url 'observation_view' %}">Current Course</a>
+            <a class="nav-link chart-item" href="{% url 'observation_view' %}">Current Course</a>
           </li>
         {% endif %}
         {% if perms.kidviz.add_observation %}
           <li class="nav-item {% active_link 'setup' %}">
-            <a class="nav-link" href="{% url 'setup' %}">Setup</a>
+            <a class="nav-link chart-item" href="{% url 'setup' %}">Setup</a>
           </li>
         {% endif %}
 
         <li class="nav-item {% active_link 'work-queue' %}">
-          <a class="nav-link" href="{% url 'work-queue' %}">Work queue</a>
+          <a class="nav-link chart-item" href="{% url 'work-queue' %}">Work queue</a>
         </li>
 
         <li class="nav-item dropdown">
@@ -63,11 +63,11 @@
                 </li>
               </ul>
             </li>
-            <a class="dropdown-item"
+            <a class="dropdown-item chart-item"
                href="{% url 'observations_teachers_specific' request|course_from_session_or_first %}">Teacher Charts</a></li>
-            <li><a class="dropdown-item" href="{% url 'floating_students' %}">Floating Students Report</a></li>
-            <li><a class="dropdown-item" href="{% url 'doubled_students' %}">Doubled Students Report</a></li>
-            <li><a class="dropdown-item" href="{% url 'homonym_students' %}">Homonym Students Report</a></li>
+            <li><a class="dropdown-item chart-item" href="{% url 'floating_students' %}">Floating Students Report</a></li>
+            <li><a class="dropdown-item chart-item" href="{% url 'doubled_students' %}">Doubled Students Report</a></li>
+            <li><a class="dropdown-item chart-item" href="{% url 'homonym_students' %}">Homonym Students Report</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -81,18 +81,18 @@
           </a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
             {% if perms.kidviz.can_approve_deny_users %}
-              <a class="dropdown-item" href="{% url 'pending_users' %}">Pending Users</a>
+              <a class="dropdown-item chart-item" href="{% url 'pending_users' %}">Pending Users</a>
             {% endif %}
 
             {% if perms.kidviz.add_course %}
-              <a class="dropdown-item" href="{% url 'import_class_roster' %}">Import Class</a>
+              <a class="dropdown-item chart-item" href="{% url 'import_class_roster' %}">Import Class</a>
             {% endif %}
 
             {% if perms.kidviz.add_contexttag %}
-              <a class="dropdown-item" href="{% url 'tag_list' %}">Edit Tags</a>
+              <a class="dropdown-item chart-item" href="{% url 'tag_list' %}">Edit Tags</a>
             {% endif %}
 
-            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin Site</a>
+            <a class="dropdown-item chart-item" href="{% url 'admin:index' %}">Admin Site</a>
           </div>
         </li>
         <li class="nav-item">

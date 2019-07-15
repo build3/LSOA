@@ -197,8 +197,10 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
             if request.POST.get('is_draft', None) == 'True':
                 if request.session.get('create_new', None):
                     form = DraftObservationForm(request.POST, request.FILES)
+                    message = 'Draft Created.'
                 else:
                     form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+                    message = 'Draft Updated.'
 
                 form.is_valid()
 
@@ -215,7 +217,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                     request.session['re_setup'] = True
                     return HttpResponseRedirect(reverse_lazy('setup'))
 
-                messages.add_message(request, messages.SUCCESS, 'Draft Created.')
+                messages.add_message(request, messages.SUCCESS, message)
                 return HttpResponseRedirect(self.get_success_url())
             else:
                 form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
