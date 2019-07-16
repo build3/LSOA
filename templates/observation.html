@@ -424,12 +424,6 @@
         formChanged = true;
       });
 
-      $('.nav-link').click(function() {
-        if (formChanged && !$(this).hasClass('not-confirm')) {
-          return confirm("You didn't save this observation. Do you want to continue.")
-        }
-      })
-
       $('.chart-item').click(function() {
         if (formChanged) {
           return confirm("You didn't save this observation. Do you want to continue.")
@@ -735,6 +729,7 @@
         stage.clear();
         updateAnnotationJson();
         stage.isDrawingMode = !stage.isDrawingMode;
+        formChanged = true;
 
         $("#id_original_image").val('');
         $("#id_video").val('');
@@ -791,6 +786,7 @@
         hideStage();
         stage.clear();
         updateAnnotationJson();
+        formChanged = true;
       })
 
       var index = parseInt(Math.random() * 100);
@@ -841,7 +837,10 @@
 
       function updateAnnotationJson() {
         annotationInput.value = getEaselData();
-        formChanged = true;
+
+        if (stage.isDrawingMode) {
+          formChanged = true;
+        }
       }
 
       function hideStage() {
