@@ -390,9 +390,9 @@
             <b>Students from group</b>: {{ observation.allowed_students|join:', ' }}
           </small>
 
-          {% if observation.video_url %}
+          {% if observation.external_video %}
             <small class="d-block">
-              <b>URL to video</b>: <a href="{{ observation.video_url }}">{{ observation.video_url }}</a>
+              <b>URL to video</b>: <a href="{{ observation.external_video }}">{{ observation.external_video }}</a>
             </small>
           {% endif %}
 

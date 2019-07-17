@@ -155,7 +155,7 @@ class ObservationAdmin(admin.ModelAdmin):
                 'name',
                 'original_image',
                 'video',
-                'video_url',
+                'external_video',
                 'students',
                 'constructs',
                 'tags',
