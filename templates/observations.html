@@ -390,6 +390,12 @@
             <b>Students from group</b>: {{ observation.allowed_students|join:', ' }}
           </small>
 
+          {% if observation.external_video %}
+            <small class="d-block">
+              <b>URL to video</b>: <a href="{{ observation.external_video }}">{{ observation.external_video }}</a>
+            </small>
+          {% endif %}
+
           {% if observation.tags.count %}
             <b style="display: block;">Tags:</b>
             {% for tag in observation.tags.all %}
