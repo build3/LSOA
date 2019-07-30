@@ -1,3 +1,8 @@
+# Prerequisites
+
+* `docker` `>= 17.09`
+* `docker-compose` (for development environment)
+
 # Production image
 
 To build production image run:
@@ -25,3 +30,22 @@ configure the application, especially the database connection string:
 ```
 DATABASE_URL=postgres://user:password@db-host:5432/lsoa
 ```
+
+# Development environment
+
+To run development image with `docker-compose` you need to provide
+initial database dump. Place it in the main code directory in
+`kidviz.sql` file. To run development environment use:
+
+```base
+$ docker-compose up --build
+```
+
+The development server will be available at
+[http://localhost:8000](http://localhost:8000) and the code will be
+watched for changes.
+
+> NOTE: the current setup does not provide all environment options that
+> are referenced in the `settings.py`. To add other please edit
+> `docker-compose.yml` and add them in section
+> `services.backend.environment`.

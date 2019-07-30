@@ -1,0 +1,31 @@
+version: '3.4'
+
+networks:
+    kidviz:
+        external: false
+
+services:
+    db:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile-db
+        networks:
+            kidviz: {}
+        environment:
+            POSTGRES_DB: kidviz
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: secret
+    backend:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile-dev
+        networks:
+            kidviz: {}
+        environment:
+            # Place any configuration options here.
+            DATABASE_URL: postgres://postgres:secret@db:5432/kidviz
+        ports:
+            - 8000:8000
+        command: ['./tools/run-development.sh']
+        volumes:
+            - .:/app
