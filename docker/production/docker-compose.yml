@@ -8,24 +8,28 @@ services:
     db:
         build:
             context: .
-            dockerfile: docker/Dockerfile-db
+            dockerfile: ../database/Dockerfile
         networks:
             kidviz: {}
+        restart: always
         environment:
             POSTGRES_DB: kidviz
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: secret
+            PGDATA: /data
+        volumes:
+            - ./data:/data
     backend:
         build:
-            context: .
-            dockerfile: docker/Dockerfile-dev
+            context: ../..
+            dockerfile: ./docker/production/Dockerfile
         networks:
             kidviz: {}
+        restart: always
         environment:
             # Place any configuration options here.
             DATABASE_URL: postgres://postgres:secret@db:5432/kidviz
+        env_file: env
         ports:
-            - 8000:8000
-        command: ['./tools/run-development.sh']
-        volumes:
-            - .:/app
+            - 80:80
+        command: ['/tools/run.sh']

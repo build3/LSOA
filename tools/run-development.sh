@@ -1,6 +1,6 @@
 #!/bin/sh
 
-./tools/wait-for db:5432 -- echo Database ready
+/tools/wait-for db:5432 -- echo Database ready
 
 pipenv install
 

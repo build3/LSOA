@@ -3,49 +3,62 @@
 * `docker` `>= 17.09`
 * `docker-compose` (for development environment)
 
-# Production image
+# Environments
 
-To build production image run:
+The setup procedure for both environments (`development` and
+`production`) is exactly the same. The only difference is the directory
+in which the commands should be run.
 
-```bash
-$ docker build -t <docker_image_name> -f docker/Dockerfile-prod .
-```
+# Running images
 
-The resulting image will run gunicorn server and expose port 80 to the
-host.
-
-To run the image on the host please run:
+At first navigate to the directory specific to the variant you want to
+run:
 
 ```bash
-$ docker run -d -p 80:80 --env-file=.env <docker_image_name>
+$ cd docker/<environment>
 ```
 
-This will spawn new docker container which will serve the application on
-the host's port 80. Also, the static file collection and database
-migrations will be run on it's startup.
+where `<environment>` is either `production` or `development`. Then
+create directory which will store database files:
 
-The `.env` file should contain all environment variables neede to
-configure the application, especially the database connection string:
-
-```
-DATABASE_URL=postgres://user:password@db-host:5432/lsoa
+```bash
+$ mkdir data
 ```
 
-# Development environment
+Copy the initial SQL dump to `kidviz.sql` file:
 
-To run development image with `docker-compose` you need to provide
-initial database dump. Place it in the main code directory in
-`kidviz.sql` file. To run development environment use:
-
-```base
-$ docker-compose up --build
+```bash
+$ cp path/to/dump.sql kidviz.sql
 ```
 
-The development server will be available at
-[http://localhost:8000](http://localhost:8000) and the code will be
-watched for changes.
+This dump is necessary since the Django migrations will fail on empty
+database.
 
-> NOTE: the current setup does not provide all environment options that
-> are referenced in the `settings.py`. To add other please edit
-> `docker-compose.yml` and add them in section
-> `services.backend.environment`.
+Create the `env` file:
+
+```bash
+$ touch env
+```
+
+Fill it with all necessary environment variables (like AWS keys) that
+should be passed to the application in runtime. Each variable should be
+placed on separate line in th following format:
+
+```
+VARIABLE_NAME=variable_value
+```
+
+Build images:
+
+```bash
+$ docker-compose build
+```
+
+Run the application:
+
+```bash
+$ docker-compsoe up
+```
+
+The development version will be available at [http://localhost:8000](http://localhost:8000),
+and the production version will be bound to [http://localhost](http://localhost).
