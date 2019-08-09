@@ -50,3 +50,8 @@ staticfiles/
 
 # DB dumps
 dumpfile.gz
+
+# Environment
+env
+.env
+kidviz.sql
