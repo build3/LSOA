@@ -505,8 +505,6 @@
             element[0].dataset.modalLaunchObservations = `[${obs[j]}]`;
             element[0].dataset.class = course;
         } else {
-            var element = null;
-
             // If last student in class add thicker class.
             if (obs.length - 1 === j) {
                 element = $(element[0])
