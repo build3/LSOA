@@ -28,7 +28,7 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    DateFilteringForm, DraftObservationForm
+    DateFilteringForm, DraftObservationForm, StudentFilterForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -587,6 +587,53 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'constructs': GET_DATA.get('constructs', None),
             'tags': GET_DATA.get('tags', None)
         })
+
+
+class StudentsTimelineView(LoginRequiredMixin, TemplateView):
+    template_name = 'students_timeline_view.html'
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+
+        filter_form = StudentFilterForm(self.request.GET)
+        students = None
+
+        if filter_form.is_valid():
+            students = filter_form.cleaned_data['students']
+
+        observations = None
+
+        if students:
+            observations = Observation.objects.filter(students__in=students) \
+                .prefetch_related('students') \
+                .prefetch_related('constructs') \
+                .prefetch_related('tags') \
+                .prefetch_related('constructs__level') \
+                .prefetch_related('constructs__level__construct') \
+                .prefetch_related('course')
+
+        if observations:
+            constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
+            min_date = Observation.get_min_date_from_observation(observations) - timedelta(days=1)
+            star_chart, dates = Observation.create_student_timeline(
+                observations, students, constructs, min_date)
+
+            data.update({
+                'star_chart': star_chart,
+                'dates': json.dumps(dates),
+                'min_date': min_date,
+                'max_date': Observation.get_max_date_from_observations(observations)
+                    + timedelta(days=1),
+                'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
+                'observations_count': observations.filter(constructs__isnull=False).count(),
+            })
+
+        data.update({
+            'filter_form': filter_form,
+            'students': students,
+        })
+
+        return data
 
 
 class TeacherObservationView(LoginRequiredMixin, TemplateView):

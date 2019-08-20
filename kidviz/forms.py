@@ -8,7 +8,8 @@ from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
-from kidviz.models import Course, LearningConstructSublevel, ContextTag, Observation
+from kidviz.models import (Course, LearningConstructSublevel, ContextTag,
+    Observation, Student)
 
 
 class TagWidget(SelectMultiple):
@@ -198,3 +199,11 @@ class DraftObservationForm(ObservationForm):
     def clean(self):
         """Remove validation from parent form."""
         return self.cleaned_data
+
+
+class StudentFilterForm(forms.Form):
+    students = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=Student.objects.all(),
+        widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
+    )
