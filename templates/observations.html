@@ -253,13 +253,7 @@
           $('#filtering-submit').attr('name', chart_id);
         }
 
-        if (chart_id == "chart_v3") {
-          $("#construct-row").removeClass('d-none');
-          $('.date-class').removeClass('d-none');
-
-          initSelect2();
-          loadAllowedConstructs();
-        } else if (chart_id === "chart_v4") {
+        if (chart_id === "timeline_view") {
           $("#construct-row").addClass('d-none');
           $('.date-class').addClass('d-none');
         } else {
@@ -281,12 +275,9 @@
       $(`#chartTab a[href="#${url[url.length - 1]}"]`).tab('show');
       window.scrollTo(0, 0);
 
-      if (url[url.length - 1] == "chart_v4") {
+      if (url[url.length - 1] == "timeline_view") {
         $("#construct-row").addClass('d-none');
         $('.date-class').addClass('d-none');
-      } else if (url[url.length - 1] == "chart_v3") {
-        $("#construct-row").removeClass('d-none');
-        $('.date-class').removeClass('d-none');
       } else {
         $("#construct-row").addClass('d-none');
         $('.date-class').removeClass('d-none');
@@ -315,39 +306,42 @@
 
           <ul class="nav nav-tabs" id="chartTab" role="tablist">
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "chart_v1" %} active {% endif %}" data-toggle="tab" href="#chart_v1">Student View</a>
+              <a class="nav-link {% if selected_chart == "student_view" %} active {% endif %}"
+                data-toggle="tab" href="#student_view">Student View</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "chart_v1_vertical" %} active {% endif %}" data-toggle="tab" href="#chart_v1_vertical">Student View - Vertical Collapse All</a>
+              <a class="nav-link {% if selected_chart == "student_view_vertical" %} active {% endif %}"
+                data-toggle="tab" href="#student_view_vertical">Student View - Vertical Collapse All</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "chart_v2" %} active {% endif %}" data-toggle="tab" href="#chart_v2">Construct View </a>
+              <a class="nav-link {% if selected_chart == "construct_view" %} active {% endif %}"
+                data-toggle="tab" href="#construct_view">Construct View </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "heat_map" %} active {% endif %}"
-                data-toggle="tab" href="#heat_map">Construct Heat Map</a>
+              <a class="nav-link {% if selected_chart == "construct_heat_map" %} active {% endif %}"
+                data-toggle="tab" href="#construct_heat_map">Construct Heat Map</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "chart_v4" %} active {% endif %}"
-                data-toggle="tab" href="#chart_v4">Timeline View</a>
+              <a class="nav-link {% if selected_chart == "timeline_view" %} active {% endif %}"
+                data-toggle="tab" href="#timeline_view">Timeline View</a>
             </li>
           </ul>
 
           <div class="tab-content">
-            <div class="tab-pane {% if selected_chart == "chart_v1" %} active {% else %} fade {% endif %}" id="chart_v1">
-              {% include "_star_chart_v1.html" %}
+            <div class="tab-pane {% if selected_chart == "student_view" %} active {% else %} fade {% endif %}" id="student_view">
+              {% include "includes/student_view.html" %}
             </div>
-            <div class="tab-pane {% if selected_chart == "chart_v1_vertical" %} active {% else %} fade {% endif %}" id="chart_v1_vertical">
-              {% include "_star_chart_vertical_v1.html" %}
+            <div class="tab-pane {% if selected_chart == "student_view_vertical" %} active {% else %} fade {% endif %}" id="student_view_vertical">
+              {% include "includes/student_view_vertical.html" %}
             </div>
-            <div class="tab-pane {% if selected_chart == "chart_v2" %} active {% else %} fade {% endif %}" id="chart_v2">
-              {% include "_star_chart_v2.html" %}
+            <div class="tab-pane {% if selected_chart == "construct_view" %} active {% else %} fade {% endif %}" id="construct_view">
+              {% include "includes/construct_view.html" %}
             </div>
-            <div class="tab-pane {% if selected_chart == "heat_map" %} active {% else %} fade {% endif %}" id="heat_map">
-              {% include "_star_chart_heat_map.html" %}
+            <div class="tab-pane {% if selected_chart == "construct_heat_map" %} active {% else %} fade {% endif %}" id="construct_heat_map">
+              {% include "includes/construct_heat_map.html" %}
             </div>
-            <div class="tab-pane {% if selected_chart == "chart_v4" %} active {% else %} fade {% endif %}" id="chart_v4">
-              {% include "_star_chart_v4.html" %}
+            <div class="tab-pane {% if selected_chart == "timeline_view" %} active {% else %} fade {% endif %}" id="timeline_view">
+              {% include "includes/timeline_view.html" %}
             </div>
           </div>
         </div>

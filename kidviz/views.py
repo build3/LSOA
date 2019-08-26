@@ -470,8 +470,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def selected_chart(self):
         get = self.request.GET or {}
-        chart_keys = ['chart_v1', 'chart_v2',
-            'chart_v1_vertical', 'heat_map', 'chart_v4']
+        chart_keys = ['student_view', 'construct_view',
+            'student_view_vertical', 'construct_heat_map', 'timeline_view']
         for key in chart_keys:
             if key in get:
                 return key
