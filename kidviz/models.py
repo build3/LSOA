@@ -362,7 +362,7 @@ class Observation(TimeStampedModel, OwnerMixin):
         return (star_chart_4, star_chart_4_dates)
 
     @classmethod
-    def create_student_timeline(cls, observations, students, constructs, min_date):
+    def create_student_timeline(cls, observations, students, constructs, start_date):
         star_chart = {}
         star_chart_dates = {}
 
@@ -389,7 +389,7 @@ class Observation(TimeStampedModel, OwnerMixin):
                 for sublevel in sublevels:
                     construct = sublevel.level.construct
 
-                    if observation.observation_date <= min_date:
+                    if observation.observation_date <= start_date:
                         star_chart[construct][student][sublevel].append(observation)
 
                     star_chart_dates[construct.id][student.id][sublevel.id].append(

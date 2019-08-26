@@ -46,6 +46,15 @@
   border-radius: 50%;
   border: none;
   cursor: pointer;
+  background-color: black;
+}
+
+.ui-slider .ui-slider-handle:hover {
+  background-color: grey;
+}
+
+.ui-slider .ui-slider-handle:focus {
+  background-color: grey;
 }
 
 .ui-slider.ui-slider-horizontal .ui-slider-handle {
