@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^observations-work-queue/$', kidviz.views.WorkQueue.as_view(), name='work-queue'),
     url(r'^observations-remove-draft/(?P<pk>\d+)/$', kidviz.views.RemoveDraft.as_view(), name='remove-draft'),
     url(r'^observation-new/$', kidviz.views.StartNewObservation.as_view(), name='new-observation'),
+    url(r'^observation-new/students-timeline/$', kidviz.views.StudentsTimelineView.as_view(), name='students-timeline'),
 
     # pending/approved/denied users (for admins only)
     url(r'^users/', include('users.urls')),

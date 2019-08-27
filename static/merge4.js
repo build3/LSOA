@@ -540,7 +540,11 @@
         $(tbody).append(`<tr class="construct-${constructId} merged-row"></tr>`);
 
         var tr = $(tbody).find('tr');
-        $(tr[0]).append('<td><b>All courses</b></td>');
+        if (window.isStudents) {
+            $(tr[0]).append('<td><b>All students</b></td>');
+        } else {
+            $(tr[0]).append('<td><b>All courses</b></td>');
+        }
         $(tr[1]).append('<td></td>');
 
         for (var i = 0; i < observationQuantity.length; i++) {

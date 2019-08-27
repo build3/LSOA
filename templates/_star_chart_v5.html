@@ -5,9 +5,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'star-chart-v4.css' %}">
 {% endblock %}
 
-{% for construct, classes in star_chart_4.items %}
+{% for construct, students in star_chart.items %}
 <div class="star-v4">
-    <h4 class="text-align-center">{{ construct.abbreviation }}</h4>
+    <h4 class="text-align-center mt-2">{{ construct.abbreviation }}</h4>
     <table class="table table-bordered star-chart-4-table-{{ construct.id }} chart-4">
         <thead>
             <tr>
@@ -57,14 +57,14 @@
             </tr>
         </thead>
         <tbody>
-            {% for class, sublevels in classes.items %}
+            {% for student, sublevels in students.items %}
                 <tr class="construct-{{ construct.id }} heat-row">
-                    <td><b>{{ class.name }}</b></td>
+                    <td><b>{{ student.name }}</b></td>
 
                     {% for sublevel, observations in sublevels.items %}
-                        <td data-csl-id="{{ csl_id }}" class="text-center heat-{{ class.id }}-{{ sublevel.id }} heat-elem heatmap-elem"
+                        <td data-csl-id="{{ csl_id }}" class="text-center heat-{{ student.id }}-{{ sublevel.id }} heat-elem heatmap-elem"
                             data-color="{% get_color_star_chart_4 sublevel observations %}"
-                            data-elem="heat-{{ construct.id }}-{{ class.id }}-{{ sublevel.id }}"
+                            data-elem="heat-{{ construct.id }}-{{ student.id }}-{{ sublevel.id }}"
                             bgcolor="{% get_color_star_chart_4 sublevel observations %}"
                             data-sublevel="{{ sublevel.id }}" data-stars={{ observations|length }}>
                         </td>
@@ -75,9 +75,9 @@
 
                     {% for sublevel, observations in sublevels.items %}
                         <td data-csl-id="{{ csl_id }}" data-stars="{{ observations|length }}"
-                            data-elem="star-{{ construct.id }}-{{ class.id }}-{{ sublevel.id }}"
+                            data-elem="star-{{ construct.id }}-{{ student.id }}-{{ sublevel.id }}"
                             data-sublevel="{{ sublevel.id }}"
-                            class="text-center stars-{{ class.id }}-{{ sublevel.id }} stars-amount heatmap-elem">
+                            class="text-center stars-{{ student.id }}-{{ sublevel.id }} stars-amount heatmap-elem">
                             <span>{{ observations|length }}</span>
                         </td>
                     {% endfor %}
@@ -107,9 +107,9 @@
     window.COLORS_DARK = "{{ COLORS_DARK|escapejs }}";
     window.minDate = "{{ min_date }}";
     window.maxDate = "{{ max_date }}";
-    window.observations = "{{ star_chart_4_dates|escapejs }}";
+    window.observations = "{{ dates|escapejs }}";
     window.allObservations = "{{ observations_count }}";
-    window.isStudents = false;
+    window.isStudents = true;
 </script>
 <script src="{% static 'merge4.js' %}"></script>
 <script src="{% static 'slider.js' %}"></script>

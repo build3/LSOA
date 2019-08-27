@@ -362,6 +362,44 @@ class Observation(TimeStampedModel, OwnerMixin):
         return (star_chart_4, star_chart_4_dates)
 
     @classmethod
+    def create_student_timeline(cls, observations, students, constructs, start_date):
+        star_chart = {}
+        star_chart_dates = {}
+
+        for construct in constructs:
+            star_chart[construct] = {}
+            star_chart_dates[construct.id] = {}
+
+            for student in students:
+                star_chart[construct][student] = {}
+                star_chart_dates[construct.id][student.id] = {}
+
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        star_chart[construct][student][sublevel] = []
+                        star_chart_dates[construct.id][student.id][sublevel.id] = []
+
+        for student in students:
+            for observation in observations:
+                if student not in observation.students.all():
+                    continue
+
+                sublevels = observation.constructs.all()
+
+                for sublevel in sublevels:
+                    construct = sublevel.level.construct
+
+                    if observation.observation_date <= start_date:
+                        star_chart[construct][student][sublevel].append(observation)
+
+                    star_chart_dates[construct.id][student.id][sublevel.id].append(
+                        datetime.datetime \
+                            .combine(observation.observation_date, datetime.datetime.min.time()) \
+                            .timestamp())
+
+        return (star_chart, star_chart_dates)
+
+    @classmethod
     def get_min_date_from_observation(cls, observations):
         return observations.aggregate(models.Min('observation_date'))['observation_date__min']
 
