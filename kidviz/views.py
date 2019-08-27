@@ -470,8 +470,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def selected_chart(self):
         get = self.request.GET or {}
-        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3',
-            'chart_v1_vertical', 'heat_map', 'chart_v4']
+        chart_keys = ['student_view', 'construct_view',
+            'student_view_vertical', 'construct_heat_map', 'timeline_view']
         for key in chart_keys:
             if key in get:
                 return key
@@ -552,7 +552,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                             star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
-        min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
+        min_date = Observation.get_min_date_from_observation(star_chart_4_obs) - datetime.timedelta(days=1)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
                 star_chart_4_obs, constructs, courses, min_date)
 
@@ -572,7 +572,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'star_chart_4': star_chart_4,
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
             'min_date': min_date,
-            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
+            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs)
+                + datetime.timedelta(days=1),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
             'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count()
         })

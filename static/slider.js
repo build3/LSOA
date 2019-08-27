@@ -101,9 +101,8 @@
         var courseObservations = {};
         var horizontalCourse = {};
 
-        // Add 60 seconds here to do get same observations as in start.
         var timestamp = new Date(ui.value);
-        timestamp = timestamp.setSeconds(timestamp.getSeconds() + 60);
+        timestamp = timestamp.setSeconds(timestamp.getSeconds());
 
         // Filter observations.
         for (var construct in observations) {
@@ -137,7 +136,10 @@
 
                         courseObservations[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
-                        newValue += filtered.length;
+
+                        // Add one to change elements in table when it
+                        // should be empty (moved to min date).
+                        filtered.length === 0 ? newValue++ : newValue += filtered.length;
                     }
                 } else {
                     observationsFiltered[construct][course] = {};
@@ -149,7 +151,8 @@
 
                         observationsFiltered[construct][course][sublevel] = filtered;
                         horizontalCourse[construct][course][sublevel] = filtered;
-                        newValue += filtered.length;
+
+                        filtered.length === 0 ? newValue++ : newValue += filtered.length;
                     }
                 }
             }
