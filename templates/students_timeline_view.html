@@ -18,12 +18,27 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
+            <form action="" method="GET" id="filterFormCourse">
+                <div class="mt-3 mb-3 input-group">
+                    <div class="input-group-addon">
+                        <label class="mb-0" for="id_course">Filter course</label>
+                    </div>
+                    {{ course_filter_form.course }}
+                </div>
+
+                <div class="d-flex flex-row-reverse">
+                    <input id="filtering-submit-course"
+                        type="submit" class="btn btn-primary mt-2">
+                </div>
+            </form>
+
             <form action="" method="GET" id="filterForm">
                 <div class="mt-3 mb-3 input-group">
                     <div class="input-group-addon">
                         <label class="mb-0" for="id_students">Filter students</label>
                     </div>
                     {{ filter_form.students }}
+                    <input type="hidden" name="chosenCourse" value="{{ course_id }}">
 
                     <button type="button" id="select-all-students" class="btn btn-primary ml-2">Select all</button>
                 </div>
@@ -35,7 +50,7 @@
             </form>
 
             {% if students %}
-                {% include "_star_chart_v5.html" %}
+                {% include "includes/student_timeline.html" %}
             {% else %}
                 <h4 class="text-center mt-2">At least one student has to be selected to display report</h4>
             {% endif %}

@@ -3,10 +3,24 @@ $(document).ready(function() {
         tokenSeparators: [',', '\n']
     });
 
-    $('#filtering-submit').prop('disabled', true)
+    $('#filtering-submit').prop('disabled', true);
+
+    $('#filtering-submit-course').prop('disabled', true);
 
     $('#filterForm :input').on('change input', function() {
         $('#filtering-submit').removeAttr('disabled');
+    });
+
+    $('#filterForm :input').on('change input', function() {
+        $('#filtering-submit').removeAttr('disabled');
+    });
+
+    $('#filterFormCourse :input').on('change input', function() {
+        $('#filtering-submit-course').removeAttr('disabled');
+    });
+
+    $('#filterFormCourse :input').on('change input', function() {
+        $('#filtering-submit-course').removeAttr('disabled');
     });
 
     $('#select-all-students').click(function() {

@@ -18,7 +18,10 @@ def observation_pks(observations):
 @register.filter
 def course_from_session_or_first(request):
     if request.user.is_authenticated:
-        return request.user.default_course.pk or request.session.get('course')
+        if request.user.default_course:
+            return request.user.default_course.pk
+        else:
+            return request.session.get('course') or Course.objects.first().id
     else:
         return request.session.get('course')
 

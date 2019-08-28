@@ -28,7 +28,7 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    DateFilteringForm, DraftObservationForm, StudentFilterForm
+    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -596,8 +596,28 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
 
-        filter_form = StudentFilterForm(self.request.GET)
+        # Get default course or first in database.
+        course = (self.request.user.default_course or Course.objects.first())
         students = None
+
+        # Id of submitted earlier course.
+        chosenCourse = self.request.GET.get('chosenCourse', None)
+
+        # Check if course was changed.
+        if not self.request.GET.get('course', None) and not chosenCourse:
+            course_filter_form = CourseFilterForm(initial={'course': course.id})
+        elif chosenCourse:
+            course_filter_form = CourseFilterForm(initial={'course': chosenCourse})
+        else:
+            course_filter_form = CourseFilterForm(self.request.GET)
+
+        if course_filter_form.is_valid():
+            course = course_filter_form.cleaned_data['course']
+
+        if chosenCourse:
+            course = get_object_or_404(Course, id=chosenCourse)
+
+        filter_form = StudentFilterForm(self.request.GET, queryset=course.students.all())
 
         if filter_form.is_valid():
             students = filter_form.cleaned_data['students']
@@ -631,7 +651,9 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
 
         data.update({
             'filter_form': filter_form,
+            'course_filter_form': course_filter_form,
             'students': students,
+            'course_id': course.id,
         })
 
         return data
@@ -1059,7 +1081,6 @@ class WorkQueue(LoginRequiredMixin, ListView):
             Q(owner=self.request.user, constructs=None, is_draft=False) |
             Q(owner=self.request.user, is_draft=True)
         )
-
 
 
 class RemoveDraft(LoginRequiredMixin, View):
