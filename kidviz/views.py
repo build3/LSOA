@@ -596,26 +596,18 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
 
-        # Get default course or first in database.
-        course = (self.request.user.default_course or Course.objects.first())
+        # Get default course or first course in database.
+        course = self.request.user.get_course()
         students = None
 
-        # Id of submitted earlier course.
-        chosenCourse = self.request.GET.get('chosenCourse', None)
-
         # Check if course was changed.
-        if not self.request.GET.get('course', None) and not chosenCourse:
+        if not self.request.GET.get('course', None):
             course_filter_form = CourseFilterForm(initial={'course': course.id})
-        elif chosenCourse:
-            course_filter_form = CourseFilterForm(initial={'course': chosenCourse})
         else:
             course_filter_form = CourseFilterForm(self.request.GET)
 
         if course_filter_form.is_valid():
             course = course_filter_form.cleaned_data['course']
-
-        if chosenCourse:
-            course = get_object_or_404(Course, id=chosenCourse)
 
         filter_form = StudentFilterForm(self.request.GET, queryset=course.students.all())
 
