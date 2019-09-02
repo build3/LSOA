@@ -28,7 +28,7 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    DateFilteringForm, DraftObservationForm, StudentFilterForm
+    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -596,8 +596,20 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
 
-        filter_form = StudentFilterForm(self.request.GET)
+        # Get default course or first course in database.
+        course = self.request.user.get_course()
         students = None
+
+        # Check if course was changed.
+        if not self.request.GET.get('course', None):
+            course_filter_form = CourseFilterForm(initial={'course': course.id})
+        else:
+            course_filter_form = CourseFilterForm(self.request.GET)
+
+        if course_filter_form.is_valid():
+            course = course_filter_form.cleaned_data['course']
+
+        filter_form = StudentFilterForm(self.request.GET, queryset=course.students.all())
 
         if filter_form.is_valid():
             students = filter_form.cleaned_data['students']
@@ -631,7 +643,9 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
 
         data.update({
             'filter_form': filter_form,
+            'course_filter_form': course_filter_form,
             'students': students,
+            'course_id': course.id,
         })
 
         return data
@@ -1059,7 +1073,6 @@ class WorkQueue(LoginRequiredMixin, ListView):
             Q(owner=self.request.user, constructs=None, is_draft=False) |
             Q(owner=self.request.user, is_draft=True)
         )
-
 
 
 class RemoveDraft(LoginRequiredMixin, View):

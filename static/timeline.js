@@ -3,7 +3,11 @@ $(document).ready(function() {
         tokenSeparators: [',', '\n']
     });
 
-    $('#filtering-submit').prop('disabled', true)
+    $('#filtering-submit').prop('disabled', true);
+
+    $('#filterForm :input').on('change input', function() {
+        $('#filtering-submit').removeAttr('disabled');
+    });
 
     $('#filterForm :input').on('change input', function() {
         $('#filtering-submit').removeAttr('disabled');

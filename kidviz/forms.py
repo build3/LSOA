@@ -3,7 +3,7 @@ from collections import defaultdict
 from django import forms
 from django.db.models import Q
 from django.forms.utils import ErrorList
-from django.forms.widgets import SelectMultiple
+from django.forms.widgets import Select, SelectMultiple
 from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
@@ -206,4 +206,18 @@ class StudentFilterForm(forms.Form):
         required=False,
         queryset=Student.objects.all(),
         widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
+    )
+
+    def __init__(self, *args, queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if queryset:
+            self.fields['students'].queryset = queryset
+
+
+class CourseFilterForm(forms.Form):
+    course = forms.ModelChoiceField(
+        queryset=Course.objects.all(),
+        widget=forms.widgets.Select(attrs={'class': 'form-control'}),
+        empty_label=None
     )

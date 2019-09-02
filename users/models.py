@@ -78,3 +78,8 @@ class User(AbstractBaseUser, TimeStampedModel, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
+
+    def get_course(self):
+        # Prevent circular import.
+        from kidviz.models import Course
+        return self.default_course or Course.objects.first()
