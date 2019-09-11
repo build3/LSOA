@@ -609,10 +609,22 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
         if course_filter_form.is_valid():
             course = course_filter_form.cleaned_data['course']
 
-        filter_form = StudentFilterForm(self.request.GET, queryset=course.students.all())
+        queryset = course.students.all()
+        filter_form = StudentFilterForm(self.request.GET, queryset=queryset)
+        chosen_students = self.request.GET.getlist('students')
 
         if filter_form.is_valid():
             students = filter_form.cleaned_data['students']
+        else:
+            # This is required to display report when one student belong to the class but others don't.
+            #
+            # For example when user selects two students in class A and then clicks submit two
+            # reports are going to show. Then if he change class to B and do not change students
+            # (let's say one of the students belongs to class B as well)
+            # system should display report for that one student even though form is invalid.
+            if chosen_students:
+                students = [Student.objects.get(id=student_id) for student_id in chosen_students
+                    if int(student_id) in queryset.values_list('id', flat=True)]
 
         observations = None
 
