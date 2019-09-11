@@ -470,8 +470,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def selected_chart(self):
         get = self.request.GET or {}
-        chart_keys = ['student_view', 'construct_view',
-            'student_view_vertical', 'construct_heat_map', 'timeline_view']
+        chart_keys = ['student_view', 'construct_view', 'construct_heat_map', 'timeline_view']
         for key in chart_keys:
             if key in get:
                 return key
@@ -567,7 +566,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'course_id': course_id,
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart(),
-            'star_matrix_vertical': Observation.get_vertical_stars(star_matrix),
             'star_matrix_by_class': star_matrix_by_class,
             'star_chart_4': star_chart_4,
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),

@@ -267,31 +267,6 @@ class Observation(TimeStampedModel, OwnerMixin):
         return (observations, all_observations_for_chart_4)
 
     @classmethod
-    def get_vertical_stars(cls, star_matrix):
-        star_matrix_vertical = {}
-
-        # I had to divide it into two for loops because there was a bug which added new observation
-        # for student in star_matrix.
-        for construct in star_matrix:
-            star_matrix_vertical[construct] = {}
-
-            for student in star_matrix[construct]:
-                for level in construct.levels.all():
-                    for sublevel in level.sublevels.all():
-                        # Set is used here to remove same observations from collection.
-                        star_matrix_vertical[construct][sublevel] = set()
-
-        for construct in star_matrix:
-            for student in star_matrix[construct]:
-                for level in construct.levels.all():
-                    for sublevel in level.sublevels.all():
-                        # Join sets to remove same observations.
-                        star_matrix_vertical[construct][sublevel] \
-                            .update(set(star_matrix[construct][student][sublevel]))
-
-        return star_matrix_vertical
-
-    @classmethod
     def initialize_star_matrix_by_class(cls, constructs, courses):
         star_matrix_by_class = {}
 
