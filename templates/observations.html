@@ -310,10 +310,6 @@
                 data-toggle="tab" href="#student_view">Student View</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "student_view_vertical" %} active {% endif %}"
-                data-toggle="tab" href="#student_view_vertical">Student View - Vertical Collapse All</a>
-            </li>
-            <li class="nav-item">
               <a class="nav-link {% if selected_chart == "construct_view" %} active {% endif %}"
                 data-toggle="tab" href="#construct_view">Construct View </a>
             </li>
@@ -330,9 +326,6 @@
           <div class="tab-content">
             <div class="tab-pane {% if selected_chart == "student_view" %} active {% else %} fade {% endif %}" id="student_view">
               {% include "includes/student_view.html" %}
-            </div>
-            <div class="tab-pane {% if selected_chart == "student_view_vertical" %} active {% else %} fade {% endif %}" id="student_view_vertical">
-              {% include "includes/student_view_vertical.html" %}
             </div>
             <div class="tab-pane {% if selected_chart == "construct_view" %} active {% else %} fade {% endif %}" id="construct_view">
               {% include "includes/construct_view.html" %}
