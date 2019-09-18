@@ -182,25 +182,27 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if request.POST.get('use_recent_observation'):
             return self.get(request, *args, **kwargs)
         else:
-            draft_observation = Observation.objects.filter(is_draft=True, owner=request.user) \
-                .order_by('-id') \
-                .first()
-
-            original_image = request.POST.get('original_image', None)
-            video = request.POST.get('video', None)
-
-            # This is needed to update video or original_image when one of them is already set
-            # and user want to change to the opposite.
-            if draft_observation:
-                draft_observation.update_draft_media(original_image, video)
-
             if request.POST.get('is_draft', None) == 'True':
                 if request.session.get('create_new', None):
                     form = DraftObservationForm(request.POST, request.FILES)
                     message = 'Draft Created.'
                 else:
-                    form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
-                    message = 'Draft Updated.'
+                    draft_observation = Observation.objects.filter(is_draft=True, owner=request.user) \
+                        .order_by('-id') \
+                        .first()
+
+                    original_image = request.POST.get('original_image', None)
+                    video = request.POST.get('video', None)
+
+                    # This is needed to update video or original_image when one of them is already set
+                    # and user want to change to the opposite.
+                    if draft_observation:
+                        draft_observation.update_draft_media(original_image, video)
+                        form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+                        message = 'Draft Updated.'
+                    else:
+                        form = DraftObservationForm(request.POST, request.FILES)
+                        message = 'Draft Created.'
 
                 form.is_valid()
 
@@ -220,7 +222,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 messages.add_message(request, messages.SUCCESS, message)
                 return HttpResponseRedirect(self.get_success_url())
             else:
-                form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
+                form = ObservationForm(request.POST, request.FILES)
                 return self.form_valid(form)
 
     def get_context_data(self, **kwargs):
