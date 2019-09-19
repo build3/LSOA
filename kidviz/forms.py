@@ -3,12 +3,13 @@ from collections import defaultdict
 from django import forms
 from django.db.models import Q
 from django.forms.utils import ErrorList
-from django.forms.widgets import SelectMultiple
+from django.forms.widgets import Select, SelectMultiple
 from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
-from kidviz.models import Course, LearningConstructSublevel, ContextTag, Observation
+from kidviz.models import (Course, LearningConstructSublevel, ContextTag,
+    Observation, Student)
 
 
 class TagWidget(SelectMultiple):
@@ -91,7 +92,7 @@ class ObservationForm(forms.ModelForm):
             'students', 'constructs', 'tag_choices', 'tags', 'annotation_data',
             'original_image', 'video', 'observation_date', 'no_constructs',
             'notes', 'video_notes', 'parent', 'owner', 'name', 'course',
-            'grouping', 'construct_choices', 'curricular_focus', 'is_draft'
+            'grouping', 'construct_choices', 'curricular_focus', 'is_draft', 'external_video'
         ]
         widgets = {
             'course': forms.HiddenInput(),
@@ -109,6 +110,7 @@ class ObservationForm(forms.ModelForm):
             'video_notes': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
             'video': forms.ClearableFileInput(attrs={'accept': 'video/*'}),
             'original_image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'external_video': forms.TextInput(attrs={'class': 'form-control'})
         }
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
@@ -197,3 +199,25 @@ class DraftObservationForm(ObservationForm):
     def clean(self):
         """Remove validation from parent form."""
         return self.cleaned_data
+
+
+class StudentFilterForm(forms.Form):
+    students = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=Student.objects.all(),
+        widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
+    )
+
+    def __init__(self, *args, queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if queryset:
+            self.fields['students'].queryset = queryset
+
+
+class CourseFilterForm(forms.Form):
+    course = forms.ModelChoiceField(
+        queryset=Course.objects.all(),
+        widget=forms.widgets.Select(attrs={'class': 'form-control'}),
+        empty_label=None
+    )

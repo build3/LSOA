@@ -94,7 +94,10 @@ if DEBUG:
 
 DATABASES = {}
 # local database uses old name for now
-DATABASES['default'] = dj_database_url.config(conn_max_age=600, default='postgres://localhost:5432/lsoa')
+DATABASES['default'] = dj_database_url.config(
+    conn_max_age=600,
+    default=os.environ.get('DATABASE_URL', 'postgres://localhost:5432/lsoa')
+)
 
 # TEMPLATES AND STATIC FILES
 

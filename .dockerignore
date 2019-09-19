@@ -1,0 +1,9 @@
+.git
+**/__pycache__
+.hypothesis
+production
+development
+.pytest_cache
+.mypy_cache
+.env
+docker/**

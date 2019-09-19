@@ -28,7 +28,7 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    DateFilteringForm, DraftObservationForm
+    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, StudentGroup, Student, Observation
@@ -182,23 +182,27 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if request.POST.get('use_recent_observation'):
             return self.get(request, *args, **kwargs)
         else:
-            draft_observation = Observation.objects.filter(is_draft=True, owner=request.user) \
-                .order_by('-id') \
-                .first()
-
-            original_image = request.POST.get('original_image', None)
-            video = request.POST.get('video', None)
-
-            # This is needed to update video or original_image when one of them is already set
-            # and user want to change to the opposite.
-            if draft_observation:
-                draft_observation.update_draft_media(original_image, video)
-
             if request.POST.get('is_draft', None) == 'True':
                 if request.session.get('create_new', None):
                     form = DraftObservationForm(request.POST, request.FILES)
+                    message = 'Draft Created.'
                 else:
-                    form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+                    draft_observation = Observation.objects.filter(is_draft=True, owner=request.user) \
+                        .order_by('-id') \
+                        .first()
+
+                    original_image = request.POST.get('original_image', None)
+                    video = request.POST.get('video', None)
+
+                    # This is needed to update video or original_image when one of them is already set
+                    # and user want to change to the opposite.
+                    if draft_observation:
+                        draft_observation.update_draft_media(original_image, video)
+                        form = DraftObservationForm(request.POST, request.FILES, instance=draft_observation)
+                        message = 'Draft Updated.'
+                    else:
+                        form = DraftObservationForm(request.POST, request.FILES)
+                        message = 'Draft Created.'
 
                 form.is_valid()
 
@@ -215,10 +219,10 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                     request.session['re_setup'] = True
                     return HttpResponseRedirect(reverse_lazy('setup'))
 
-                messages.add_message(request, messages.SUCCESS, 'Draft Created.')
+                messages.add_message(request, messages.SUCCESS, message)
                 return HttpResponseRedirect(self.get_success_url())
             else:
-                form = ObservationForm(request.POST, request.FILES, instance=draft_observation)
+                form = ObservationForm(request.POST, request.FILES)
                 return self.form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -468,8 +472,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
     def selected_chart(self):
         get = self.request.GET or {}
-        chart_keys = ['chart_v1', 'chart_v2', 'chart_v3',
-            'chart_v1_vertical', 'heat_map', 'chart_v4']
+        chart_keys = ['student_view', 'construct_view', 'construct_heat_map', 'timeline_view']
         for key in chart_keys:
             if key in get:
                 return key
@@ -550,7 +553,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                             star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
-        min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
+        min_date = Observation.get_min_date_from_observation(star_chart_4_obs) - datetime.timedelta(days=1)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
                 star_chart_4_obs, constructs, courses, min_date)
 
@@ -565,14 +568,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'course_id': course_id,
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart(),
-            'star_matrix_vertical': Observation.get_vertical_stars(star_matrix),
             'star_matrix_by_class': star_matrix_by_class,
             'star_chart_4': star_chart_4,
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
             'min_date': min_date,
-            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
+            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs)
+                + datetime.timedelta(days=1),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
-            'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count(),
+            'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count()
         })
 
         return data
@@ -587,6 +590,79 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         })
 
 
+class StudentsTimelineView(LoginRequiredMixin, TemplateView):
+    template_name = 'students_timeline_view.html'
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+
+        # Get default course or first course in database.
+        course = self.request.user.get_course()
+        students = None
+
+        # Check if course was changed.
+        if not self.request.GET.get('course', None):
+            course_filter_form = CourseFilterForm(initial={'course': course.id})
+        else:
+            course_filter_form = CourseFilterForm(self.request.GET)
+
+        if course_filter_form.is_valid():
+            course = course_filter_form.cleaned_data['course']
+
+        queryset = course.students.all()
+        filter_form = StudentFilterForm(self.request.GET, queryset=queryset)
+        chosen_students = self.request.GET.getlist('students')
+
+        if filter_form.is_valid():
+            students = filter_form.cleaned_data['students']
+        else:
+            # This is required to display report when one student belong to the class but others don't.
+            #
+            # For example when user selects two students in class A and then clicks submit two
+            # reports are going to show. Then if he change class to B and do not change students
+            # (let's say one of the students belongs to class B as well)
+            # system should display report for that one student even though form is invalid.
+            if chosen_students:
+                students = [Student.objects.get(id=student_id) for student_id in chosen_students
+                    if int(student_id) in queryset.values_list('id', flat=True)]
+
+        observations = None
+
+        if students:
+            observations = Observation.objects.filter(students__in=students) \
+                .prefetch_related('students') \
+                .prefetch_related('constructs') \
+                .prefetch_related('tags') \
+                .prefetch_related('constructs__level') \
+                .prefetch_related('constructs__level__construct') \
+                .prefetch_related('course')
+
+        if observations:
+            constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
+            min_date = Observation.get_min_date_from_observation(observations) - timedelta(days=1)
+            star_chart, dates = Observation.create_student_timeline(
+                observations, students, constructs, min_date)
+
+            data.update({
+                'star_chart': star_chart,
+                'dates': json.dumps(dates),
+                'min_date': min_date,
+                'max_date': Observation.get_max_date_from_observations(observations)
+                    + timedelta(days=1),
+                'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
+                'observations_count': observations.filter(constructs__isnull=False).count(),
+            })
+
+        data.update({
+            'filter_form': filter_form,
+            'course_filter_form': course_filter_form,
+            'students': students,
+            'course_id': course.id,
+        })
+
+        return data
+
+
 class TeacherObservationView(LoginRequiredMixin, TemplateView):
     """
     New matrix chart sorted by teachers
@@ -594,7 +670,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
     template_name = 'teachers_observations.html'
 
     def get_context_data(self, **kwargs):
-        course_id = kwargs.get('course_id')
         date_filtering_form = DateFilteringForm(self.request.GET)
         date_from = None
         date_to = None
@@ -606,14 +681,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             date_to = date_filtering_form.cleaned_data['date_to']
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
-            courses = date_filtering_form.cleaned_data['courses']
-
-            # If there aren't any query params use default course.
-            if self.request.GET:
-                if courses:
-                    course_id = [course.id for course in courses]
-                else:
-                    course_id = None
 
         observations = Observation.objects \
             .prefetch_related('students') \
@@ -623,9 +690,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             .prefetch_related('constructs__level__construct') \
             .order_by('owner', 'constructs') \
             .all()
-
-        if course_id:
-            observations = observations.filter(course__in=course_id)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -638,10 +702,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             observations = observations.filter(tags__in=tag_ids)
 
         constructs = LearningConstruct.objects.all()
-
         all_students = Student.objects.filter(status=Student.ACTIVE)
-        if course_id:
-            all_students = all_students.filter(course__in=course_id)
 
         dot_matrix = {}
 
@@ -672,7 +733,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             'all_observations': observations,
             'selected_constructs': selected_constructs,
             'courses': Course.objects.all(),
-            'course_id': course_id,
+            'course_id': None,
             'filtering_form': date_filtering_form
         })
         return data
@@ -1020,9 +1081,10 @@ class WorkQueue(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Observation.objects \
-            .prefetch_related('students') \
-            .filter(owner=self.request.user, constructs=None)
+        return Observation.objects.filter(
+            Q(owner=self.request.user, constructs=None, is_draft=False) |
+            Q(owner=self.request.user, is_draft=True)
+        )
 
 
 class RemoveDraft(LoginRequiredMixin, View):

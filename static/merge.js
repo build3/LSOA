@@ -407,11 +407,12 @@
             observations[course] = {};
 
             for (var i = 0; i < cells.length; i++) {
+                const course_cells = cells[i].filter(j => cells[i][j].dataset.class == course)
                 observations[course][i] = [];
 
-                for (var j = 0; j < cells[i].length; j++) {
-                    const courseId = $(cells[i][j]).data('class');
-                    const stars = ($(cells[i][j]).data('modal-launch-observations') || []);
+                for (var j = 0; j < course_cells.length; j++) {
+                    const courseId = $(course_cells[j]).data('class');
+                    const stars = ($(course_cells[j]).data('modal-launch-observations') || []);
 
                     if (mergedCourses.indexOf(`${courseId}`) > -1) {
                         observations[course][i].push(stars);
@@ -505,8 +506,6 @@
             element[0].dataset.modalLaunchObservations = `[${obs[j]}]`;
             element[0].dataset.class = course;
         } else {
-            var element = null;
-
             // If last student in class add thicker class.
             if (obs.length - 1 === j) {
                 element = $(element[0])

@@ -124,9 +124,14 @@
           uiLibrary: 'bootstrap4'
       });
 
-      $('.datepicker').focus(function() {
-        $(this).blur();
+      $('.gj-datepicker').append(`<span class="clearInput" role="right-icon">
+          <button btn btn-outline-secondary border-left-0 type="button"><i class="fa fa-close"></i></button></span>`)
+
+      $('.clearInput').click(function() {
+        $($(this).parent().find('input')).datepicker().val('');
       })
+
+      $('.datepicker').prop('readonly', true);
     });
 
     function registerUpdateConstructsListener(id) {

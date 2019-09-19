@@ -196,6 +196,7 @@ class Observation(TimeStampedModel, OwnerMixin):
     annotation_data = models.TextField(default='', null=True, blank=True)
     original_image = models.FileField(upload_to=UploadToPathAndRename('original_images/'), blank=True, null=True)
     video = models.FileField(upload_to=UploadToPathAndRename('videos/'), blank=True, null=True)
+    external_video = models.URLField(max_length=200, blank=True, null=True)
 
     # the end user can type notes or take an AV sample and just talk into the mic
     notes = models.TextField(blank=True)
@@ -266,31 +267,6 @@ class Observation(TimeStampedModel, OwnerMixin):
         return (observations, all_observations_for_chart_4)
 
     @classmethod
-    def get_vertical_stars(cls, star_matrix):
-        star_matrix_vertical = {}
-
-        # I had to divide it into two for loops because there was a bug which added new observation
-        # for student in star_matrix.
-        for construct in star_matrix:
-            star_matrix_vertical[construct] = {}
-
-            for student in star_matrix[construct]:
-                for level in construct.levels.all():
-                    for sublevel in level.sublevels.all():
-                        # Set is used here to remove same observations from collection.
-                        star_matrix_vertical[construct][sublevel] = set()
-
-        for construct in star_matrix:
-            for student in star_matrix[construct]:
-                for level in construct.levels.all():
-                    for sublevel in level.sublevels.all():
-                        # Join sets to remove same observations.
-                        star_matrix_vertical[construct][sublevel] \
-                            .update(set(star_matrix[construct][student][sublevel]))
-
-        return star_matrix_vertical
-
-    @classmethod
     def initialize_star_matrix_by_class(cls, constructs, courses):
         star_matrix_by_class = {}
 
@@ -359,6 +335,44 @@ class Observation(TimeStampedModel, OwnerMixin):
                             .timestamp())
 
         return (star_chart_4, star_chart_4_dates)
+
+    @classmethod
+    def create_student_timeline(cls, observations, students, constructs, start_date):
+        star_chart = {}
+        star_chart_dates = {}
+
+        for construct in constructs:
+            star_chart[construct] = {}
+            star_chart_dates[construct.id] = {}
+
+            for student in students:
+                star_chart[construct][student] = {}
+                star_chart_dates[construct.id][student.id] = {}
+
+                for level in construct.levels.all():
+                    for sublevel in level.sublevels.all():
+                        star_chart[construct][student][sublevel] = []
+                        star_chart_dates[construct.id][student.id][sublevel.id] = []
+
+        for student in students:
+            for observation in observations:
+                if student not in observation.students.all():
+                    continue
+
+                sublevels = observation.constructs.all()
+
+                for sublevel in sublevels:
+                    construct = sublevel.level.construct
+
+                    if observation.observation_date <= start_date:
+                        star_chart[construct][student][sublevel].append(observation)
+
+                    star_chart_dates[construct.id][student.id][sublevel.id].append(
+                        datetime.datetime \
+                            .combine(observation.observation_date, datetime.datetime.min.time()) \
+                            .timestamp())
+
+        return (star_chart, star_chart_dates)
 
     @classmethod
     def get_min_date_from_observation(cls, observations):
