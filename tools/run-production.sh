@@ -5,7 +5,7 @@ set -e
 NAME="kidviz"
 NUM_WORKERS=5
 
-/tools/wait-for db:5432 -- echo Database ready
+#/tools/wait-for db:5432 -- echo Database ready
 
 DJANGO_SETTINGS_MODULE=settings
 DJANGO_WSGI_MODULE=wsgi
