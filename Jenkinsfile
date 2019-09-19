@@ -7,13 +7,20 @@ pipeline {
     }
     stages{
         stage('Checkout'){
-            scm checkout
+            steps{
+                scm checkout
+            }
         }
         stage('Docker Push'){
-            sh './ecr_push.sh'
+            steps{
+                sh './ecr_push.sh'
+            }
         }
         stage('Update ECS Service'){
-            sh '/usr/local/bin/aws ecs update-service --cluster ${CLUSTER_NAME} --service ${SERVICE_NAME} --force-new-deployment'
+            steps{
+                sh '/usr/local/bin/aws ecs update-service --cluster ${CLUSTER_NAME} --service ${SERVICE_NAME} --force-new-deployment'
+            }
+
         }
     }
 }
