@@ -117,6 +117,9 @@
     function forceTagsReset() {
       $('#id_context_tags').val('').trigger('change');
       $('.form-check-input').attr("checked", false).trigger("change");
+      $('#id_context_tags')
+          .find('option')
+          .removeAttr('selected');
     }
     
     function dumpFormData(e) {
