@@ -553,7 +553,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                             star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
-        min_date = Observation.get_min_date_from_observation(star_chart_4_obs) - datetime.timedelta(days=1)
+        min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
                 star_chart_4_obs, constructs, courses, min_date)
 
@@ -572,8 +572,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'star_chart_4': star_chart_4,
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
             'min_date': min_date,
-            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs)
-                + datetime.timedelta(days=1),
+            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
             'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count()
         })
@@ -639,7 +638,8 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
 
         if observations:
             constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
-            min_date = Observation.get_min_date_from_observation(observations) - timedelta(days=1)
+            min_date = Observation.get_min_date_from_observation(observations)
+
             star_chart, dates = Observation.create_student_timeline(
                 observations, students, constructs, min_date)
 
@@ -647,8 +647,7 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
                 'star_chart': star_chart,
                 'dates': json.dumps(dates),
                 'min_date': min_date,
-                'max_date': Observation.get_max_date_from_observations(observations)
-                    + timedelta(days=1),
+                'max_date': Observation.get_max_date_from_observations(observations),
                 'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
                 'observations_count': observations.filter(constructs__isnull=False).count(),
             })
