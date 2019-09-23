@@ -81,23 +81,24 @@
           {# "#image => hidden", "#video => url", button-rows => none() #}
           {% if recent_observation.original_image and use_last_sample %}
             <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 530px; height: 332px;" controls playsinline></video>
           {% elif recent_observation.video and use_last_sample %}
-            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
-            <video id="recorded" style="width: 100%; height: 332px;" src="{{ recent_observation.video.url }}#t=0.1" controls playsinline/>
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%; height: 332px;"/>
+            <video id="recorded" style="width: 530px; height: 332px;" src="{{ recent_observation.video.url }}#t=0.1" controls playsinline/>
           {% elif draft_observation.original_image %}
             <img id="image" src="{{ draft_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 530px; height: 332px;" controls playsinline></video>
           {% elif draft_observation.video %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%;"/>
-            <video id="recorded" style="width: 100%; height: 332px;" src="{{ draft_observation.video.url }}#t=0.1" controls playsinline/>
+            <video id="recorded" style="width: 530px; height: 332px;" src="{{ draft_observation.video.url }}#t=0.1" controls playsinline/>
           {% else %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%; height: 332px; object-fit: contain;"/>
-            <video id="recorded" style="display: none; width: 100%; height: 332px;" controls playsinline></video>
+            <video id="recorded" style="display: none; width: 530px; height: 332px;" controls playsinline></video>
           {% endif %}
 
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0;"></canvas>
           <input type="hidden" id="annotated-image" name="annotation_data" value="">
+          <input type="hidden" id="image-width" name="image_width" value="">
         </div>
 
         <div class="btn-group-lg text-center mt-1" id="buttons-capture">
@@ -460,6 +461,8 @@
           return confirm("You didn't save this observation. Do you want to continue.")
         }
       })
+
+      $('#image-width').val($('#image').css('width'))
 
       $('#cancel').click(function() {
         window.history.back()
@@ -841,22 +844,27 @@
         var ctx = JSON.parse(("{{ form.annotation_data.value|escapejs }}" || "{}"));
         var height = $('#image').height();
         var originalHeight = parseFloat(ctx['originalHeight']);
+        const imageWidth = '{{ observation.image_width }}' || '';
+        const currentWidth = $('#image').width();
+
         if (isNaN(originalHeight)) {
           // Assume that original height was the same
           originalHeight = height;
         }
-        var scale = height / originalHeight;
-        var positionScale = height / originalHeight;
 
-        stage.setHeight($('#image').height());
-        stage.setWidth($('#image').width());
+        var scale = height / originalHeight;
+        var scaleWidth = currentWidth / parseFloat(imageWidth);
 
         stage.loadFromJSON(ctx);
         stage.forEachObject(function (object) {
             object = object.scale(scale);
-            object.left = object.left * scale;
+            object.left = object.left * scaleWidth;
             object.top = object.top * scale;
         })
+
+        stage.setHeight($('#image').height());
+        stage.setWidth($('#image').width());
+
         stage.renderAll()
       }
 

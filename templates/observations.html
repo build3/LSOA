@@ -132,6 +132,8 @@
 
         var annotation_data = $('#annotation_data_' + id).html();
 
+        const imageWidth = $('#image-width_' + id).html();
+
         $('#the-modal').on('shown.bs.modal', function() {
             var url = $('#image-source-'+id).html();
             if (!url) {
@@ -145,7 +147,7 @@
 
             var cHeight = 332;
             var cWidth = 530;
-            var cWidthFull = 768;
+            var cWidthFull = 530;
 
             var bgImg = new fabric.Image();
             bgImg.setSrc(url.replace(/&amp;/g, '&'), function() {
@@ -153,8 +155,8 @@
                 var width = Math.min(bgImg.width, cWidth);
                 var naturalWidth = bgImg.getOriginalSize().width;
                 var imgScale = width / naturalWidth;
-
                 var ctx = {};
+
                 if (annotation_data !== "") {
                     var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
                 }
@@ -165,15 +167,22 @@
                     // Assume that original height was the same - scale it for 60% like in html
                     originalHeight = height / 0.6;
                 }
+
                 var scale = originalHeight / height;
                 canvas.loadFromJSON(ctx);
 
-                var offset = cWidthFull - cWidth - 45;
+                if (imageWidth != 'None') {
+                    const scaleWidth = cWidth / parseFloat(imageWidth);
+                    const offset = 5
+                } else {
+                    const scaleWidth = originalHeight / height;
+                    const offset = cWidthFull - cWidth - 45;
+                }
 
                 canvas.forEachObject(function (object) {
                     object = object.scale(scale);
-                    object.left = (object.left * scale) - offset;
-                    object.top = object.top * scale;
+                    object.left = object.left * scaleWidth - offset;
+                    object.top = object.top * scale + 30;
                 });
 
                 canvas.renderAll();
@@ -185,7 +194,6 @@
                         scaleY: imgScale
                     },
                     {
-                        left: 200,
                         originX: 'left',
                         originY: 'top'
                     }
@@ -391,6 +399,7 @@
                 <div style="display: flex; justify-content: center;">
                   <canvas id="{{ observation.id }}"></canvas>
                 </div>
+                <p class="d-none" id="image-width_{{ observation.id }}">{{ observation.image_width }}</p>
                 <div class="d-none" id="annotation_data_{{ observation.id }}">{{ observation.annotation_data }}</div>
                 <div class="d-none" id="image-source-{{ observation.id }}">{{ observation.original_image.url }}</div>
               </div>
