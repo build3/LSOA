@@ -30,6 +30,8 @@
 
         if (typeof(course_id) === "number") {
           $('#id_courses').val(`${course_id}`).trigger('change');
+        } else if (typeof(course_id) === "object" && course_id.length === 1) {
+          $('#id_courses').val(`${course_id[0]}`).trigger('change');
         }
       }
     }
