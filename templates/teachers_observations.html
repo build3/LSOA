@@ -341,7 +341,7 @@
 
           {% if observation.video %}
             <div style="display: flex; justify-content: center;">
-              <video src="{{ observation.video.url }}" alt="" style="width: 60%; height: auto;" controls></video>
+              <video src="{{ observation.video.url }}" alt="" style="width: 60%; height: auto;" controls preload="none"></video>
             </div>
           {% endif %}
 
@@ -352,7 +352,7 @@
 
           {% if observation.video_notes %}
             <b style="display: block;">Video Note:</b>
-            <video src="{{ observation.video_notes.url }}" style="width: 100%; height: auto;" controls></video>
+            <video src="{{ observation.video_notes.url }}" style="width: 100%; height: auto;" controls preload="none"></video>
           {% endif %}
 
 
