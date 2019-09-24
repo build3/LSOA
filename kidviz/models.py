@@ -78,7 +78,7 @@ class Student(TimeStampedModel):
 
     @property
     def name(self):
-        return self.first_name + ' ' + self.last_name
+        return '{}, {}'.format(self.last_name, self.first_name)
 
     def save(self, **kwargs):
         # this keeps excel import from bombing on nulls
