@@ -80,6 +80,10 @@
               <a class="dropdown-item chart-item" href="{% url 'pending_users' %}">Pending Users</a>
             {% endif %}
 
+            {% if perms.kidviz.can_approve_deny_users %}
+              <a class="dropdown-item chart-item" href="{% url 'add_user' %}">Add User</a>
+            {% endif %}
+
             {% if perms.kidviz.add_course %}
               <a class="dropdown-item chart-item" href="{% url 'import_class_roster' %}">Import Class</a>
             {% endif %}
