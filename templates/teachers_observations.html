@@ -5,52 +5,7 @@
 
 {% block extrastyles %}
   <link rel="stylesheet" href="{% static 'vendor/lightbox2/css/lightbox.min.css' %}">
-  <style>
-    [role="tooltip"] {
-      z-index: 9999999;
-    }
-
-    table, .ios .page {
-      background-color: #fff !important;
-    }
-
-    .modal.show {
-      z-index: 5010;
-    }
-
-    [data-modal-launch-observations] {
-      cursor: pointer;
-    }
-
-    [data-modal-launch-observations] i {
-      color: goldenrod;
-    }
-
-    [data-modal-launch-observations]:hover i {
-      color: darkgoldenrod;
-    }
-
-    .dot {
-      height: 20px;
-      width: 20px;
-      background-color: #f2a287;
-      border-radius: 50%;
-      display: inline-block;
-      margin: 3px auto;
-    }
-
-    .dot:hover {
-      background-color: #cb6634;
-    }
-
-    /*
-     * Height of date input is broken if there is no value. It have been
-     * solved in higher version of bootstrap.
-     */
-    input[type="date"] {
-	     height: 2.375rem;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'teacher-report.css' %}">
 {% endblock %}
 
 {% block extrascripts %}
@@ -265,7 +220,7 @@
               {% for construct, observations in constructs.items %}
                 {% if observations %}
                   <tr>
-                    <td>{{ construct }}</td>
+                    <td class="construct">{{ construct }}</td>
                     <td>
                       {% for observation in observations %}
                         <span

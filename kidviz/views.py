@@ -700,7 +700,9 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             tag_ids = [tag.id for tag in tags]
             observations = observations.filter(tags__in=tag_ids)
 
-        constructs = LearningConstruct.objects.all()
+        if selected_constructs:
+            observations = observations.filter(constructs__id__in=selected_constructs)
+
         all_students = Student.objects.filter(status=Student.ACTIVE)
 
         dot_matrix = {}
