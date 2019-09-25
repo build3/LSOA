@@ -156,7 +156,6 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # we no longer have a username field (
 ACCOUNT_USERNAME_REQUIRED = False  # require email instead of username
 ACCOUNT_ADAPTER = 'users.adapters.PendingUserAccountAdapter'  # allows correct "pending approval" flow
 AUTH_USER_MODEL = 'users.User'  # to use our model instead of the default Django one (ours uses email == username)
-ACCOUNT_SIGNUP_FORM_CLASS = 'users.forms.SignupForm'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',

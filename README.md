@@ -46,3 +46,6 @@ user that can log into the admin panel to modify data from there as well.
 From here, you're all set. To actually run the entire service, type `./manage.py runserver`. This will run the server
 locally at `http://127.0.0.1:8000/` (or alternatively accessible at `http://localhost:8000/`. At this point you 
 should be able to use everything in your browser.
+
+If you want allow user to create new users you should set
+`kidviz | admin perms | Can Approve or Deny Users` permission.

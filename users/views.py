@@ -1,4 +1,3 @@
-from allauth.account.models import EmailAddress
 from allauth.account.views import PasswordResetView
 
 from django.conf import settings
@@ -79,7 +78,7 @@ class CreateNewUser(PermissionRequiredMixin, PasswordResetView):
     def form_valid(self, form):
         email = form.cleaned_data['email']
 
-        user = get_user_model()(email=email)
+        user = User(email=email)
         user.set_unusable_password()
         user.save()
 
