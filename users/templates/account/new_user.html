@@ -1,0 +1,31 @@
+{% extends "base/b4_base.html" %}
+
+{% load static bootstrap4 %}
+
+{% block content %}
+  <form class="form-horizontal" role="form" action="{% url 'add_user' %}" method="POST">
+    <div class="row mt-5">
+      <div class="col-md-6 offset-md-3">
+        <h2>{% block title %}Add new user{% endblock %}</h2>
+        <hr>
+        <p>Create new user and send email to create new password.</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_messages %}
+        {% csrf_token %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_field form.email %}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        {% bootstrap_button content='Reset Password' button_type='submit' button_class='btn-success' %}
+      </div>
+    </div>
+  </form>
+{% endblock %}

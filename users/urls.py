@@ -1,7 +1,8 @@
 from django.conf.urls import include, url
 from django.views.generic import TemplateView
 
-from users.views import ApproveUserView, ApprovedUserListView, DeniedUserListView, DenyUserView, PendingUserListView
+from users.views import (ApproveUserView, ApprovedUserListView, CreateNewUser,
+    DeniedUserListView, DenyUserView, PendingUserListView)
 
 urlpatterns = [
     url(r'^pending/$', PendingUserListView.as_view(), name='pending_users'),
@@ -14,4 +15,5 @@ urlpatterns = [
     url(r'^accounts/', include('allauth.urls')),
     url(r"^accounts/pending/$", TemplateView.as_view(template_name='account/account_pending.html'),
         name="account_pending"),
+    url(r'^add_user/$', CreateNewUser.as_view(), name='add_user'),
 ]
