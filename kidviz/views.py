@@ -480,7 +480,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         return chart_keys[0]
 
     def get_context_data(self, **kwargs):
-        course_id = kwargs.get('course_id')
+        session_course = self.request.session.get('course')
+        course_ids = [self.request.user.get_course(session_course)]
         date_filtering_form = self._init_filter_form(self.request.GET)
 
         date_from = None
@@ -498,14 +499,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             # If there aren't any query params use default course.
             if self.request.GET:
                 if courses:
-                    course_id = [course.id for course in courses]
+                    course_ids = [course.id for course in courses]
 
         (observations, star_chart_4_obs) = Observation.get_observations(
-            course_id, date_from, date_to, tags)
+            course_ids, date_from, date_to, tags)
 
         constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
-        all_students = Student.get_students_by_course(course_id)
-        courses = Course.get_courses(course_id)
+        all_students = Student.get_students_by_course(course_ids)
+        courses = Course.get_courses(course_ids)
 
         star_matrix = {}
         dot_matrix = Observation.initialize_dot_matrix_by_class(constructs, courses)
@@ -553,7 +554,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                             star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
-        min_date = Observation.get_min_date_from_observation(star_chart_4_obs) - datetime.timedelta(days=1)
+        min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
                 star_chart_4_obs, constructs, courses, min_date)
 
@@ -565,15 +566,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'all_observations': observations,
             'selected_constructs': selected_constructs,
             'courses': Course.objects.all(),
-            'course_id': course_id,
+            'course_id': course_ids,
             'filtering_form': date_filtering_form,
             'selected_chart': self.selected_chart(),
             'star_matrix_by_class': star_matrix_by_class,
             'star_chart_4': star_chart_4,
             'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
             'min_date': min_date,
-            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs)
-                + datetime.timedelta(days=1),
+            'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
             'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count()
         })
@@ -597,7 +597,7 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
         data = super().get_context_data(**kwargs)
 
         # Get default course or first course in database.
-        course = self.request.user.get_course()
+        course = self.request.user.get_course(self.request.session.get('course'))
         students = None
 
         # Check if course was changed.
@@ -639,7 +639,8 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
 
         if observations:
             constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
-            min_date = Observation.get_min_date_from_observation(observations) - timedelta(days=1)
+            min_date = Observation.get_min_date_from_observation(observations)
+
             star_chart, dates = Observation.create_student_timeline(
                 observations, students, constructs, min_date)
 
@@ -647,8 +648,7 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
                 'star_chart': star_chart,
                 'dates': json.dumps(dates),
                 'min_date': min_date,
-                'max_date': Observation.get_max_date_from_observations(observations)
-                    + timedelta(days=1),
+                'max_date': Observation.get_max_date_from_observations(observations),
                 'COLORS_DARK': json.dumps(LearningConstructSublevel.COLORS_DARK),
                 'observations_count': observations.filter(constructs__isnull=False).count(),
             })
@@ -701,7 +701,9 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             tag_ids = [tag.id for tag in tags]
             observations = observations.filter(tags__in=tag_ids)
 
-        constructs = LearningConstruct.objects.all()
+        if selected_constructs:
+            observations = observations.filter(constructs__id__in=selected_constructs)
+
         all_students = Student.objects.filter(status=Student.ACTIVE)
 
         dot_matrix = {}

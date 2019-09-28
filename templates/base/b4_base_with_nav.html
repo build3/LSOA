@@ -39,19 +39,19 @@
               <ul class="dropdown-menu">
                 <li>
                   <a class="dropdown-item chart-item"
-                    href="{% url 'observations_specific' request|course_from_session_or_first %}?student_view=Submit#student_view">Student View</a>
+                    href="{% url 'observations_all' %}?student_view=Submit#student_view">Student View</a>
                 </li>
                 <li>
                   <a class="dropdown-item chart-item"
-                    href="{% url 'observations_specific' request|course_from_session_or_first %}?construct_view=Submit#construct_view">Construct View </a>
+                    href="{% url 'observations_all' %}?construct_view=Submit#construct_view">Construct View </a>
                 </li>
                 <li>
                   <a class="dropdown-item chart-item"
-                    href="{% url 'observations_specific' request|course_from_session_or_first %}?construct_heat_map=Submit#construct_heat_map">Construct Heat Map</a>
+                    href="{% url 'observations_all' %}?construct_heat_map=Submit#construct_heat_map">Construct Heat Map</a>
                 </li>
                 <li>
                   <a class="dropdown-item chart-item"
-                    href="{% url 'observations_specific' request|course_from_session_or_first %}?timeline_view=Submit#timeline_view">Timeline View</a>
+                    href="{% url 'observations_all' %}?timeline_view=Submit#timeline_view">Timeline View</a>
                 </li>
                 <li>
                   <a class="dropdown-item chart-item"
@@ -78,6 +78,10 @@
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
             {% if perms.kidviz.can_approve_deny_users %}
               <a class="dropdown-item chart-item" href="{% url 'pending_users' %}">Pending Users</a>
+            {% endif %}
+
+            {% if perms.kidviz.can_approve_deny_users %}
+              <a class="dropdown-item chart-item" href="{% url 'add_user' %}">Add User</a>
             {% endif %}
 
             {% if perms.kidviz.add_course %}

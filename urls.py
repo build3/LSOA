@@ -21,8 +21,6 @@ urlpatterns = [
 
     # past observations view shows the "star charts"
     url(r'^observations/$', kidviz.views.ObservationAdminView.as_view(), name='observations_all'),
-    url(r'^observations/(?P<course_id>\d+)/$', kidviz.views.ObservationAdminView.as_view(),
-        name='observations_specific'),
     url(r'^observations-ajax/$', kidviz.views.ObservationAjax.as_view(), name='observations-ajax'),
     url(r'^observations-teachers/$', kidviz.views.TeacherObservationView.as_view(), name='observations_teachers'),
     url(r'^observations-teachers/(?P<course_id>\d+)/$', kidviz.views.TeacherObservationView.as_view(),

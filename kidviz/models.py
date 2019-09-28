@@ -78,7 +78,7 @@ class Student(TimeStampedModel):
 
     @property
     def name(self):
-        return self.first_name + ' ' + self.last_name
+        return '{}, {}'.format(self.last_name, self.first_name)
 
     def save(self, **kwargs):
         # this keeps excel import from bombing on nulls
@@ -376,11 +376,21 @@ class Observation(TimeStampedModel, OwnerMixin):
 
     @classmethod
     def get_min_date_from_observation(cls, observations):
-        return observations.aggregate(models.Min('observation_date'))['observation_date__min']
+        min_date = observations.aggregate(models.Min('observation_date'))['observation_date__min']
+
+        if min_date:
+            min_date -= datetime.timedelta(days=1)
+
+        return min_date
 
     @classmethod
     def get_max_date_from_observations(cls, observations):
-        return observations.aggregate(models.Max('observation_date'))['observation_date__max']
+        max_date = observations.aggregate(models.Max('observation_date'))['observation_date__max']
+
+        if max_date:
+            max_date += datetime.timedelta(days=1)
+
+        return max_date
 
     def __str__(self):
         _display = self.name or 'Observation at {}'.format(self.created)

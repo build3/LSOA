@@ -1,8 +1,14 @@
+from allauth.account.views import PasswordResetView
+
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import Http404
+from django.urls import reverse_lazy
 from django.views.generic import ListView, RedirectView
 
+from .forms import CustomPasswordResetForm
 from .models import User
 
 
@@ -62,3 +68,18 @@ class DeniedUserListView(PermissionRequiredMixin, ListView):
     model = User
     queryset = User.objects.filter(is_pending=False, is_active=False)
     actions = [('approve_user', 'Approve')]
+
+
+class CreateNewUser(PermissionRequiredMixin, PasswordResetView):
+    permission_required = 'kidviz.can_approve_deny_users'
+    form_class = CustomPasswordResetForm
+    template_name = 'account/new_user.html'
+
+    def form_valid(self, form):
+        email = form.cleaned_data['email']
+
+        user = User(email=email)
+        user.set_unusable_password()
+        user.save()
+
+        return super().form_valid(form)

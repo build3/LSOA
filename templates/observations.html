@@ -30,6 +30,8 @@
 
         if (typeof(course_id) === "number") {
           $('#id_courses').val(`${course_id}`).trigger('change');
+        } else if (typeof(course_id) === "object" && course_id.length === 1) {
+          $('#id_courses').val(`${course_id[0]}`).trigger('change');
         }
       }
     }
@@ -118,7 +120,8 @@
                 style: 'width: 100%; height: 100%;',
                 src: link,
                 type: 'video/mp4',
-                controls: true
+                controls: true,
+                preload: false,
             })[0];
 
             $videoContainer.append($videoElement);
@@ -348,14 +351,18 @@
         <div class="observation-body" data-observation-id="{{ observation.id }}">
           <h3>
             <a href="{% url 'observation_detail_view' pk=observation.id %}">
-                {% if observation.name %}
-                    {{ observation.name }}
-                {% else %}
-                    Observation #{{ observation.id }}
-                {% endif %}
+              Class: {{ observation.course }}
             </a>
             <a href="{% url 'observation_detail_view' pk=observation.id %}" class="btn btn-primary pull-right">Edit</a>
           </h3>
+          <small class="d-block">
+            <b>Students Observed:</b>
+            {{ observation.students.all|join:', ' }}
+          </small>
+          <small class="d-block">
+            <b>Observed by:</b>
+            {{ observation.owner }}
+          </small>
           <small class="d-block"><b>Constructs:</b> {{ observation.constructs.all|join:', ' }}</small>
           <small class="d-block"><b>Observation date:</b> {{ observation.observation_date }}</small>
           <small class="d-block"><b>Recorded on:</b> {{ observation.created }}</small>
@@ -368,7 +375,12 @@
             {% endif %}
           </small>
           <small class="d-block">
-            <b>Students from group</b>: {{ observation.allowed_students|join:', ' }}
+            <b>Students in observed group(s):</b>
+            {% if observation.allowed_students %}
+              {{ observation.allowed_students|join:', ' }}
+            {% else %}
+              -
+            {% endif %}
           </small>
 
           {% if observation.external_video %}
