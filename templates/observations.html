@@ -132,8 +132,6 @@
 
         var annotation_data = $('#annotation_data_' + id).html();
 
-        const imageWidth = $('#image-width_' + id).html();
-
         $('#the-modal').on('shown.bs.modal', function() {
             var url = $('#image-source-'+id).html();
             if (!url) {
@@ -142,65 +140,52 @@
 
             var canvas = new fabric.Canvas('canvas' + id, {
                 isDrawingMode: false,
-                selection: false
+                selection: false,
             });
 
-            var cHeight = 332;
-            var cWidth = 530;
-            var cWidthFull = 530;
+            const canvasHeight = 332;
+            const canvasWidth = 530;
 
             var bgImg = new fabric.Image();
-            bgImg.setSrc(url.replace(/&amp;/g, '&'), function() {
-                var height = Math.min(bgImg.height, cHeight);
-                var width = Math.min(bgImg.width, cWidth);
-                var naturalWidth = bgImg.getOriginalSize().width;
-                var imgScale = width / naturalWidth;
+
+            bgImg.setSrc(url.replace(/&amp;/g, '&'), function(obj) {
+                var imageWidth = $('#image-width_' + id).html();
+
+                if (imageWidth == 'None') {
+                    imageWidth = 500
+                }
+
+                const scale = (canvasWidth - parseFloat(imageWidth)) / 2;
+
                 var ctx = {};
 
                 if (annotation_data !== "") {
                     var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
                 }
 
-                var originalHeight = parseFloat(ctx['originalHeight']);
-
-                if (isNaN(originalHeight)) {
-                    // Assume that original height was the same - scale it for 60% like in html
-                    originalHeight = height / 0.6;
-                }
-
-                var scale = originalHeight / height;
+                // Load drawings to canvas
                 canvas.loadFromJSON(ctx);
+                canvas.setHeight(canvasHeight);
+                canvas.setWidth(canvasWidth);
 
-                if (imageWidth != 'None') {
-                    const scaleWidth = cWidth / parseFloat(imageWidth);
-                    const offset = 5
-                } else {
-                    const scaleWidth = originalHeight / height;
-                    const offset = cWidthFull - cWidth - 45;
-                }
+                // Scale and add image to canvas.
+                obj.scaleToWidth(canvasWidth);
+                obj.scaleToHeight(canvasHeight);
+                obj.set({selectable: false});
+                canvas.add(obj);
+                obj.centerH();
 
-                canvas.forEachObject(function (object) {
-                    object = object.scale(scale);
-                    object.left = object.left * scaleWidth - offset;
-                    object.top = object.top * scale + 30;
-                });
+                // Get only drawings without image.
+                // Fabric saves drawings with type 'path'.
+                const drawings = canvas.getObjects().filter(object => object.type == 'path')
 
-                canvas.renderAll();
-
-                canvas.setBackgroundImage(
-                    bgImg,
-                    canvas.renderAll.bind(canvas), {
-                        scaleX: imgScale,
-                        scaleY: imgScale
-                    },
-                    {
-                        originX: 'left',
-                        originY: 'top'
-                    }
-                );
-
-                canvas.setHeight(height);
-                canvas.setWidth(cWidthFull);
+                // I can't use bringToFront() with forEachObjects because bringToFront()
+                // change canvas's objects stack so iteration fails.
+                // Never use bringForward(). It will crash drawings.
+                drawings.forEach(drawing => {
+                    drawing.left += scale
+                    drawing.bringToFront();
+                })
 
                 canvas.renderAll();
             });
