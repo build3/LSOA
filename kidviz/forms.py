@@ -92,7 +92,7 @@ class ObservationForm(forms.ModelForm):
             'students', 'constructs', 'tag_choices', 'tags', 'annotation_data',
             'original_image', 'video', 'observation_date', 'no_constructs',
             'notes', 'video_notes', 'parent', 'owner', 'name', 'course',
-            'grouping', 'construct_choices', 'curricular_focus', 'is_draft', 'external_video'
+            'grouping', 'construct_choices', 'curricular_focus', 'is_draft', 'external_video', 'image_width'
         ]
         widgets = {
             'course': forms.HiddenInput(),
