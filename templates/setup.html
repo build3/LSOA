@@ -121,7 +121,7 @@
           .find('option')
           .removeAttr('selected');
     }
-    
+
     function dumpFormData(e) {
       $.ajax({
         url : "{% url 'setup_dump' %}",
@@ -135,7 +135,7 @@
 {% block content %}
   <div class="row">
     <div class="col-6 offset-3">
-      <h1>{% block title %}KidViz: {% if re_setup %}Reconfiguration{% else %}Setup{% endif %}{% endblock %}</h1>
+      <h1>{% block title %}TOTs: {% if re_setup %}Reconfiguration{% else %}Setup{% endif %}{% endblock %}</h1>
     </div>
   </div>
   <div class="row">

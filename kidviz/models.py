@@ -205,6 +205,8 @@ class Observation(TimeStampedModel, OwnerMixin):
     observation_date = models.DateField(default=now)
     is_draft = models.BooleanField(default=False)
 
+    image_width = models.CharField(null=True, blank=True, max_length=255)
+
     @property
     def allowed_students(self):
         if not self.grouping:
