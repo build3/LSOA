@@ -27,6 +27,7 @@ services:
         environment:
             # Place any configuration options here.
             DATABASE_URL: postgres://postgres:secret@db:5432/kidviz
+            DJANGO_EMAIL_BACKEND: anymail.backends.amazon_ses.EmailBackend
         env_file: env
         ports:
             - 8000:8000

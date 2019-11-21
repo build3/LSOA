@@ -31,6 +31,9 @@ EMAIL_BACKEND = os.getenv('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.con
 ANYMAIL = {
     'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
     "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_DOMAIN'),
+    'AMAZON_SES_CLIENT_PARAMS': {
+        'region_name': 'us-east-1'
+    }
 }
 DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@kidviz.local')
 
