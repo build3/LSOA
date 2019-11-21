@@ -32,7 +32,10 @@ ANYMAIL = {
     'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
     "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_DOMAIN'),
     'AMAZON_SES_CLIENT_PARAMS': {
-        'region_name': 'us-east-1'
+        'region_name': 'us-east-1',
+        'config': {
+            'region_name': 'us-east-1',
+        }
     }
 }
 DEFAULT_FROM_EMAIL = os.getenv('FROM_EMAIL', 'noreply@kidviz.local')
@@ -55,7 +58,7 @@ BACKEND_THIRD_PARTY_APPS = [
     'allauth.account',  # Authentication/Registration
     'formtools',  # for wizard views
     'storages',  # for S3-backed media
-    's3file', # for S3 direct upload
+    's3file',  # for S3 direct upload
     'anymail',  # for mailgun emails
 ]
 
