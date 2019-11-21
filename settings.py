@@ -32,6 +32,8 @@ ANYMAIL = {
     'MAILGUN_API_KEY': os.getenv('MAILGUN_API_KEY'),
     "MAILGUN_SENDER_DOMAIN": os.getenv('MAILGUN_DOMAIN'),
     'AMAZON_SES_CLIENT_PARAMS': {
+        'aws_access_key_id': os.getenv('SES_ACCESS_KEY'),
+        'aws_secret_access_key': os.getenv('SES_SECRET_KEY'),
         'region_name': 'us-east-1',
         'config': {
             'region_name': 'us-east-1',
