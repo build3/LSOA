@@ -18,6 +18,8 @@ services:
             PGDATA: /data
         volumes:
             - ./data:/data
+        ports:
+          - 5433:5432
     backend:
         build:
             context: ../..
