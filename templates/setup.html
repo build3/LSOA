@@ -65,11 +65,7 @@
             toastr.success('Setup saved');
           },
           error: function(xhr, status, e) {
-            data = Object.values(xhr.responseJSON.errors).reduce((acc, item) => {
-              acc += item.join(' ');
-              return acc;
-            }, '');
-
+            data = Object.values(xhr.responseJSON.errors).flat().join();
             toastr.error(data);
           },
         });
@@ -375,35 +371,17 @@
 
 
         <div class="row" style="margin-top: 30px;">
-          {% if request.user.setup %}
-            <div class="col-3">
-              <input onclick="forceTagsReset()" class="btn btn-primary col" type="reset" value="Reset"/>
-            </div>
+          <div class="col btn-group">
+            <input onclick="forceTagsReset()" class="btn btn-primary btn-block" type="reset" value="Reset"/>
 
-            <div class="col-3">
-              <input class="btn btn-primary col" type="button" id="loadButton" value="Load saved"/>
-            </div>
+            {% if request.user.setup %}
+              <input class="btn btn-primary btn-block ml-1 mt-auto" type="button" id="loadButton" value="Load saved"/>
+            {% endif %}
 
-            <div class="col-3">
-              <input class="btn btn-primary col" type="button" id="saveButton" value="Save"/>
-            </div>
+            <input class="btn btn-primary btn-block ml-1 mt-auto" type="button" id="saveButton" value="Save"/>
 
-            <div class="col-3">
-              <input class="btn btn-primary col" type="submit" value="Submit"/>
-            </div>
-          {% else %}
-            <div class="col-4">
-              <input onclick="forceTagsReset()" class="btn btn-primary col" type="reset" value="Reset"/>
-            </div>
-
-            <div class="col-4">
-              <input class="btn btn-primary col" type="button" id="saveButton" value="Save"/>
-            </div>
-
-            <div class="col-4">
-              <input class="btn btn-primary col" type="submit" value="Submit"/>
-            </div>
-          {% endif %}
+            <input class="btn btn-primary btn-block ml-1 mt-auto" type="submit" value="Submit"/>
+          </div>
         </div>
       </form>
     </div>

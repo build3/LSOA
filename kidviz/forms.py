@@ -229,7 +229,7 @@ class SetupSaveForm(forms.ModelForm):
 
     class Meta:
         model = Setup
-        fields = '__all__'
+        fields = ('user', 'context_tags', 'grouping', 'course', 'constructs')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

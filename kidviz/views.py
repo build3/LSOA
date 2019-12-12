@@ -1102,7 +1102,7 @@ class StartNewObservation(LoginRequiredMixin, View):
         return HttpResponseRedirect(reverse_lazy('observation_view'))
 
 
-class SaveUserSetupView(LoginRequiredMixin, View):
+class SaveUserSetupView(LoginRequiredMixin, FormView):
     form_class = SetupSaveForm
 
     def post(self, request, *args, **kwargs):
@@ -1119,10 +1119,10 @@ class SaveUserSetupView(LoginRequiredMixin, View):
         instance.save()
         form.save_m2m()
 
-        return JsonResponse({'success': True}, safe=False)
+        return JsonResponse({'success': True}, safe=True)
 
     def form_invalid(self, form):
-        return JsonResponse({'errors': form.errors}, safe=False, status=400)
+        return JsonResponse({'errors': form.errors}, safe=True, status=400)
 
     def get_setup_instance(self):
         return Setup.objects.filter(user=self.request.user).first()
@@ -1139,5 +1139,5 @@ class GetUserSetup(LoginRequiredMixin, View):
                 'context_tags': list(setup.context_tags.all().values_list('id', flat=True)),
                 'constructs': list(setup.constructs.all().values_list('id', flat=True)),
             },
-            safe=False
+            safe=True
         )
