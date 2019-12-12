@@ -9,7 +9,8 @@ from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
 from kidviz.models import (Course, LearningConstructSublevel, ContextTag,
-    Observation, Student)
+    Observation, Setup, Student)
+from users.models import User
 
 
 class TagWidget(SelectMultiple):
@@ -221,3 +222,20 @@ class CourseFilterForm(forms.Form):
         widget=forms.widgets.Select(attrs={'class': 'form-control'}),
         empty_label=None
     )
+
+
+class SetupSaveForm(forms.ModelForm):
+    user = forms.ModelChoiceField(queryset=User.objects.all(), required=False)
+
+    class Meta:
+        model = Setup
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        request = get_current_request()
+        self.fields['context_tags'].queryset = ContextTag.objects.filter(
+            Q(owner=request.user)
+            | Q(owner__isnull=True)
+        )

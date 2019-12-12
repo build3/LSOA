@@ -28,10 +28,10 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm
+    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm, SetupSaveForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
-    LearningConstruct, StudentGroup, Student, Observation
+    LearningConstruct, Setup, StudentGroup, Student, Observation
 )
 from kidviz.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
 
@@ -1100,3 +1100,44 @@ class StartNewObservation(LoginRequiredMixin, View):
     def get(self, request):
         self.request.session['create_new'] = True
         return HttpResponseRedirect(reverse_lazy('observation_view'))
+
+
+class SaveUserSetupView(LoginRequiredMixin, View):
+    form_class = SetupSaveForm
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST, instance=self.get_setup_instance())
+
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        instance.user = self.request.user
+        instance.save()
+        form.save_m2m()
+
+        return JsonResponse({'success': True}, safe=False)
+
+    def form_invalid(self, form):
+        return JsonResponse({'errors': form.errors}, safe=False, status=400)
+
+    def get_setup_instance(self):
+        return Setup.objects.filter(user=self.request.user).first()
+
+
+class GetUserSetup(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        setup = get_object_or_404(Setup, user=request.user)
+
+        return JsonResponse(
+            {
+                'course': setup.course.id if setup.course else '',
+                'grouping': setup.grouping.id if setup.grouping else '',
+                'context_tags': list(setup.context_tags.all().values_list('id', flat=True)),
+                'constructs': list(setup.constructs.all().values_list('id', flat=True)),
+            },
+            safe=False
+        )
