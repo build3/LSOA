@@ -1105,13 +1105,11 @@ class StartNewObservation(LoginRequiredMixin, View):
 class SaveUserSetupView(LoginRequiredMixin, FormView):
     form_class = SetupSaveForm
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST, instance=self.get_setup_instance())
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = Setup.objects.filter(user=self.request.user).first()
 
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
+        return kwargs
 
     def form_valid(self, form):
         instance = form.save(commit=False)
@@ -1123,9 +1121,6 @@ class SaveUserSetupView(LoginRequiredMixin, FormView):
 
     def form_invalid(self, form):
         return JsonResponse({'errors': form.errors}, safe=True, status=400)
-
-    def get_setup_instance(self):
-        return Setup.objects.filter(user=self.request.user).first()
 
 
 class GetUserSetup(LoginRequiredMixin, View):
