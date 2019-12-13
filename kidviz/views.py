@@ -28,10 +28,10 @@ from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
-    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm
+    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm, SetupSaveForm
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
-    LearningConstruct, StudentGroup, Student, Observation
+    LearningConstruct, Setup, StudentGroup, Student, Observation
 )
 from kidviz.resources import ClassRoster, ACCEPTED_FILE_EXTENSIONS
 
@@ -1100,3 +1100,39 @@ class StartNewObservation(LoginRequiredMixin, View):
     def get(self, request):
         self.request.session['create_new'] = True
         return HttpResponseRedirect(reverse_lazy('observation_view'))
+
+
+class SaveUserSetupView(LoginRequiredMixin, FormView):
+    form_class = SetupSaveForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = Setup.objects.filter(user=self.request.user).first()
+
+        return kwargs
+
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        instance.user = self.request.user
+        instance.save()
+        form.save_m2m()
+
+        return JsonResponse({'success': True}, safe=True)
+
+    def form_invalid(self, form):
+        return JsonResponse({'errors': form.errors}, safe=True, status=400)
+
+
+class GetUserSetup(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        setup = get_object_or_404(Setup, user=request.user)
+
+        return JsonResponse(
+            {
+                'course': setup.course.id if setup.course else '',
+                'grouping': setup.grouping.id if setup.grouping else '',
+                'context_tags': list(setup.context_tags.all().values_list('id', flat=True)),
+                'constructs': list(setup.constructs.all().values_list('id', flat=True)),
+            },
+            safe=True
+        )

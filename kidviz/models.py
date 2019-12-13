@@ -13,6 +13,8 @@ from tinymce.models import HTMLField
 
 from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
+from users.models import User
+
 
 @deconstructible
 class UploadToPathAndRename(object):
@@ -459,7 +461,7 @@ class LearningConstructSublevel(TimeStampedModel):
         "5": "#666666", # < 60%
         "6": "#4D4D4D", # < 70%
         "7": "#333333", # < 80%
- 		"8": "#1A1A1A", # < 90%
+        "8": "#1A1A1A", # < 90%
         "9": "#0D0D0D", # < 100%
         "10": "#000000" # == 100%
     }
@@ -562,3 +564,12 @@ class AdminPerms(models.Model):
         permissions = (
             ('can_approve_deny_users', 'Can Approve or Deny Users'),
         )
+
+
+class Setup(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
+    grouping = models.ForeignKey(StudentGrouping, on_delete=models.SET_NULL, null=True, blank=True)
+    context_tags = models.ManyToManyField(ContextTag, blank=True)
+    constructs = models.ManyToManyField(LearningConstructSublevel, blank=True)
