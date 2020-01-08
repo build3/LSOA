@@ -8,7 +8,7 @@ from django.urls import reverse_lazy
 from related_select.fields import RelatedChoiceField
 from threadlocals.threadlocals import get_current_request
 
-from kidviz.models import (Course, LearningConstructSublevel, ContextTag,
+from kidviz.models import (Course, LearningConstruct, LearningConstructSublevel, ContextTag,
     Observation, Setup, Student)
 from users.models import User
 
@@ -192,6 +192,22 @@ class DateFilteringForm(forms.Form):
         queryset=Course.objects.all(),
         widget=forms.widgets.SelectMultiple(attrs={'class': 'form-control'})
     )
+    learning_construct = forms.ChoiceField(
+        widget=forms.widgets.Select(attrs={'class': 'form-control'}),
+        required=False,
+        choices=[]
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        constructs = LearningConstruct.objects.all()
+
+        choices = [('', '--------')]
+        choices.extend([(construct.id, construct.name) for construct in constructs])
+        choices.append((LearningConstruct.NO_CONSTRUCT, 'No construct'))
+
+        self.fields['learning_construct'].choices = choices
 
 
 class DraftObservationForm(ObservationForm):
