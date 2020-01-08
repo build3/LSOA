@@ -243,7 +243,7 @@ class Observation(TimeStampedModel, OwnerMixin):
         self.save()
 
     @classmethod
-    def get_observations(cls, course_id, date_from, date_to, tags):
+    def get_observations(cls, course_id, date_from, date_to, tags, learning_construct):
         observations = Observation.objects \
             .prefetch_related('students') \
             .prefetch_related('constructs') \
@@ -258,6 +258,12 @@ class Observation(TimeStampedModel, OwnerMixin):
         if course_id:
             observations = observations.filter(course__in=course_id)
             all_observations_for_chart_4 = observations
+
+        if learning_construct:
+            if learning_construct == LearningConstruct.NO_CONSTRUCT:
+                observations = observations.filter(no_constructs=True)
+            else:
+                observations = observations.filter(constructs__level__construct=learning_construct)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -407,6 +413,8 @@ class LearningConstruct(TimeStampedModel):
     """
     name = models.CharField(max_length=255)
     abbreviation = models.CharField(max_length=255)
+
+    NO_CONSTRUCT = 'NO_CONSTRUCT'
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.abbreviation)

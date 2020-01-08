@@ -488,6 +488,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         date_to = None
         selected_constructs = None
         tags = None
+        learning_construct = None
+        show_no_construct = True
 
         if date_filtering_form.is_valid():
             date_from = date_filtering_form.cleaned_data['date_from']
@@ -495,6 +497,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
             courses = date_filtering_form.cleaned_data['courses']
+            learning_construct = date_filtering_form.cleaned_data['learning_construct']
+
+            if learning_construct and learning_construct != LearningConstruct.NO_CONSTRUCT:
+                learning_construct = LearningConstruct.objects.filter(id=learning_construct).first()
 
             # If there aren't any query params use default course.
             if self.request.GET:
@@ -502,31 +508,47 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                     course_ids = [course.id for course in courses]
 
         (observations, star_chart_4_obs) = Observation.get_observations(
-            course_ids, date_from, date_to, tags)
+            course_ids, date_from, date_to, tags, learning_construct)
 
-        constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
+        all_constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
+
+        if learning_construct and learning_construct != LearningConstruct.NO_CONSTRUCT:
+            constructs = [learning_construct]
+            show_no_construct = False
+
+        elif learning_construct == LearningConstruct.NO_CONSTRUCT:
+            constructs = []
+
+        else:
+            constructs = all_constructs
+
         all_students = Student.get_students_by_course(course_ids)
         courses = Course.get_courses(course_ids)
 
         star_matrix = {}
-        dot_matrix = Observation.initialize_dot_matrix_by_class(constructs, courses)
+        dot_matrix = Observation.initialize_dot_matrix_by_class(all_constructs, courses)
         observation_without_construct = {}
         star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, courses)
 
-        for construct in constructs:
-            star_matrix[construct] = {}
+        if constructs:
+            for construct in constructs:
+                star_matrix[construct] = {}
 
+                for student in all_students:
+                    star_matrix[construct][student] = {}
+                    observation_without_construct[student] = []
+
+                    for level in construct.levels.all():
+                        for sublevel in level.sublevels.all():
+                            star_matrix[construct][student][sublevel] = []
+        else:
             for student in all_students:
-                star_matrix[construct][student] = {}
                 observation_without_construct[student] = []
-
-                for level in construct.levels.all():
-                    for sublevel in level.sublevels.all():
-                        star_matrix[construct][student][sublevel] = []
 
         for observation in observations:
             students = observation.students.all()
             sublevels = observation.constructs.all()
+
             for student in students:
                 if student not in all_students:
                     continue
@@ -556,13 +578,13 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
-                star_chart_4_obs, constructs, courses, min_date)
+                star_chart_4_obs, all_constructs, courses, min_date)
 
         data = super().get_context_data(**kwargs)
         data.update({
             'star_matrix': star_matrix,
             'dot_matrix': dot_matrix,
-            'obseravtion_without_construct': observation_without_construct,
+            'observation_without_construct': observation_without_construct,
             'all_observations': observations,
             'selected_constructs': selected_constructs,
             'courses': Course.objects.all(),
@@ -575,7 +597,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'min_date': min_date,
             'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
-            'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count()
+            'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count(),
+            'show_no_construct': show_no_construct
         })
 
         return data
@@ -586,7 +609,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'date_from': GET_DATA.get('date_from', None),
             'date_to': GET_DATA.get('date_to', None),
             'constructs': GET_DATA.get('constructs', None),
-            'tags': GET_DATA.get('tags', None)
+            'tags': GET_DATA.get('tags', None),
+            'learning_construct': GET_DATA.get('learning_construct', None)
         })
 
 
@@ -602,6 +626,9 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
 
         # Check if course was changed.
         if not self.request.GET.get('course', None):
+            if isinstance(course, int):
+                course = get_object_or_404(Course, id=course)
+
             course_filter_form = CourseFilterForm(initial={'course': course.id})
         else:
             course_filter_form = CourseFilterForm(self.request.GET)
