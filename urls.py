@@ -14,6 +14,8 @@ urlpatterns = [
     url(r'^setup-dump/$', kidviz.views.SetupView.as_view(), name='setup_dump'),
     url(r'^setup-groupings-ajax/$', kidviz.views.GroupingRelatedSelectView.as_view(), name='student-groupings-ajax'),
     url(r'^setup/course-default-ajax$', kidviz.views.DefaultCourseView.as_view(), name='set-default-course'),
+    url(r'^setup/save-setup/$', kidviz.views.SaveUserSetupView.as_view(), name='save-setup'),
+    url(r'^setup/get-setup/$', kidviz.views.GetUserSetup.as_view(), name='get-setup'),
 
     # "New Group" screen
     url(r'^grouping/$', kidviz.views.GroupingView.as_view(), name='grouping'),

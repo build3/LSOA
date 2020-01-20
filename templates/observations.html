@@ -252,9 +252,16 @@
         if (chart_id === "timeline_view") {
           $("#construct-row").addClass('d-none');
           $('.date-class').addClass('d-none');
+          $('#student-construct-row').addClass('d-none');
+        } else if (chart_id === "student_view") {
+          $(".swapping").addClass('d-none');
+          $("#construct-row").addClass('d-none');
+          $('#student-construct-row').removeClass('d-none');
+          $('.date-class').removeClass('d-none');
         } else {
           $(".swapping").addClass('d-none');
           $('.date-class').removeClass('d-none');
+          $('#student-construct-row').addClass('d-none');
         }
       });
 
@@ -274,9 +281,14 @@
       if (url[url.length - 1] == "timeline_view") {
         $("#construct-row").addClass('d-none');
         $('.date-class').addClass('d-none');
+        $('#student-construct-row').addClass('d-none');
+      } else if (url[url.length - 1] == "student_view") {
+        $("#construct-row").addClass('d-none');
+        $('#student-construct-row').removeClass('d-none');
       } else {
         $("#construct-row").addClass('d-none');
         $('.date-class').removeClass('d-none');
+        $('#student-construct-row').addClass('d-none');
       }
 
       $('#select-all-courses').click(function() {

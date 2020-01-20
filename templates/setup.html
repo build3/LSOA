@@ -12,6 +12,23 @@
   <script src='{% static "django-related-select.js" %}'></script>
   <script>
     $( document ).ready(function() {
+      toastr.options = {
+        "closeButton": false,
+        "debug": true,
+        "newestOnTop": false,
+        "progressBar": false,
+        "positionClass": "toast-top-right",
+        "preventDuplicates": false,
+        "onclick": null,
+        "showDuration": "1000",
+        "hideDuration": "1000",
+        "timeOut": "3000",
+        "extendedTimeOut": "1000",
+        "showEasing": "swing",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+      };
       $('#id_context_tags').select2({
         tokenSeparators: [',', '\n'],
       });
@@ -38,7 +55,101 @@
       }
 
       hideCourseForReconfiguration();
+
+      $('#saveButton').click(function() {
+        $.ajax({
+          url: "{% url 'save-setup' %}",
+          type: 'POST',
+          data: $('#setupForm').serialize(),
+          success: function(data) {
+            toastr.success('Setup saved');
+          },
+          error: function(xhr, status, e) {
+            data = Object.values(xhr.responseJSON.errors).flat().join();
+            toastr.error(data);
+          },
+        });
+      });
+
+      $('#loadButton').click(function() {
+        $.ajax({
+          url: "{% url 'get-setup' %}",
+          type: 'GET',
+          success: function(data) {
+            const course_selector = '#id_course';
+
+            // HACK: Remove listener from django-related-select.js
+            // to make this thing work here. Otherwise we end up with great
+            // race-condition with populating new grouping ajax request after
+            // course is changed. We don't want to change django-related-select.js
+            // because is used also in base/b4_base_with_nav.html and I have no
+            // idea if it is used anywhere else in the project.
+            $(course_selector).off("change.relatedselect");
+            $(course_selector).val(data.course);
+            $(course_selector).change();
+
+            const query = {'value': $(course_selector).val()};
+
+            updateGrouping(query, data.grouping);
+
+            $('#id_context_tags').val(data.context_tags);
+            $('#id_context_tags').trigger('change');
+
+            $('input[type="checkbox"]').prop('checked', false);
+
+            data.constructs.forEach(id => {
+              $(`#checkbox-${id}`).prop('checked', true);
+            });
+
+            // Subscribe listener again.
+            $(course_selector).on("change.relatedselect");
+
+            toastr.success('Setup successfully loaded');
+          },
+          error: function(xhr, status, e) {
+            toastr.error(xhr.responseText)
+          },
+        });
+      });
+
+      function updateGrouping(query, grouping) {
+        // This is coppied from django-related-select.js
+        const grouping_selector = '#id_grouping';
+
+        $.ajax({
+          url: $(grouping_selector).data("relatedUrl"),
+          type: "GET",
+          data: query,
+          success: function (response) {
+            $(grouping_selector).empty();
+            $(grouping_selector)
+              .append($("<option></option>")
+                .attr("value", "")
+                .text($('#id_grouping')
+                .data("emptyLabel")));
+
+            if (response.length > 0) {
+              $(grouping_selector).prop("readonly", false);
+            } else {
+              $(grouping_selector).prop("readonly", true);
+            }
+
+            $.each(response, function (index, object) {
+              $(grouping_selector).append($("<option></option>").attr("value", object.value).text(object.key));
+            });
+
+            $(grouping_selector).val(grouping);
+            $(grouping_selector).change();
+          },
+          error: function () {
+            $(grouping_selector).empty();
+            $(grouping_selector).append($("<option></option>").attr("value", "error").text("Error"));
+            $(grouping_selector).prop("readonly", true);
+          }
+        });
+      }
     });
+
     function updateAddGroupLink() {
       var $gLink = $('#grouping_link');
       var $courseField = $('#id_course');
@@ -260,14 +371,18 @@
 
 
         <div class="row" style="margin-top: 30px;">
-          <div class="col-6">
-              <input onclick="forceTagsReset()" class="btn btn-primary col" type="reset" value="Reset"/>
-          </div>
-          <div class="col-6">
-            <input class="btn btn-primary col" type="submit" value="Submit"/>
+          <div class="col btn-group">
+            <input onclick="forceTagsReset()" class="btn btn-primary btn-block" type="reset" value="Reset"/>
+
+            {% if request.user.setup %}
+              <input class="btn btn-primary btn-block ml-1 mt-auto" type="button" id="loadButton" value="Load saved"/>
+            {% endif %}
+
+            <input class="btn btn-primary btn-block ml-1 mt-auto" type="button" id="saveButton" value="Save"/>
+
+            <input class="btn btn-primary btn-block ml-1 mt-auto" type="submit" value="Submit"/>
           </div>
         </div>
-
       </form>
     </div>
   </div>

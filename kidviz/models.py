@@ -13,6 +13,8 @@ from tinymce.models import HTMLField
 
 from utils.ownership import OwnerMixin, OptionalOwnerMixin
 
+from users.models import User
+
 
 @deconstructible
 class UploadToPathAndRename(object):
@@ -241,7 +243,7 @@ class Observation(TimeStampedModel, OwnerMixin):
         self.save()
 
     @classmethod
-    def get_observations(cls, course_id, date_from, date_to, tags):
+    def get_observations(cls, course_id, date_from, date_to, tags, learning_construct):
         observations = Observation.objects \
             .prefetch_related('students') \
             .prefetch_related('constructs') \
@@ -256,6 +258,12 @@ class Observation(TimeStampedModel, OwnerMixin):
         if course_id:
             observations = observations.filter(course__in=course_id)
             all_observations_for_chart_4 = observations
+
+        if learning_construct:
+            if learning_construct == LearningConstruct.NO_CONSTRUCT:
+                observations = observations.filter(no_constructs=True)
+            else:
+                observations = observations.filter(constructs__level__construct=learning_construct)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -406,6 +414,8 @@ class LearningConstruct(TimeStampedModel):
     name = models.CharField(max_length=255)
     abbreviation = models.CharField(max_length=255)
 
+    NO_CONSTRUCT = 'NO_CONSTRUCT'
+
     def __str__(self):
         return '{} ({})'.format(self.name, self.abbreviation)
 
@@ -459,7 +469,7 @@ class LearningConstructSublevel(TimeStampedModel):
         "5": "#666666", # < 60%
         "6": "#4D4D4D", # < 70%
         "7": "#333333", # < 80%
- 		"8": "#1A1A1A", # < 90%
+        "8": "#1A1A1A", # < 90%
         "9": "#0D0D0D", # < 100%
         "10": "#000000" # == 100%
     }
@@ -562,3 +572,12 @@ class AdminPerms(models.Model):
         permissions = (
             ('can_approve_deny_users', 'Can Approve or Deny Users'),
         )
+
+
+class Setup(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
+    grouping = models.ForeignKey(StudentGrouping, on_delete=models.SET_NULL, null=True, blank=True)
+    context_tags = models.ManyToManyField(ContextTag, blank=True)
+    constructs = models.ManyToManyField(LearningConstructSublevel, blank=True)

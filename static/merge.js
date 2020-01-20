@@ -46,9 +46,9 @@
         if (starAmount.length !== 0) {
             addColumnWithStar(startIndex, constructId, starAmount, i, isLast, levelId);
         } else if (isLast) {
-            addEmptyCellAfter(constructId, i + 1, startIndex - NOT_STAR_COLUMNS - 1, levelId);
+            addEmptyCellAfter(constructId, i, startIndex - NOT_STAR_COLUMNS - 1, levelId);
         } else {
-            addEmptyCellBefore(constructId, i + 1, startIndex - NOT_STAR_COLUMNS, levelId);
+            addEmptyCellBefore(constructId, i, startIndex - NOT_STAR_COLUMNS, levelId);
         }
     }
 
@@ -56,10 +56,10 @@
         let span = createSpan(stars);
 
         if (isLast) {
-            starColumnAfter(rowIndex + 1, constructId,
+            starColumnAfter(rowIndex, constructId,
                 startIndex - NOT_STAR_COLUMNS - 1, stars, span, levelId);
         } else {
-            starColumnBefore(rowIndex + 1, constructId,
+            starColumnBefore(rowIndex, constructId,
                 startIndex - NOT_STAR_COLUMNS, stars, span, levelId);
         }
     }
@@ -149,7 +149,7 @@
             .addClass(`text-center level-${levelId}`);
         element[0].dataset.cslId = "";
 
-        if (endClasses.includes(j - 1)) {
+        if (endClasses.includes(j)) {
             $(element[0]).addClass("thicker");
         }
 
@@ -165,7 +165,7 @@
             .addClass(`text-center level-${levelId}`);
         element[0].dataset.cslId = "";
 
-        if (endClasses.includes(j - 1)) {
+        if (endClasses.includes(j)) {
             $(element[0]).addClass("thicker");
         }
 
@@ -185,7 +185,7 @@
         element[0].dataset.cslId = "";
         element[0].dataset.modalLaunchObservations = `[${stars}]`;
 
-        if (endClasses.includes(rowIndex - 1)) {
+        if (endClasses.includes(rowIndex)) {
             $(element[0]).addClass("thicker");
         }
 
@@ -205,7 +205,7 @@
         element[0].dataset.cslId = "";
         element[0].dataset.modalLaunchObservations = `[${stars}]`;
 
-        if (endClasses.includes(rowIndex - 1)) {
+        if (endClasses.includes(rowIndex)) {
             $(element[0]).addClass("thicker");
         }
 
@@ -612,6 +612,7 @@
             $(`#horizontal-back-${levelId}`).show();
 
             mergedLevels[constructId].push(levelId);
+            $('.chart').floatThead('reflow');
         }
     })
 
@@ -644,7 +645,7 @@
             restoreSublevelHeader(isLast, constructId, headers[i]);
 
             for (var j = 0; j < cells[i].length; j++) {
-                restoreSublevelCell(isLast, constructId, newCells[i][j], j + 2);
+                restoreSublevelCell(isLast, constructId, newCells[i][j], j + 1);
             }
         }
 
@@ -675,6 +676,8 @@
         if (index > -1) {
             mergedLevels[constructId].splice(index, 1);
         }
+
+        $('.chart').floatThead('reflow');
     })
 
     /**

@@ -5,7 +5,8 @@ from import_export.admin import ImportExportActionModelAdmin
 
 from kidviz.resources import ACCEPTED_FILE_FORMATS, ClassRoster
 from .models import Course, LearningConstruct, LearningConstructLevel, LearningConstructSublevel, \
-    LearningConstructSublevelExample, Observation, Student, StudentGroup, StudentGrouping, ContextTag
+    LearningConstructSublevelExample, Observation, Student, StudentGroup, StudentGrouping, ContextTag, \
+    Setup
 
 admin.site.site_header = 'KidViz Settings'
 admin.site.site_title = 'KidViz Admin'
@@ -234,3 +235,6 @@ class ContextTagAdmin(admin.ModelAdmin):
         'owner',
         'color',
     )
+
+
+admin.site.register(Setup)
