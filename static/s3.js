@@ -14,6 +14,14 @@
     );
   }
 
+  $('#form').on('progress', function (event) {
+    const progress = parseInt(event.detail.progress * 100)
+    $('.progress-bar')
+      .attr('aria-valuenow', progress)
+      .css('width', `${progress}%`)
+      .html(`${progress}%`)
+  })
+
   function hasConstructsChecked () {
     return (
       $('.construct.bg-success').length > 0
@@ -90,7 +98,8 @@
     }
   }
 
-  function request (method, url, data) {
+  function request (method, url, data, fileInput, file, form) {
+    file.loaded = 0
     return new Promise((resolve, reject) => {
       const xhr = new window.XMLHttpRequest()
       xhr.open(method, url)
@@ -101,6 +110,34 @@
           reject(xhr.statusText)
         }
       }
+
+      xhr.upload.onprogress = function (e) {
+        var diff = e.loaded - file.loaded
+        form.loaded += diff
+        fileInput.loaded += diff
+        file.loaded = e.loaded
+        var defaultEventData = {
+          currentFile: file,
+          currentFileName: file.name,
+          currentFileProgress: Math.min(e.loaded / e.total, 1),
+          originalEvent: e
+        }
+        form.dispatchEvent(new window.CustomEvent('progress', {
+          detail: Object.assign({
+            progress: Math.min(form.loaded / form.total, 1),
+            loaded: form.loaded,
+            total: form.total
+          }, defaultEventData)
+        }))
+        fileInput.dispatchEvent(new window.CustomEvent('progress', {
+          detail: Object.assign({
+            progress: Math.min(fileInput.loaded / fileInput.total, 1),
+            loaded: fileInput.loaded,
+            total: fileInput.total
+          }, defaultEventData)
+        }))
+      }
+
       xhr.onerror = () => {
         reject(xhr.statusText)
       }
@@ -110,7 +147,12 @@
 
   function uploadFiles (form, fileInput, name) {
     const url = fileInput.getAttribute('data-url')
+    fileInput.loaded = 0
+    fileInput.total = 0
+
     const promises = Array.from(fileInput.files).map((file) => {
+      form.total += file.size
+      fileInput.total += file.size
       const s3Form = new window.FormData()
       Array.from(fileInput.attributes).forEach(attr => {
         let name = attr.name
@@ -122,7 +164,7 @@
       s3Form.append('success_action_status', '201')
       s3Form.append('Content-Type', file.type)
       s3Form.append('file', file)
-      return request('POST', url, s3Form)
+      return request('POST', url, s3Form, fileInput, file, form)
     })
     Promise.all(promises).then((results) => {
       results.forEach((result) => {
@@ -155,6 +197,8 @@
 
   function uploadS3Inputs (form) {
     window.uploading = 0
+    form.loaded = 0
+    form.total = 0
     const inputs = form.querySelectorAll('.s3file')
     Array.from(inputs).forEach(input => {
       window.uploading += 1
