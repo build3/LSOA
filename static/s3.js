@@ -16,10 +16,15 @@
 
   $('#form').on('progress', function (event) {
     const progress = parseInt(event.detail.progress * 100)
+    const total = (event.detail.total / 1000000).toFixed(1)
+    const loaded = (event.detail.loaded / 1000000).toFixed(1)
+
     $('.progress-bar')
       .attr('aria-valuenow', progress)
       .css('width', `${progress}%`)
       .html(`${progress}%`)
+
+    $('#loaded').html(`${loaded} / ${total} MB`);
   })
 
   function hasConstructsChecked () {

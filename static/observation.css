@@ -79,21 +79,32 @@
   z-index: 10000;
   margin: auto;
   position: absolute;
-  top: 60vh;
+  top: 50vh;
   bottom: 0;
   left: 0;
   right: 0;
 }
 
 .progress {
-  z-index: 1000;
+  z-index: 10000;
   margin: auto;
   position: absolute;
-  top: 100px;
+  top: 0;
   bottom: 0;
   left: 0;
   right: 0;
-  width: 90vw;
+  width: 80vw;
+}
+
+#loaded {
+  z-index: 10000;
+  margin: auto;
+  position: absolute;
+  top: 65vh;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
 }
 
 @keyframes spin {
