@@ -63,3 +63,13 @@ input[type="date"] {
     left: 0;
     background-color: white;
 }
+
+.pinch-zoom-container {
+    width: 530px;
+    height: 332px !important;
+}
+  
+.pinch-zoom {
+    width: 530px;
+    height: 332px !important;
+}

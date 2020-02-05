@@ -10,7 +10,10 @@
 
 {% block extrascripts %}
   <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.js"></script>
+  <script src="{% static 'vendor/jquery-zoom.js' %}"></script>
   <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'pinch-zoom.umd.js' %}"></script>
   <script>
     function initSelect2() {
       $("#id_constructs").select2({
@@ -129,7 +132,7 @@
         }
     }
 
-    function loadPicture(id) {
+    function loadPicture(id, is_touch_device) {
         var $canvas = $('#the-modal .modal-body #' + id);
         $canvas.attr('id', 'canvas' + id);
 
@@ -138,7 +141,7 @@
         $('#the-modal').on('shown.bs.modal', function() {
             var url = $('#image-source-'+id).html();
             if (!url) {
-              return;
+                return;
             }
 
             var canvas = new fabric.Canvas('canvas' + id, {
@@ -150,6 +153,16 @@
             const canvasWidth = 530;
 
             var bgImg = new fabric.Image();
+
+            if (is_touch_device) {
+                const el = $('.modal-body').find(`#art-${id}`)[0];
+
+                if (el !== null) {
+                    new PinchZoom.default(el, {});
+                }
+            } else {
+                $('.pinch-zoom').zoom();
+            }
 
             bgImg.setSrc(url.replace(/&amp;/g, '&'), function(obj) {
                 var imageWidth = $('#image-width_' + id).html();
@@ -192,9 +205,10 @@
 
                 canvas.renderAll();
             });
+
+            return canvas;
         });
     }
-
 
     $(function () {
       // Init tooltips
@@ -231,7 +245,7 @@
 
           $('#the-modal .modal-body').append($('[data-observation-id="' + id + '"]').clone());
 
-          loadPicture(id);
+          loadPicture(id, is_touch_device);
         });
 
         var modal = $('#the-modal');
@@ -404,13 +418,14 @@
           {% if observation.original_image %}
           <div class="row no-gutters">
             <div class="col-12" style="">
-              <div class="art" style="">
-                <div style="display: flex; justify-content: center;">
+              <div class="art pinch-zoom" style="" id="art-{{ observation.id }}">
+                <div style="display: flex; justify-content: center; width: 530px; height: 332px;">
                   <canvas id="{{ observation.id }}"></canvas>
                 </div>
                 <p class="d-none" id="image-width_{{ observation.id }}">{{ observation.image_width }}</p>
                 <div class="d-none" id="annotation_data_{{ observation.id }}">{{ observation.annotation_data }}</div>
                 <div class="d-none" id="image-source-{{ observation.id }}">{{ observation.original_image.url }}</div>
+                <img class="d-none" src="{{ observation.original_image.url }}" width="530px" height="332px">
               </div>
             </div>
           </div>
