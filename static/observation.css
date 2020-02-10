@@ -108,3 +108,13 @@
 .canvas-container {
   margin: 0 auto;
 }
+
+.pinch-zoom-container {
+  width: 100%;
+  height: 332px !important;
+}
+
+.pinch-zoom {
+  width: 100%;
+  height: 332px !important;
+}
