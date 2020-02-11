@@ -9,7 +9,6 @@
 {% block extrascripts %}
   <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
   <script src="{% static 'vendor/lightbox2/js/lightbox-plus-jquery.min.js' %}"></script>
-  <script src="{% static 'vendor/jquery-zoom.js' %}"></script>
   <script src="{% static 's3.js' %}"></script>
   <script type="text/javascript" src="{% static 'pinch-zoom.umd.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/npm/gijgo@1.9.10/js/gijgo.min.js" type="text/javascript"></script>
@@ -91,19 +90,19 @@
           {# 9. Edit observation, video (can't replace) #}
           {# "#image => hidden", "#video => url", button-rows => none() #}
           {% if recent_observation.original_image and use_last_sample %}
-            <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain; display:block; margin: auto;"/>
+            <img id="image" src="{{ recent_observation.original_image.url }}" style="width: 530px; height: 332px; object-fit: contain; display:block; margin: auto;"/>
             <video id="recorded" style="display: none; width: 530px; height: 332px;" controls playsinline></video>
           {% elif recent_observation.video and use_last_sample %}
-            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%; height: 332px;"/>
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 530px; height: 332px;"/>
             <video id="recorded" style="width: 530px; height: 332px;" src="{{ recent_observation.video.url }}#t=0.1" controls playsinline/>
           {% elif draft_observation.original_image %}
-            <img id="image" src="{{ draft_observation.original_image.url }}" style="width: 100%; height: 332px; object-fit: contain; display:block; margin: auto;"/>
+            <img id="image" src="{{ draft_observation.original_image.url }}" style="width: 530px; height: 332px; object-fit: contain; display:block; margin: auto;"/>
             <video id="recorded" style="display: none; width: 530px; height: 332px;" controls playsinline></video>
           {% elif draft_observation.video %}
             <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="display: none; width: 100%; height: 332px;"/>
             <video id="recorded" style="width: 530px; height: 332px;" src="{{ draft_observation.video.url }}#t=0.1" controls playsinline/>
           {% else %}
-            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 100%; height: 332px; object-fit: contain; display:block; margin: auto;"/>
+            <img id="image" src="{% static 'images/photo-placeholder.svg' %}" style="width: 530px; height: 332px; object-fit: contain; display:block; margin: auto;"/>
             <video id="recorded" style="display: none; width: 530px; height: 332px;" controls playsinline></video>
           {% endif %}
 
@@ -519,23 +518,19 @@
         $('#draft-hidden').val('False');
       })
 
-      $('#zoom-on').click(function() {
-        if (is_touch_device) {
-          pz.enable();
-        } else {
-          $('.pinch-zoom').zoom();
-        }
+      if (!is_touch_device) {
+        $('#zoom-on').hide();
+        $('#zoom-off').hide();
+      }
 
+      $('#zoom-on').click(function() {
+        pz.enable();
         $(this).hide();
         $('#zoom-off').show();
       })
 
       $('#zoom-off').click(function() {
-        if (is_touch_device) {
-          pz.disable();
-        } else {
-          $('.pinch-zoom').trigger('zoom.destroy');
-        }
+        pz.disable();
 
         $(this).hide();
         $('#zoom-on').show();
@@ -842,8 +837,6 @@
       })
 
       var annotationInput = document.querySelector('#annotated-image');
-
-      
       var drawingColorButton = document.querySelector('a#drawing-color-button');
       var drawingColorDisplay = document.querySelector('#drawing-color');
       var color;
@@ -851,6 +844,64 @@
         isDrawingMode: false,
         selection: false
       });
+
+      const canvasHeight = 332;
+      const canvasWidth = 530;
+
+      if (!is_touch_device) {
+        stage.on('mouse:wheel', function(opt) {
+          const event = opt.e;
+          const delta = event.deltaY * -1;
+          const widthViewport = 4;
+          const heightViewport = 5;
+          const zoomingVelocityReducer = 200;
+          const maxZoom = 10;
+          const minZoom = 1;
+          const baseViewportValue = 120;
+          const panningLimit = 200;
+
+          var zoom = stage.getZoom();
+          zoom = zoom + delta / zoomingVelocityReducer;
+          zoom = Math.min(Math.max(zoom, minZoom), maxZoom);
+
+          stage.zoomToPoint({ x: event.offsetX, y: event.offsetY }, zoom);
+          event.preventDefault();
+          event.stopPropagation();
+
+          const vpt = this.viewportTransform;
+
+          if (zoom < panningLimit / canvasWidth) {
+            this.viewportTransform[widthViewport] = baseViewportValue - canvasWidth * zoom / 2;
+            this.viewportTransform[heightViewport] = baseViewportValue - canvasHeight * zoom / 2;
+          } else {
+            if (vpt[widthViewport] >= 0) {
+              this.viewportTransform[widthViewport] = 0;
+            } else if (vpt[widthViewport] < stage.getWidth() - canvasWidth * zoom) {
+              this.viewportTransform[widthViewport] = stage.getWidth() - canvasWidth * zoom;
+            }
+
+            if (vpt[heightViewport] >= 0) {
+              this.viewportTransform[heightViewport] = 0;
+            } else if (vpt[heightViewport] < stage.getHeight() - canvasHeight * zoom) {
+              this.viewportTransform[heightViewport] = stage.getHeight() - canvasHeight * zoom;
+            }
+          }
+        });
+
+        $('#image').on('load', function() {
+          new fabric.Image.fromURL($(this).attr('src'), function(image) {
+            image.scaleToWidth(canvasWidth);
+            image.scaleToHeight(canvasHeight);
+            image.set({selectable: false});
+
+            stage.add(image);
+
+            image.centerH();
+          });
+
+          $(this).hide();
+        })
+      }
 
       $('#erase-drawing').click(function() {
         hideStage();
@@ -903,8 +954,10 @@
       }
 
       function updateAnnotationJson() {
-        annotationInput.value = getEaselData();
-        console.log(getEaselData())
+        var easelData = JSON.parse(getEaselData());
+        easelData.objects = easelData.objects.filter(obj => obj.type !== "image");
+
+        annotationInput.value = JSON.stringify(easelData);
 
         if (stage.isDrawingMode) {
           formChanged = true;
@@ -963,6 +1016,18 @@
             enableDisableDraw.classList.remove('disa');
             drawingColorButton.classList.add('disabled');
             stage.clear();
+
+            if (!is_touch_device) {
+              new fabric.Image.fromURL($('#image').attr('src'), function(image) {
+                image.scaleToWidth(canvasWidth);
+                image.scaleToHeight(canvasHeight);
+                image.set({selectable: false});
+
+                stage.add(image);
+
+                image.centerH();
+              });
+            }
 
             $('#erase-drawing').show();
           }
