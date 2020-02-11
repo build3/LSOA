@@ -11,7 +11,6 @@
 {% block extrascripts %}
   <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.js"></script>
-  <script src="{% static 'vendor/jquery-zoom.js' %}"></script>
   <script src="{% static 'vendor/fabricjs/fabricjs.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'pinch-zoom.umd.js' %}"></script>
   <script>
@@ -161,7 +160,43 @@
                     new PinchZoom.default(el, {});
                 }
             } else {
-                $('.pinch-zoom').zoom();
+                canvas.on('mouse:wheel', function(opt) {
+                    var delta = opt.e.deltaY * -1;
+                    var pointer = canvas.getPointer(opt.e);
+                    var zoom = canvas.getZoom();
+                    zoom = zoom + delta / 200;
+
+                    if (zoom > 10) {
+                        zoom = 10;
+                    }
+
+                    if (zoom < 1) {
+                        zoom = 1;
+                    }
+
+                    canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+                    opt.e.preventDefault();
+                    opt.e.stopPropagation();
+
+                    const vpt = this.viewportTransform;
+
+                    if (zoom < 200 / canvasWidth) {
+                        this.viewportTransform[4] = 120 - canvasWidth * zoom / 2;
+                        this.viewportTransform[5] = 120 - canvasHeight * zoom / 2;
+                    } else {
+                        if (vpt[4] >= 0) {
+                            this.viewportTransform[4] = 0;
+                        } else if (vpt[4] < canvas.getWidth() - canvasWidth * zoom) {
+                            this.viewportTransform[4] = canvas.getWidth() - canvasWidth * zoom;
+                        }
+
+                        if (vpt[5] >= 0) {
+                            this.viewportTransform[5] = 0;
+                        } else if (vpt[5] < canvas.getHeight() - canvasHeight * zoom) {
+                            this.viewportTransform[5] = canvas.getHeight() - canvasHeight * zoom;
+                        }
+                    }
+                });
             }
 
             bgImg.setSrc(url.replace(/&amp;/g, '&'), function(obj) {
