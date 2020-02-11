@@ -836,8 +836,6 @@
       })
 
       var annotationInput = document.querySelector('#annotated-image');
-
-      
       var drawingColorButton = document.querySelector('a#drawing-color-button');
       var drawingColorDisplay = document.querySelector('#drawing-color');
       var color;
@@ -851,39 +849,40 @@
 
       if (!is_touch_device) {
         stage.on('mouse:wheel', function(opt) {
-          var delta = opt.e.deltaY * -1;
-          var pointer = stage.getPointer(opt.e);
+          const event = opt.e;
+          const delta = event.deltaY * -1;
+          const widthViewport = 4;
+          const heightViewport = 5;
+          const zoomingVelocityReducer = 200;
+          const maxZoom = 10;
+          const minZoom = 1;
+          const baseViewportValue = 120;
+          const panningLimit = 200;
+
           var zoom = stage.getZoom();
-          zoom = zoom + delta / 200;
+          zoom = zoom + delta / zoomingVelocityReducer;
+          zoom = Math.min(Math.max(zoom, minZoom), maxZoom);
 
-          if (zoom > 10) {
-            zoom = 10;
-          }
-
-          if (zoom < 1) {
-            zoom = 1;
-          }
-
-          stage.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
-          opt.e.preventDefault();
-          opt.e.stopPropagation();
+          stage.zoomToPoint({ x: event.offsetX, y: event.offsetY }, zoom);
+          event.preventDefault();
+          event.stopPropagation();
 
           const vpt = this.viewportTransform;
 
-          if (zoom < 200 / canvasWidth) {
-            this.viewportTransform[4] = 120 - canvasWidth * zoom / 2;
-            this.viewportTransform[5] = 120 - canvasHeight * zoom / 2;
+          if (zoom < panningLimit / canvasWidth) {
+            this.viewportTransform[widthViewport] = baseViewportValue - canvasWidth * zoom / 2;
+            this.viewportTransform[heightViewport] = baseViewportValue - canvasHeight * zoom / 2;
           } else {
-            if (vpt[4] >= 0) {
-              this.viewportTransform[4] = 0;
-            } else if (vpt[4] < stage.getWidth() - canvasWidth * zoom) {
-              this.viewportTransform[4] = stage.getWidth() - canvasWidth * zoom;
+            if (vpt[widthViewport] >= 0) {
+              this.viewportTransform[widthViewport] = 0;
+            } else if (vpt[widthViewport] < stage.getWidth() - canvasWidth * zoom) {
+              this.viewportTransform[widthViewport] = stage.getWidth() - canvasWidth * zoom;
             }
 
-            if (vpt[5] >= 0) {
-              this.viewportTransform[5] = 0;
-            } else if (vpt[5] < stage.getHeight() - canvasHeight * zoom) {
-              this.viewportTransform[5] = stage.getHeight() - canvasHeight * zoom;
+            if (vpt[heightViewport] >= 0) {
+              this.viewportTransform[heightViewport] = 0;
+            } else if (vpt[heightViewport] < stage.getHeight() - canvasHeight * zoom) {
+              this.viewportTransform[heightViewport] = stage.getHeight() - canvasHeight * zoom;
             }
           }
         });
