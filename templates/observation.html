@@ -845,6 +845,8 @@
         selection: false
       });
 
+      annotationInput.value = ("{{ form.annotation_data.value|escapejs }}" || "{}");
+
       const canvasHeight = 332;
       const canvasWidth = 530;
 
@@ -889,7 +891,11 @@
         });
 
         $('#image').on('load', function() {
+          var ctx = JSON.parse((annotationInput.value || "{}"));
+
           new fabric.Image.fromURL($(this).attr('src'), function(image) {
+            stage.loadFromJSON(ctx);
+
             image.scaleToWidth(canvasWidth);
             image.scaleToHeight(canvasHeight);
             image.set({selectable: false});
@@ -897,6 +903,8 @@
             stage.add(image);
 
             image.centerH();
+
+            drawAnnotation();
           });
 
           $(this).hide();
@@ -904,11 +912,14 @@
       }
 
       $('#erase-drawing').click(function() {
-        hideStage();
-        stage.clear();
+        const drawings = stage.getObjects().filter(object => object.type == 'path');
+        drawings.forEach(drawing => {
+          stage.remove(drawing);
+        });
+
         updateAnnotationJson();
         formChanged = true;
-      })
+      });
 
       var index = parseInt(Math.random() * 100);
       var colors = [
@@ -930,11 +941,14 @@
         initEnableDisable();
         initChangeColorButton();
         updateDrawingColorDisplay();
+
+        var ctx = JSON.parse(("{{ form.annotation_data.value|escapejs }}" || "{}"));
+        stage.loadFromJSON(ctx);
+
         drawAnnotation();
       }
 
       function drawAnnotation() {
-        var ctx = JSON.parse(("{{ form.annotation_data.value|escapejs }}" || "{}"));
         var imageWidth = '{{ observation.image_width }}';
         const canvasWidth = $('#easel-canvas').width();
 
@@ -942,12 +956,12 @@
           imageWidth = 500
         }
 
-        stage.loadFromJSON(ctx);
-
         const scale = (canvasWidth - parseFloat(imageWidth)) / 2;
 
-        stage.forEachObject(function (object) {
-            object.left += scale;
+        const drawings = stage.getObjects().filter(object => object.type == 'path')
+        drawings.forEach(drawing => {
+          drawing.left += scale
+          drawing.bringToFront();
         })
 
         stage.renderAll()

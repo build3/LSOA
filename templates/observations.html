@@ -237,6 +237,7 @@
                 drawings.forEach(drawing => {
                     drawing.left += scale
                     drawing.bringToFront();
+                    drawing.selectable = false;
                 })
 
                 canvas.renderAll();
