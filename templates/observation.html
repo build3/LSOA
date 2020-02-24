@@ -717,6 +717,13 @@
       markSelectTags();
       handleConstructsSelection();
 
+      var annotationInput = document.querySelector('#annotated-image');
+
+      var stage = new fabric.Canvas('easel-canvas', {
+        isDrawingMode: false,
+        selection: false
+      });
+
       {# THIS SECTION IS THE VIDEO NOTE CODE #}
 
       var recordedVideoNote = document.querySelector('video#recordedNote'); // TODO change to jquery
@@ -774,7 +781,12 @@
 
         $("#image").hide();
         $("#id_original_image").val('');
-        window.media_updated = true
+        window.media_updated = true;
+
+        hideStage();
+        stage.clear();
+        updateAnnotationJson();
+        annotationInput.value = '';
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
@@ -795,6 +807,7 @@
         updateAnnotationJson();
         stage.isDrawingMode = !stage.isDrawingMode;
         formChanged = true;
+        annotationInput.value = '';
 
         $("#id_original_image").val('');
         $("#id_video").val('');
@@ -818,13 +831,18 @@
         $("#recorded").attr("src", '{% if object.video %}{{ object.video.url|safe }}{% endif %}').show();
         $("#image").hide();
         $("#id_original_image").val('');
+
+        hideStage();
+        stage.clear();
+        annotationInput.value = '';
+        $('#annotation-image').val('');
+
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
         window.media_updated = true
         setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
         enableDisableDraw.classList.remove('disabled');
       }
-
 
       {# THIS SECTION IS THE IMAGE ANNOTATION CODE #}
 
@@ -836,16 +854,16 @@
         stage.freeDrawingBrush.width = parseInt($newSize.attr('value'));
       })
 
-      var annotationInput = document.querySelector('#annotated-image');
       var drawingColorButton = document.querySelector('a#drawing-color-button');
       var drawingColorDisplay = document.querySelector('#drawing-color');
       var color;
-      var stage = new fabric.Canvas('easel-canvas', {
-        isDrawingMode: false,
-        selection: false
-      });
 
       annotationInput.value = ("{{ form.annotation_data.value|escapejs }}" || "{}");
+      const hasVideo = "{{ has_video }}" == 'True';
+
+      if (hasVideo) {
+        annotationInput.value = '';
+      }
 
       const canvasHeight = 332;
       const canvasWidth = 530;
@@ -891,21 +909,25 @@
         });
 
         $('#image').on('load', function() {
-          var ctx = JSON.parse((annotationInput.value || "{}"));
+          const is_recorded_hidden = $('#recorded').css("display") === "none";
 
-          new fabric.Image.fromURL($(this).attr('src'), function(image) {
-            stage.loadFromJSON(ctx);
+          if (!hasVideo || is_recorded_hidden) {
+            var ctx = JSON.parse((annotationInput.value || "{}"));
 
-            image.scaleToWidth(canvasWidth);
-            image.scaleToHeight(canvasHeight);
-            image.set({selectable: false});
+            new fabric.Image.fromURL($(this).attr('src'), function(image) {
+              stage.loadFromJSON(ctx);
 
-            stage.add(image);
+              image.scaleToWidth(canvasWidth);
+              image.scaleToHeight(canvasHeight);
+              image.set({selectable: false});
 
-            image.centerH();
+              stage.add(image);
 
-            drawAnnotation();
-          });
+              image.centerH();
+
+              drawAnnotation();
+            });
+          }
 
           $(this).hide();
         })
