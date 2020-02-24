@@ -341,7 +341,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         self.object = self.get_object()
 
         # When user reset image or video to default state and then updates draft.
-        if not 'original_image' in request.POST and not 'video' in request.POST:
+        if request.POST.get('has_been_reset', False) == 'True':
             self.object.reset_media()
         else:
             original_image = request.POST.get('original_image', None)
