@@ -266,6 +266,7 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         kwargs['chosen_constructs'] = json.dumps([int(item) for item in self.request.POST.getlist('constructs')])
         kwargs['chosen_tags'] = chosen_tags
         kwargs['recent_observation'] = get_recent_observations(owner=self.request.user).first()
+        kwargs['has_video'] = False
 
         # Create new instance of observation form to clear error.
         # use_recent_observation is send for Use Last Sample action.
@@ -332,8 +333,22 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
         kwargs['chosen_tags'] = list(self.object.tags.all().values_list('id', flat=True))
         kwargs['use_draft'] = False
+        kwargs['has_video'] = self.object.video != ''
 
         return super().get_context_data(**kwargs)
+
+    def post(self, request, pk):
+        self.object = self.get_object()
+
+        # When user reset image or video to default state and then updates draft.
+        if not 'original_image' in request.POST and not 'video' in request.POST:
+            self.object.reset_media()
+        else:
+            original_image = request.POST.get('original_image', None)
+            video = request.POST.get('video', None)
+            self.object.update_draft_media(original_image, video)
+
+        return super().post(request, pk)
 
 
 class GroupingRelatedSelectView(RelatedSelectView):
