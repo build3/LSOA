@@ -109,6 +109,7 @@
           <canvas id="easel-canvas" style="position: absolute;top: 0;left: 0;bottom: 0;right: 0; display:block; margin: auto;"></canvas>
           <input type="hidden" id="annotated-image" name="annotation_data" value="">
           <input type="hidden" id="image-width" name="image_width" value="">
+          <input type="hidden" id="has-been-reset" name="has_been_reset" value="False">
         </div>
 
         <div class="btn-group-lg text-center mt-1" id="buttons-capture">
@@ -773,6 +774,7 @@
         $("#buttons-draw-or-reset").show();
 
         enableDisableDraw.classList.remove('disabled');
+        $("#has-been-reset").val('False');
       });
 
       {# THIS HANDLES STATE 1 TO STATE 4 #}
@@ -790,6 +792,7 @@
 
         $("#buttons-capture").hide();
         $("#buttons-draw-or-reset").show();
+        $("#has-been-reset").val('False');
       });
 
       {# THIS HANDLES STATES {2, 3, 4} TO STATE 1 #}
@@ -812,6 +815,8 @@
         $("#id_original_image").val('');
         $("#id_video").val('');
         $("#useMostRecentMedia").prop('checked', false);
+
+        $("#has-been-reset").val('True');
       });
 
       {# THIS HANDLES ENTRY INTO STATE 8 OR 9 #}
@@ -824,6 +829,7 @@
         $("#buttons-draw-or-reset").show(); // TODO show this and show previous annotation with ability to edit it
         window.media_updated = true
         enableDisableDraw.classList.remove('disabled');
+        $("#has-been-reset").val('False');
       }
 
       if ("{% if object.video %}{{ object.video.url }}{% endif %}") {
@@ -842,6 +848,7 @@
         window.media_updated = true
         setTimeout(hideStage, 100);  // TODO this is just a stupid variable scoping issue
         enableDisableDraw.classList.remove('disabled');
+        $("#has-been-reset").val('False');
       }
 
       {# THIS SECTION IS THE IMAGE ANNOTATION CODE #}
