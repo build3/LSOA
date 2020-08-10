@@ -981,8 +981,8 @@
         var imageWidth = '{{ observation.image_width }}';
         const canvasWidth = $('#easel-canvas').width();
 
-        if (imageWidth == 'None') {
-          imageWidth = 500
+        if (imageWidth == 'None' || imageWidth == '') {
+          imageWidth = 530
         }
 
         const scale = (canvasWidth - parseFloat(imageWidth)) / 2;
