@@ -730,11 +730,23 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
         data.update(self._default_context_data)
         return data
 
+    @property
+    def _all_observations(self):
+        return Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs__level__construct') \
+            .prefetch_related('tags') \
+            .prefetch_related('grouping__groups__students') \
+            .select_related('owner') \
+            .order_by('owner', 'constructs') \
+            .all()
+
     def _filter_observations(self):
         date_from = self.filtering_form.cleaned_data.get('date_from')
         date_to = self.filtering_form.cleaned_data.get('date_to')
         selected_constructs = self.filtering_form.cleaned_data.get('constructs')
         tags = self.filtering_form.cleaned_data.get('tags')
+        learning_construct = self.filtering_form.cleaned_data.get('learning_construct')
 
         observations = self._all_observations
 
@@ -750,6 +762,12 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
 
         if selected_constructs:
             observations = observations.filter(constructs__id__in=selected_constructs)
+
+        if learning_construct:
+            if learning_construct != 'NO_CONSTRUCT':
+                observations = observations.filter(constructs__level__construct__id=learning_construct)
+            else:
+                observations = observations.filter(no_constructs=True)
 
         return observations
 
@@ -778,17 +796,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
                 dot_matrix[teacher][sublevel].append(observation)
 
         return dot_matrix
-
-    @property
-    def _all_observations(self):
-        return Observation.objects \
-            .prefetch_related('students') \
-            .prefetch_related('constructs') \
-            .prefetch_related('tags') \
-            .prefetch_related('grouping__groups__students') \
-            .select_related('owner') \
-            .order_by('owner', 'constructs') \
-            .all()
 
     @property
     def _base_context_data(self):
