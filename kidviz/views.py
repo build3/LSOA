@@ -712,26 +712,31 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
     template_name = 'teachers_observations.html'
 
     def get_context_data(self, **kwargs):
-        date_filtering_form = DateFilteringForm(self.request.GET)
-        date_from = None
-        date_to = None
-        selected_constructs = None
-        tags = None
+        self.filtering_form = DateFilteringForm(self.request.GET)
+        data = super().get_context_data(**kwargs)
 
-        if date_filtering_form.is_valid():
-            date_from = date_filtering_form.cleaned_data['date_from']
-            date_to = date_filtering_form.cleaned_data['date_to']
-            selected_constructs = date_filtering_form.cleaned_data['constructs']
-            tags = date_filtering_form.cleaned_data['tags']
+        if self.request.GET.get('from', None):
+            if self.filtering_form.is_valid():
+                observations = self._filter_observations()
 
-        observations = Observation.objects \
-            .prefetch_related('students') \
-            .prefetch_related('constructs') \
-            .prefetch_related('tags') \
-            .prefetch_related('grouping__groups__students') \
-            .select_related('owner') \
-            .order_by('owner', 'constructs') \
-            .all()
+                data.update({
+                    **self._base_context_data,
+                    'dot_matrix': self._calculate_dot_matrix(observations),
+                    'all_observations': observations,
+                })
+
+                return data
+
+        data.update(self._default_context_data)
+        return data
+
+    def _filter_observations(self):
+        date_from = self.filtering_form.cleaned_data.get('date_from')
+        date_to = self.filtering_form.cleaned_data.get('date_to')
+        selected_constructs = self.filtering_form.cleaned_data.get('constructs')
+        tags = self.filtering_form.cleaned_data.get('tags')
+
+        observations = self._all_observations
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -746,8 +751,9 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
         if selected_constructs:
             observations = observations.filter(constructs__id__in=selected_constructs)
 
-        all_students = Student.objects.filter(status=Student.ACTIVE)
+        return observations
 
+    def _calculate_dot_matrix(self, observations):
         dot_matrix = {}
 
         teachers = get_user_model().objects.filter(kidviz_observation_owner__isnull=False)
@@ -771,16 +777,34 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
                 teacher = observation.owner
                 dot_matrix[teacher][sublevel].append(observation)
 
-        data = super().get_context_data(**kwargs)
-        data.update({
-            'dot_matrix': dot_matrix,
-            'all_observations': observations,
-            'selected_constructs': selected_constructs,
+        return dot_matrix
+
+    @property
+    def _all_observations(self):
+        return Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs') \
+            .prefetch_related('tags') \
+            .prefetch_related('grouping__groups__students') \
+            .select_related('owner') \
+            .order_by('owner', 'constructs') \
+            .all()
+
+    @property
+    def _base_context_data(self):
+        return {
             'courses': Course.objects.all(),
             'course_id': None,
-            'filtering_form': date_filtering_form
-        })
-        return data
+            'filtering_form': self.filtering_form
+        }
+
+    @property
+    def _default_context_data(self):
+        return {
+            **self._base_context_data,
+            'dot_matrix': [],
+            'all_observations': None,
+        }
 
 
 def current_observation(request):
