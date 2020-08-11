@@ -728,6 +728,7 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
             .prefetch_related('students') \
             .prefetch_related('constructs') \
             .prefetch_related('tags') \
+            .prefetch_related('grouping__groups__students') \
             .select_related('owner') \
             .order_by('owner', 'constructs') \
             .all()
