@@ -28,10 +28,13 @@
       <label>Constructs</label>
       {{ filtering_form.constructs }}
     </div>
-    <div id="student-construct-row" class="col-6">
-      <label>Construct</label>
-      {{ filtering_form.learning_construct }}
-    </div>
+
+    {% if not constructs_reports %}
+      <div id="student-construct-row" class="col-6">
+        <label>Construct</label>
+        {{ filtering_form.learning_construct }}
+      </div>
+    {% endif %}
 
     {% if constructs_reports %}
       <div class="col-12 text-center mt-2">

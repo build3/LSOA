@@ -292,7 +292,7 @@
         });
       });
 
-      $('.views-nav').on('click', function (e) {
+      $('.nav-link').on('click', function (e) {
         var chart_href = $(this).attr('href');
         var chart_id = chart_href.substr(1);
 
@@ -365,19 +365,19 @@
 
           <ul class="nav nav-tabs" id="chartTab" role="tablist">
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "student_view" %} active {% endif %} views-nav"
+              <a class="nav-link {% if selected_chart == "student_view" %} active {% endif %}"
                 data-toggle="tab" href="#student_view">Student View</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "construct_view" %} active {% endif %} views-nav"
+              <a class="nav-link {% if selected_chart == "construct_view" %} active {% endif %}"
                 data-toggle="tab" href="#construct_view">Construct View </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "construct_heat_map" %} active {% endif %} views-nav"
+              <a class="nav-link {% if selected_chart == "construct_heat_map" %} active {% endif %}"
                 data-toggle="tab" href="#construct_heat_map">Construct Heat Map</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if selected_chart == "timeline_view" %} active {% endif %} views-nav"
+              <a class="nav-link {% if selected_chart == "timeline_view" %} active {% endif %}"
                 data-toggle="tab" href="#timeline_view">Timeline View</a>
             </li>
           </ul>
