@@ -730,17 +730,6 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
         data.update(self._default_context_data)
         return data
 
-    @property
-    def _all_observations(self):
-        return Observation.objects \
-            .prefetch_related('students') \
-            .prefetch_related('constructs__level__construct') \
-            .prefetch_related('tags') \
-            .prefetch_related('grouping__groups__students') \
-            .select_related('owner') \
-            .order_by('owner', 'constructs') \
-            .all()
-
     def _filter_observations(self):
         date_from = self.filtering_form.cleaned_data.get('date_from')
         date_to = self.filtering_form.cleaned_data.get('date_to')
@@ -770,6 +759,17 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
                 observations = observations.filter(no_constructs=True)
 
         return observations
+
+    @property
+    def _all_observations(self):
+        return Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs__level__construct') \
+            .prefetch_related('tags') \
+            .prefetch_related('grouping__groups__students') \
+            .select_related('owner') \
+            .order_by('owner', 'constructs') \
+            .all()
 
     def _calculate_dot_matrix(self, observations):
         dot_matrix = {}
