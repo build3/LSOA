@@ -32,6 +32,13 @@
       <label>Construct</label>
       {{ filtering_form.learning_construct }}
     </div>
+
+    {% if constructs_reports %}
+      <div class="col-12 text-center mt-2">
+        <label>Learning constructs</label>
+        {{ filtering_form.learning_constructs }}
+      </div>
+    {% endif %}
   </div>
   <div class="d-flex flex-row-reverse">
     <input id="filtering-submit"
