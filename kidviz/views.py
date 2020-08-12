@@ -774,8 +774,8 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
     def _calculate_dot_matrix(self, observations):
         dot_matrix = {}
 
-        teachers = get_user_model().objects.filter(kidviz_observation_owner__isnull=False)
-        sublevels = LearningConstructSublevel.objects.filter(observation__isnull=False)
+        teachers = get_user_model().objects.filter(kidviz_observation_owner__isnull=False).distinct()
+        sublevels = LearningConstructSublevel.objects.filter(observation__isnull=False).distinct()
 
         for teacher in teachers:
             dot_matrix[teacher] = {}
