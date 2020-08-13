@@ -348,6 +348,14 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
             video = request.POST.get('video', None)
             self.object.update_draft_media(original_image, video)
 
+        if request.POST.get('back_to_setup', None) == 'True':
+            form = DraftObservationForm(request.POST, request.FILES, instance=self.object)
+            form.is_valid()
+            form.save()
+
+            request.session['re_setup'] = True
+            return HttpResponseRedirect(reverse_lazy('setup'))
+
         return super().post(request, pk)
 
 
