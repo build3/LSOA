@@ -27,8 +27,10 @@ from related_select.views import RelatedSelectView
 from tablib import Dataset
 
 from kidviz.exceptions import InvalidFileFormatError
-from kidviz.forms import ObservationForm, SetupForm, GroupingForm, ContextTagForm, \
+from kidviz.forms import (
+    ObservationForm, SetupForm, GroupingForm, ContextTagForm,
     CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm, SetupSaveForm
+)
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
     LearningConstruct, Setup, StudentGroup, Student, Observation
@@ -519,7 +521,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         date_to = None
         selected_constructs = None
         tags = None
-        learning_construct = None
+        learning_constructs = []
         show_no_construct = True
 
         if date_filtering_form.is_valid():
@@ -528,35 +530,50 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
             courses = date_filtering_form.cleaned_data['courses']
-            learning_construct = date_filtering_form.cleaned_data['learning_construct']
-
-            if learning_construct and learning_construct != LearningConstruct.NO_CONSTRUCT:
-                learning_construct = LearningConstruct.objects.filter(id=learning_construct).first()
-
+            learning_constructs = date_filtering_form.cleaned_data['learning_constructs']
             # If there aren't any query params use default course.
             if self.request.GET:
                 if courses:
                     course_ids = [course.id for course in courses]
 
         (observations, star_chart_4_obs) = Observation.get_observations(
-            course_ids, date_from, date_to, tags, learning_construct)
+            course_ids, date_from, date_to, tags, learning_constructs)
 
         all_constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
 
         all_constructs_sorted = []
 
         for construct in all_constructs:
-            if construct.abbreviation == 'ToML':
-                all_constructs_sorted.insert(0, construct)
-            else:
-                all_constructs_sorted.append(construct)
+                if construct.abbreviation == 'ToML':
+                    all_constructs_sorted.insert(0, construct)
+                else:
+                    all_constructs_sorted.append(construct)
 
-        if learning_construct and learning_construct != LearningConstruct.NO_CONSTRUCT:
-            constructs = [learning_construct]
+        constructs_wo_no_construct = [
+            construct
+            for construct in learning_constructs
+            if construct != LearningConstruct.NO_CONSTRUCT
+        ]
+
+        if learning_constructs and not LearningConstruct.NO_CONSTRUCT in learning_constructs:
+            constructs = []
+
+            for construct in all_constructs.filter(id__in=learning_constructs):
+                if construct.abbreviation == 'ToML':
+                    constructs.insert(0, construct)
+                else:
+                    constructs.append(construct)
+
             show_no_construct = False
 
-        elif learning_construct == LearningConstruct.NO_CONSTRUCT:
+        elif LearningConstruct.NO_CONSTRUCT in learning_constructs:
             constructs = []
+
+            for construct in all_constructs.filter(id__in=constructs_wo_no_construct):
+                if construct.abbreviation == 'ToML':
+                    constructs.insert(0, construct)
+                else:
+                    constructs.append(construct)
 
         else:
             constructs = all_constructs_sorted
@@ -637,7 +654,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'max_date': Observation.get_max_date_from_observations(star_chart_4_obs),
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
             'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count(),
-            'show_no_construct': show_no_construct
+            'show_no_construct': show_no_construct,
+            'constructs_reports': True,
+            'filtered_constructs': list(map(int, constructs_wo_no_construct))
         })
 
         return data

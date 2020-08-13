@@ -1,0 +1,7 @@
+{% if filtered_constructs %}
+    {% if construct.id in filtered_constructs %}
+        {% include template_name %}
+    {% endif %}
+{% else %}
+    {% include template_name %}
+{% endif %}
