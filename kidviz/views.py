@@ -96,8 +96,16 @@ class SetupView(LoginRequiredMixin, FormView):
         r['form'].fields['grouping'].init_bound_field(r['form'].initial.get('course'))
         r['constructs'] = []
 
+        learning_constructs = []
+
         for lc in LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels',
                                                              'levels__sublevels__examples').all():
+            if lc.abbreviation == 'ToML':
+                learning_constructs.insert(0, lc)
+            else:
+                learning_constructs.append(lc)
+
+        for lc in learning_constructs:
             construct = {
                 'name': lc.name,
                 'levels': [],
@@ -350,6 +358,14 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
             video = request.POST.get('video', None)
             self.object.update_draft_media(original_image, video)
 
+        if request.POST.get('back_to_setup', None) == 'True':
+            form = DraftObservationForm(request.POST, request.FILES, instance=self.object)
+            form.is_valid()
+            form.save()
+
+            request.session['re_setup'] = True
+            return HttpResponseRedirect(reverse_lazy('setup'))
+
         return super().post(request, pk)
 
 
@@ -525,6 +541,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         all_constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
 
+        all_constructs_sorted = []
+
+        for construct in all_constructs:
+                if construct.abbreviation == 'ToML':
+                    all_constructs_sorted.insert(0, construct)
+                else:
+                    all_constructs_sorted.append(construct)
+
         constructs_wo_no_construct = [
             construct
             for construct in learning_constructs
@@ -532,20 +556,33 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         ]
 
         if learning_constructs and not LearningConstruct.NO_CONSTRUCT in learning_constructs:
-            constructs = all_constructs.filter(id__in=learning_constructs)
+            constructs = []
+
+            for construct in all_constructs.filter(id__in=learning_constructs):
+                if construct.abbreviation == 'ToML':
+                    constructs.insert(0, construct)
+                else:
+                    constructs.append(construct)
+
             show_no_construct = False
 
         elif LearningConstruct.NO_CONSTRUCT in learning_constructs:
-            constructs = all_constructs.filter(id__in=constructs_wo_no_construct)
+            constructs = []
+
+            for construct in all_constructs.filter(id__in=constructs_wo_no_construct):
+                if construct.abbreviation == 'ToML':
+                    constructs.insert(0, construct)
+                else:
+                    constructs.append(construct)
 
         else:
-            constructs = all_constructs
+            constructs = all_constructs_sorted
 
         all_students = Student.get_students_by_course(course_ids)
         courses = Course.get_courses(course_ids)
 
         star_matrix = {}
-        dot_matrix = Observation.initialize_dot_matrix_by_class(all_constructs, courses)
+        dot_matrix = Observation.initialize_dot_matrix_by_class(all_constructs_sorted, courses)
         observation_without_construct = {}
         star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, courses)
 
@@ -597,7 +634,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
-                star_chart_4_obs, all_constructs, courses, min_date)
+                star_chart_4_obs, all_constructs_sorted, courses, min_date)
 
         data = super().get_context_data(**kwargs)
         data.update({
@@ -718,25 +755,32 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
     template_name = 'teachers_observations.html'
 
     def get_context_data(self, **kwargs):
-        date_filtering_form = DateFilteringForm(self.request.GET)
-        date_from = None
-        date_to = None
-        selected_constructs = None
-        tags = None
+        self.filtering_form = DateFilteringForm(self.request.GET)
+        data = super().get_context_data(**kwargs)
 
-        if date_filtering_form.is_valid():
-            date_from = date_filtering_form.cleaned_data['date_from']
-            date_to = date_filtering_form.cleaned_data['date_to']
-            selected_constructs = date_filtering_form.cleaned_data['constructs']
-            tags = date_filtering_form.cleaned_data['tags']
+        if self.request.GET.get('from', None):
+            if self.filtering_form.is_valid():
+                observations = self._filter_observations()
 
-        observations = Observation.objects \
-            .prefetch_related('students') \
-            .prefetch_related('constructs') \
-            .prefetch_related('tags') \
-            .select_related('owner') \
-            .order_by('owner', 'constructs') \
-            .all()
+                data.update({
+                    **self._base_context_data,
+                    'dot_matrix': self._calculate_dot_matrix(observations),
+                    'all_observations': observations,
+                })
+
+                return data
+
+        data.update(self._default_context_data)
+        return data
+
+    def _filter_observations(self):
+        date_from = self.filtering_form.cleaned_data.get('date_from')
+        date_to = self.filtering_form.cleaned_data.get('date_to')
+        selected_constructs = self.filtering_form.cleaned_data.get('constructs')
+        tags = self.filtering_form.cleaned_data.get('tags')
+        learning_construct = self.filtering_form.cleaned_data.get('learning_construct')
+
+        observations = self._all_observations
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
@@ -751,12 +795,30 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
         if selected_constructs:
             observations = observations.filter(constructs__id__in=selected_constructs)
 
-        all_students = Student.objects.filter(status=Student.ACTIVE)
+        if learning_construct:
+            if learning_construct != 'NO_CONSTRUCT':
+                observations = observations.filter(constructs__level__construct__id=learning_construct)
+            else:
+                observations = observations.filter(no_constructs=True)
 
+        return observations
+
+    @property
+    def _all_observations(self):
+        return Observation.objects \
+            .prefetch_related('students') \
+            .prefetch_related('constructs__level__construct') \
+            .prefetch_related('tags') \
+            .prefetch_related('grouping__groups__students') \
+            .select_related('owner') \
+            .order_by('owner', 'constructs') \
+            .all()
+
+    def _calculate_dot_matrix(self, observations):
         dot_matrix = {}
 
-        teachers = get_user_model().objects.filter(kidviz_observation_owner__isnull=False)
-        sublevels = LearningConstructSublevel.objects.filter(observation__isnull=False)
+        teachers = get_user_model().objects.filter(kidviz_observation_owner__isnull=False).distinct()
+        sublevels = LearningConstructSublevel.objects.filter(observation__isnull=False).distinct()
 
         for teacher in teachers:
             dot_matrix[teacher] = {}
@@ -776,16 +838,23 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
                 teacher = observation.owner
                 dot_matrix[teacher][sublevel].append(observation)
 
-        data = super().get_context_data(**kwargs)
-        data.update({
-            'dot_matrix': dot_matrix,
-            'all_observations': observations,
-            'selected_constructs': selected_constructs,
+        return dot_matrix
+
+    @property
+    def _base_context_data(self):
+        return {
             'courses': Course.objects.all(),
             'course_id': None,
-            'filtering_form': date_filtering_form
-        })
-        return data
+            'filtering_form': self.filtering_form
+        }
+
+    @property
+    def _default_context_data(self):
+        return {
+            **self._base_context_data,
+            'dot_matrix': [],
+            'all_observations': None,
+        }
 
 
 def current_observation(request):

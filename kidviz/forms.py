@@ -211,14 +211,22 @@ class DateFilteringForm(forms.Form):
 
         constructs = LearningConstruct.objects.all()
 
+        constructs_sorted = []
+
+        for construct in constructs:
+            if construct.abbreviation == 'ToML':
+                constructs_sorted.insert(0, construct)
+            else:
+                constructs_sorted.append(construct)
+
         choices = [('', '--------')]
-        choices.extend([(construct.id, construct.name) for construct in constructs])
+        choices.extend([(construct.id, construct.name) for construct in constructs_sorted])
         choices.append((LearningConstruct.NO_CONSTRUCT, 'No construct'))
 
         self.fields['learning_construct'].choices = choices
 
         choices = []
-        choices.extend([(construct.id, construct.name) for construct in constructs])
+        choices.extend([(construct.id, construct.name) for construct in constructs_sorted])
         choices.append((LearningConstruct.NO_CONSTRUCT, 'No construct'))
 
         self.fields['learning_constructs'].choices = choices
