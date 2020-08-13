@@ -525,17 +525,17 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         all_constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
 
+        constructs_wo_no_construct = [
+            construct
+            for construct in learning_constructs
+            if construct != LearningConstruct.NO_CONSTRUCT
+        ]
+
         if learning_constructs and not LearningConstruct.NO_CONSTRUCT in learning_constructs:
             constructs = all_constructs.filter(id__in=learning_constructs)
             show_no_construct = False
 
         elif LearningConstruct.NO_CONSTRUCT in learning_constructs:
-            constructs_wo_no_construct = [
-                construct
-                for construct in learning_constructs
-                if construct != LearningConstruct.NO_CONSTRUCT
-            ]
-
             constructs = all_constructs.filter(id__in=constructs_wo_no_construct)
 
         else:
@@ -618,7 +618,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             'star_chart_4_dates': json.dumps(star_chart_4_dates),
             'observations_count': star_chart_4_obs.filter(constructs__isnull=False).count(),
             'show_no_construct': show_no_construct,
-            'constructs_reports': True
+            'constructs_reports': True,
+            'filtered_constructs': list(map(int, constructs_wo_no_construct))
         })
 
         return data
