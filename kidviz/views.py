@@ -94,8 +94,16 @@ class SetupView(LoginRequiredMixin, FormView):
         r['form'].fields['grouping'].init_bound_field(r['form'].initial.get('course'))
         r['constructs'] = []
 
+        learning_constructs = []
+
         for lc in LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels',
                                                              'levels__sublevels__examples').all():
+            if lc.abbreviation == 'ToML':
+                learning_constructs.insert(0, lc)
+            else:
+                learning_constructs.append(lc)
+
+        for lc in learning_constructs:
             construct = {
                 'name': lc.name,
                 'levels': [],
@@ -535,6 +543,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         all_constructs = LearningConstruct.objects.prefetch_related('levels', 'levels__sublevels').all()
 
+        all_constructs_sorted = []
+
+        for construct in all_constructs:
+            if construct.abbreviation == 'ToML':
+                all_constructs_sorted.insert(0, construct)
+            else:
+                all_constructs_sorted.append(construct)
+
         if learning_construct and learning_construct != LearningConstruct.NO_CONSTRUCT:
             constructs = [learning_construct]
             show_no_construct = False
@@ -543,13 +559,13 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             constructs = []
 
         else:
-            constructs = all_constructs
+            constructs = all_constructs_sorted
 
         all_students = Student.get_students_by_course(course_ids)
         courses = Course.get_courses(course_ids)
 
         star_matrix = {}
-        dot_matrix = Observation.initialize_dot_matrix_by_class(all_constructs, courses)
+        dot_matrix = Observation.initialize_dot_matrix_by_class(all_constructs_sorted, courses)
         observation_without_construct = {}
         star_matrix_by_class = Observation.initialize_star_matrix_by_class(constructs, courses)
 
@@ -601,7 +617,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
-                star_chart_4_obs, all_constructs, courses, min_date)
+                star_chart_4_obs, all_constructs_sorted, courses, min_date)
 
         data = super().get_context_data(**kwargs)
         data.update({
