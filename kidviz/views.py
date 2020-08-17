@@ -614,6 +614,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                 for sublevel in sublevels:
                     construct = sublevel.level.construct
+
+                    if construct not in constructs:
+                        continue
+
                     star_matrix[construct][student][sublevel].append(observation)
 
                     if observation.course:

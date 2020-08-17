@@ -261,17 +261,15 @@ class Observation(TimeStampedModel, OwnerMixin):
             all_observations_for_chart_4 = observations
 
         if learning_constructs:
-            if LearningConstruct.NO_CONSTRUCT in learning_constructs:
-                observations = observations.filter(no_constructs=True)
-
             constructs = [
                 construct
                 for construct in learning_constructs
                 if construct != LearningConstruct.NO_CONSTRUCT
             ]
 
-            observations = observations.filter(
-                constructs__level__construct__id__in=constructs)
+            if LearningConstruct.NO_CONSTRUCT in learning_constructs:
+                observations = observations.filter(
+                    constructs__level__construct__id__in=constructs) | observations.filter(no_constructs=True)
 
         if date_from:
             observations = observations.filter(observation_date__gte=date_from)
