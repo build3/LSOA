@@ -1206,7 +1206,7 @@ class WorkQueue(LoginRequiredMixin, ListView):
         return Observation.objects.filter(
             Q(owner=self.request.user, constructs=None, is_draft=False) |
             Q(owner=self.request.user, is_draft=True)
-        )
+        ).distinct()
 
 
 class RemoveDraft(LoginRequiredMixin, View):
