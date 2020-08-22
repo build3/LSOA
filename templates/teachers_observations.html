@@ -99,6 +99,94 @@
     registerUpdateConstructsListener('#id_date_from');
     registerUpdateConstructsListener('#id_date_to');
 
+    function loadVideo(id, key) {
+        var $video = $('#' + key + '-source-' + id)[0];
+        if ($video) {
+            var link = $video.value;
+            var $videoContainer = $('#' + key + '-' + id)[0];
+            var $videoElement = $('<video />', {
+                style: 'width: 100%; height: 100%;',
+                src: link,
+                type: 'video/mp4',
+                controls: true,
+                preload: false,
+            })[0];
+
+            $videoContainer.append($videoElement);
+            $video.remove();
+        }
+    }
+
+    function loadPicture(id, is_touch_device) {
+        var $canvas = $('#the-modal .modal-body #' + id);
+        $canvas.attr('id', 'canvas' + id);
+
+        var annotation_data = $('#annotation_data_' + id).html();
+
+        $('#the-modal').on('shown.bs.modal', function() {
+            var url = $('#image-source-'+id).html();
+            if (!url) {
+                return;
+            }
+
+            var canvas = new fabric.Canvas('canvas' + id, {
+                isDrawingMode: false,
+                selection: false,
+            });
+
+            const canvasHeight = 332;
+            const canvasWidth = 530;
+
+            var bgImg = new fabric.Image();
+
+            bgImg.setSrc(url.replace(/&amp;/g, '&'), function(obj) {
+                var imageWidth = $('#image-width_' + id).html();
+
+                const baseImageWidth = 530;
+
+                if (imageWidth == 'None' || imageWidth == '') {
+                  imageWidth = baseImageWidth;
+                }
+
+                const scale = (canvasWidth - parseFloat(imageWidth)) / 2;
+
+                var ctx = {};
+
+                if (annotation_data !== "") {
+                    var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
+                }
+
+                // Load drawings to canvas
+                canvas.loadFromJSON(ctx);
+                canvas.setHeight(canvasHeight);
+                canvas.setWidth(canvasWidth);
+
+                // Scale and add image to canvas.
+                obj.scaleToWidth(canvasWidth);
+                obj.scaleToHeight(canvasHeight);
+                obj.set({selectable: false});
+                canvas.add(obj);
+                obj.centerH();
+
+                // Get only drawings without image.
+                // Fabric saves drawings with type 'path'.
+                const drawings = canvas.getObjects().filter(object => object.type == 'path')
+
+                // I can't use bringToFront() with forEachObjects because bringToFront()
+                // change canvas's objects stack so iteration fails.
+                // Never use bringForward(). It will crash drawings.
+                drawings.forEach(drawing => {
+                    drawing.left += scale
+                    drawing.bringToFront();
+                    drawing.selectable = false;
+                })
+
+                canvas.renderAll();
+            });
+
+            return canvas;
+        });
+    }
 
     $(function () {
       // Init tooltips
@@ -125,64 +213,17 @@
       });
 
       // Launch modals
-      $('[data-modal-launch-observations]').on('click', function (e) {
+      $('body').on('click', '[data-modal-launch-observations]', function (e) {
         var observationIds = $(this).data('modal-launch-observations');
 
         $('#the-modal .modal-body').html('');
         observationIds.forEach(function (id) {
+          loadVideo(id, 'video');
+          loadVideo(id, 'video-notes');
+
           $('#the-modal .modal-body').append($('[data-observation-id="' + id + '"]').clone());
-          var $canvas = $('#the-modal .modal-body #' + id);
-          $canvas.attr('id', 'canvas' + id);
 
-          var annotation_data = $('#annotation_data_' + id).html();
-
-          $('#the-modal').on('shown.bs.modal', function() {
-            var $image = $('#the-modal .modal-body #image-' + id);
-            if ($image.length == 0) {
-                return;
-            }
-
-            var height = $image.height();
-            var width = $image.width();
-            var naturalWidth = $image.get(0).naturalWidth;
-            $image.hide();
-            var imageScale = width/naturalWidth;
-
-            var canvas = new fabric.Canvas('canvas' + id, {
-              isDrawingMode: false,
-              selection: false
-            });
-            canvas.setHeight(height);
-            canvas.setWidth(width);
-
-            var url = $('#url_'+id).html();
-            canvas.setBackgroundImage(
-              decodeURI(url.replace(/&amp;/g, '&')),
-              canvas.renderAll.bind(canvas), {
-                scaleX: imageScale,
-                scaleY:  imageScale
-              }
-            );
-
-            var ctx = {};
-            if (annotation_data !== "") {
-              var ctx = JSON.parse(annotation_data.replace(/&quot;/g, '"'));
-            }
-            var originalHeight = parseFloat(ctx['originalHeight']);
-            if (isNaN(originalHeight)) {
-              // Assume that original height was the same - scale it for 60% like in html
-              originalHeight = height / 0.6;
-            };
-            var scale = height / originalHeight;
-
-            canvas.loadFromJSON(ctx);
-            canvas.forEachObject(function (object) {
-              object = object.scale(scale);
-              object.left = object.left * scale;
-              object.top = object.top * scale;
-            });
-            canvas.renderAll();
-          });
+          loadPicture(id, is_touch_device);
         });
 
         var modal = $('#the-modal');
@@ -279,15 +320,14 @@
           {% if observation.original_image %}
           <div class="row no-gutters">
             <div class="col-12" style="">
-              <div class="art" style="">
-                <div style="display: flex; justify-content: center;">
+              <div class="art pinch-zoom" style="" id="art-{{ observation.id }}">
+                <div style="display: flex; justify-content: center; width: 530px; height: 332px;">
                   <canvas id="{{ observation.id }}"></canvas>
                 </div>
-                <div style="display: flex; justify-content: center;">
-                  <img class="" id="image-{{observation.id}}" src="{{ observation.original_image.url }}" alt="" style=" width: 60%; height: 60%"/>
-                </div>
-                <div class="d-none" id="annotation_data_{{observation.id}}">{{observation.annotation_data}}</div>
-                <div class="d-none" id="url_{{observation.id}}">{{observation.original_image.url}}</div>
+                <p class="d-none" id="image-width_{{ observation.id }}">{{ observation.image_width }}</p>
+                <div class="d-none" id="annotation_data_{{ observation.id }}">{{ observation.annotation_data }}</div>
+                <div class="d-none" id="image-source-{{ observation.id }}">{{ observation.original_image.url }}</div>
+                <img class="d-none" src="{{ observation.original_image.url }}" width="530px" height="332px">
               </div>
             </div>
           </div>

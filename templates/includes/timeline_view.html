@@ -1,4 +1,3 @@
-{% load observations %}
 {% load static %}
 
 {% block extrastyles %}
@@ -6,86 +5,9 @@
 {% endblock %}
 
 {% for construct, classes in star_chart_4.items %}
-<div class="star-v4">
-    <h4 class="text-align-center">{{ construct.abbreviation }}</h4>
-    <table class="table table-bordered star-chart-4-table-{{ construct.id }} chart-4">
-        <thead>
-            <tr>
-                <th scope="col">&nbsp;</th>
-
-                {% for level in construct.levels.all %}
-                    <th colspan="{{ level.sublevels.count }}" data-sublevels="{{ level.sublevels.count }}" class="text-center">
-                        <button class="btn btn-primary btn-sm horizontal-merge-4" id="horizontal-4-{{ level.id }}"
-                            data-sublevels="{{ level.sublevels.count }}" data-construct="construct-{{ construct.id }}"
-                            data-level-name="{{ level }}" data-levels-count="{{ construct.levels.count }}"
-                            >Merge {{ level }}</button>
-
-                        <button class="btn btn-primary btn-sm horizontal-unmerge-4" id="horizontal-back-4-{{ level.id }}"
-                            data-construct="construct-{{ construct.id }}"
-                            data-level-name="{{ level }}" data-levels-count="{{ construct.levels.count }}"
-                            >Separate {{ level }}</button>
-                    </th>
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for sublevel in construct.sublevels %}
-                    {% if forloop.first %}
-                        <th scope="col">
-                            <button 
-                                class="btn btn-primary btn-sm mergeVertical-4"
-                                id="mergeVertical-4-{{ construct.id }}"
-                                data-construct="construct-{{ construct.id }}"
-                                data-sublevels="{{ construct.sublevels.count }}">Merge all courses</button>
-
-                            <button 
-                                class="btn btn-primary btn-sm separateVertical-4"
-                                id="separateVertical-4-{{ construct.id }}"
-                                data-construct="construct-{{ construct.id }}"
-                                data-sublevels="{{ construct.sublevels.count }}">Separate all courses</button>
-                        </th>
-                    {% endif %}
-
-                    <th class="align-middle text-center sublevel" scope="col"
-                        title="{{ sublevel.description }}" data-toggle="tooltip"
-                        data-level-id="{{ sublevel.level.id }}">
-                        {{ sublevel.short_name }}
-                        {% if sublevel.description %}
-                            <span><i class="fa fa-info-circle"></i></span>
-                        {% endif %}
-                    </th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for class, sublevels in classes.items %}
-                <tr class="construct-{{ construct.id }} heat-row">
-                    <td><b>{{ class.name }}</b></td>
-
-                    {% for sublevel, observations in sublevels.items %}
-                        <td data-csl-id="{{ csl_id }}" class="text-center heat-{{ class.id }}-{{ sublevel.id }} heat-elem heatmap-elem"
-                            data-color="{% get_color_star_chart_4 sublevel observations %}"
-                            data-elem="heat-{{ construct.id }}-{{ class.id }}-{{ sublevel.id }}"
-                            bgcolor="{% get_color_star_chart_4 sublevel observations %}"
-                            data-sublevel="{{ sublevel.id }}" data-stars={{ observations|length }}>
-                        </td>
-                    {% endfor %}
-                </tr>
-                <tr class="construct-{{ construct.id }} thicker quantity-row">
-                    <td></td>
-
-                    {% for sublevel, observations in sublevels.items %}
-                        <td data-csl-id="{{ csl_id }}" data-stars="{{ observations|length }}"
-                            data-elem="star-{{ construct.id }}-{{ class.id }}-{{ sublevel.id }}"
-                            data-sublevel="{{ sublevel.id }}"
-                            class="text-center stars-{{ class.id }}-{{ sublevel.id }} stars-amount heatmap-elem">
-                            <span>{{ observations|length }}</span>
-                        </td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    {% with template_name='includes/_construct_timeline_table.html' %}
+        {% include 'includes/_display_constructs.html' %}
+    {% endwith %}
 {% endfor %}
 
 <div class="wrapper">

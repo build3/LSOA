@@ -1,42 +1,5 @@
-{% load observations %}
-
 {% for construct, classes in dot_matrix.items %}
-
-<div style="overflow-x: scroll;width:100%;">
-    <h4 class="text-align-center" style="margin-bottom: 25px;">{{ construct.abbreviation }}</h4>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th scope="col">&nbsp;</th>
-
-                {% for level in construct.sublevels %}
-                    <th scope="col" title="{{ level.description }}" data-toggle="tooltip">
-                        {{ level.short_name }}
-
-                        {% if level.description %}
-                            <span><i class="fa fa-info-circle"></i></span>
-                        {% endif %}
-                    </th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for class, sublevels in classes.items %}
-                <tr>
-                    <td>{{ class.name }}</td>
-                    {% for sublevel, observations in sublevels.items %}
-                        <td style="height: 60px" class="text-center"
-                            bgcolor="{{ sublevel|get_color_for_sublevel:observations }}"></td>
-                    {% endfor %}
-                </tr>
-                <tr class="thicker">
-                    <td></td>
-                    {% for sublevel, observations in sublevels.items %}
-                        <td class="text-center">({{ observations|length }})</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    {% with template_name='includes/_construct_heat_map_table.html' %}
+        {% include 'includes/_display_constructs.html' %}
+    {% endwith %}
 {% endfor %}
