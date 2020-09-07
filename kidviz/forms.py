@@ -277,3 +277,16 @@ class SetupSaveForm(forms.ModelForm):
             Q(owner=request.user)
             | Q(owner__isnull=True)
         )
+
+
+class ObservationByIDForm(forms.Form):
+    observation_id = forms.ModelChoiceField(
+        queryset=Observation.objects.all(),
+        widget=forms.widgets.TextInput(),
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
