@@ -133,6 +133,8 @@ class SetupView(LoginRequiredMixin, FormView):
             curricular_focus=True
         )[0].id
 
+        self.request.session.pop('read_only', None)
+
         if self.request.session.pop('re_setup', None):
             r['re_setup'] = True
             self.request.session['reconfigure'] = True
@@ -185,6 +187,8 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         return reverse_lazy('observation_view')
 
     def get(self, request, *args, **kwargs):
+        self.request.session.pop('read_only', None)
+
         if not self.request.session.get('course'):
             return HttpResponseRedirect(reverse('setup'))
         return super().get(request, *args, **kwargs)
@@ -345,8 +349,14 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         kwargs['chosen_tags'] = list(self.object.tags.all().values_list('id', flat=True))
         kwargs['use_draft'] = False
         kwargs['has_video'] = self.object.video != ''
+        kwargs['read_only'] = self.request.session.get('read_only', False)
 
         return super().get_context_data(**kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['read_only'] = self.request.session.get('read_only', False)
+        return kwargs
 
     def post(self, request, pk):
         self.object = self.get_object()
@@ -514,6 +524,8 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         return chart_keys[0]
 
     def get_context_data(self, **kwargs):
+        self.request.session.pop('read_only', None)
+
         session_course = self.request.session.get('course')
         course_ids = [self.request.user.get_course(session_course)]
         date_filtering_form = self._init_filter_form(self.request.GET)
@@ -682,6 +694,7 @@ class StudentsTimelineView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
+        self.request.session.pop('read_only', None)
 
         # Get default course or first course in database.
         course = self.request.user.get_course(self.request.session.get('course'))
@@ -760,6 +773,8 @@ class TeacherObservationView(LoginRequiredMixin, TemplateView):
     template_name = 'teachers_observations.html'
 
     def get_context_data(self, **kwargs):
+        self.request.session.pop('read_only', None)
+
         self.filtering_form = DateFilteringForm(self.request.GET)
         data = super().get_context_data(**kwargs)
 
@@ -1204,6 +1219,8 @@ class WorkQueue(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
+        self.request.session.pop('read_only', None)
+
         return Observation.objects.filter(
             Q(owner=self.request.user, constructs=None, is_draft=False) |
             Q(owner=self.request.user, is_draft=True)
@@ -1264,6 +1281,8 @@ class AdminObservationsByID(LoginRequiredMixin, FormView):
     template_name = "admin_observation_by_id.html"
 
     def form_valid(self, form):
+        self.request.session['read_only'] = True
+
         return HttpResponseRedirect(
             reverse('observation_detail_view', args=(form.data['observation_id'],))
         )
