@@ -29,7 +29,8 @@ from tablib import Dataset
 from kidviz.exceptions import InvalidFileFormatError
 from kidviz.forms import (
     ObservationForm, SetupForm, GroupingForm, ContextTagForm,
-    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm, SetupSaveForm
+    CourseFilterForm, DateFilteringForm, DraftObservationForm, StudentFilterForm, SetupSaveForm,
+    ObservationByIDForm
 )
 from kidviz.models import (
     ContextTag, Course, StudentGrouping, LearningConstructSublevel,
@@ -1255,4 +1256,14 @@ class GetUserSetup(LoginRequiredMixin, View):
                 'constructs': list(setup.constructs.all().values_list('id', flat=True)),
             },
             safe=True
+        )
+
+
+class AdminObservationsByID(LoginRequiredMixin, FormView):
+    form_class = ObservationByIDForm
+    template_name = "admin_observation_by_id.html"
+
+    def form_valid(self, form):
+        return HttpResponseRedirect(
+            reverse('observation_detail_view', args=(form.data['observation_id'],))
         )
