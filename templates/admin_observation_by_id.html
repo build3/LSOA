@@ -1,0 +1,27 @@
+{% extends 'base/b4_base_with_nav.html' %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-12 text-center">
+        <h3>Write ID of observation and click the submit button to see the observation details</h3>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12 text-center">
+        <form method="POST" class="form">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="offset-4 col-4 text-center">
+                <div class="form-group">
+                    {{ form }}
+                </div>
+                </div>
+            </div>
+
+            <input type="submit" class="btn btn-primary" />
+        </form>
+    </div>
+</div>
+{% endblock %}
