@@ -118,7 +118,7 @@ class ObservationForm(forms.ModelForm):
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=None,
-                 empty_permitted=False, instance=None, use_required_attribute=None):
+                 empty_permitted=False, instance=None, use_required_attribute=None, read_only=False):
         if data:
             data = data.copy()
             if not data.get('useMostRecentMedia'):
@@ -128,6 +128,10 @@ class ObservationForm(forms.ModelForm):
                          initial=initial, error_class=error_class, label_suffix=label_suffix,
                          empty_permitted=empty_permitted, instance=instance,
                          use_required_attribute=use_required_attribute)
+
+        if read_only:
+            for field in self.fields:
+                self.fields[field].disabled = True
 
     def clean(self):
         super().clean()
@@ -277,3 +281,16 @@ class SetupSaveForm(forms.ModelForm):
             Q(owner=request.user)
             | Q(owner__isnull=True)
         )
+
+
+class ObservationByIDForm(forms.Form):
+    observation_id = forms.ModelChoiceField(
+        queryset=Observation.objects.all(),
+        widget=forms.widgets.TextInput(),
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'

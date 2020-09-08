@@ -37,6 +37,7 @@ urlpatterns = [
 
     # admin site - used to allow teachers to create/modify their classes
     url(r'^admin/', admin.site.urls),
+    url(r'^admin-observation/$', kidviz.views.AdminObservationsByID.as_view(), name='admin-observation-by-id'),
 
     # observation view - the main screen of the application
     url(r'^observation/$', kidviz.views.ObservationCreateView.as_view(), name='observation_view'),
