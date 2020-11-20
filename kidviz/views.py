@@ -358,6 +358,9 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         kwargs['read_only'] = self.request.session.get('read_only', False)
         return kwargs
 
+    def get_success_url(self):
+        return reverse('observation_detail_view', args=(self.object.id,))
+
     def post(self, request, pk):
         self.object = self.get_object()
 
