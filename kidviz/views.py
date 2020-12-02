@@ -356,6 +356,8 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['read_only'] = self.request.session.get('read_only', False)
+        kwargs['initial'] = {}
+
         return kwargs
 
     def get_success_url(self):
