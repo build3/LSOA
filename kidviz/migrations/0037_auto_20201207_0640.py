@@ -7,7 +7,7 @@ def fix_constructs(apps, schema_editor):
     Observation = apps.get_model('kidviz', 'Observation')
     observations = Observation.objects.all().prefetch_related(
         'students', 'constructs'
-    ).filter(modified__lte='2020-11-18')
+    ).filter(created__lte='2020-11-18')
 
     for observation in observations:
         student = observation.students.first()
@@ -21,20 +21,24 @@ def fix_constructs(apps, schema_editor):
            for course in student.course_set.all():
                courses.add(course)
 
-        if observation.course not in courses:
-            for course in student.course_set.all():
-                use_course = True
+        selected_course = None
 
-                for student in observation.students.all():
-                    if course not in student.course_set.all():
-                        use_course = False
+        observation_year = observation.created.year
 
-                if use_course:
-                    observation.course = course
-                    continue
+        # -1 before september so I can match course in the whole academic year
+        # 2018 - 2019 for example
+        if observation.created.month <= 8:
+            observation_year -= 1
 
-            observation.construct_choices = [construct.id for construct in observation.constructs.all()]
-            observation.save()
+        for course in courses:
+            if course.created.year == observation_year:
+                selected_course = course
+
+        if selected_course and observation.course != selected_course:
+            observation.course = selected_course
+
+        observation.construct_choices += [construct.id for construct in observation.constructs.all()]
+        observation.save()
 
 
 class Migration(migrations.Migration):
