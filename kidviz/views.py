@@ -342,7 +342,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         kwargs['created'] = self.object.created
         kwargs['course'] = self.object.course
         kwargs['grouping'] = self.object.grouping
-        kwargs['tags'] = ContextTag.objects.filter(owner=self.request.user, pk__in=available_tags)
+        kwargs['tags'] = ContextTag.objects.filter(Q(owner=self.request.user) | Q(owner__isnull=True), pk__in=available_tags)
         kwargs['construct_choices'] = get_constructs(pk_list=self.object.construct_choices)
         kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
