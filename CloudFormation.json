@@ -1,0 +1,486 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "DatabaseUsername": {
+      "Type": "String",
+      "Description": "Username for database admin account",
+      "MinLength": "1",
+      "MaxLength": "16",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+      "Default": "kidviz",
+      "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
+    },
+    "DatabasePassword": {
+      "NoEcho": "true",
+      "Description": "The database admin account password",
+      "Type": "String",
+      "MinLength": "8",
+      "MaxLength": "41",
+      "AllowedPattern": "[a-zA-Z0-9]*",
+      "ConstraintDescription": "must contain only alphanumeric characters."
+    },
+    "AppServerSubnets": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "Subnets to place app server containers in"
+    },
+    "DatabaseAccessSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup::Id"
+    },
+    "DockerRepositoryName": {
+      "Type": "String",
+      "Description": "ECR repository name with app image",
+      "Default": "tots"
+    },
+    "VPC": {
+      "Type": "AWS::EC2::VPC::Id"
+    },
+    "SSLCertificate": {
+      "Type": "String",
+      "Description": "ACM certificate ARN for the HTTPS listener",
+      "Default": "arn:aws:acm:us-east-1:617608773253:certificate/c0e0f282-33da-4532-a82e-0474b0d9c614"
+    }
+  },
+  "Resources": {
+    "DatabaseSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": "TOTSDatabaseSG",
+        "GroupDescription": "Security group for TOTS database server"
+      }
+    },
+    "LoadBalancerSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": "TOTSLoadBalancerSG",
+        "GroupDescription": "Security group for TOTS load balancer",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIpv6": "::/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIpv6": "::/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+    "AppServerContainerSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": "TOTSAppServerSG",
+        "GroupDescription": "Security group for TOTS app server containers",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "LoadBalancerSG",
+                "GroupId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "DatabaseSecurityGroupIngress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "FromPort": 5432,
+        "ToPort": 5432,
+        "IpProtocol": "tcp",
+        "GroupId": {
+          "Fn::GetAtt": [
+            "DatabaseSecurityGroup",
+            "GroupId"
+          ]
+        },
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "AppServerContainerSG",
+            "GroupId"
+          ]
+        }
+      }
+    },
+    "DatabaseSecurityGroupProxyIngress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "FromPort": 5432,
+        "ToPort": 5432,
+        "IpProtocol": "tcp",
+        "GroupId": {
+          "Fn::GetAtt": [
+            "DatabaseSecurityGroup",
+            "GroupId"
+          ]
+        },
+        "SourceSecurityGroupId": {"Ref": "DatabaseAccessSecurityGroup"}
+      }
+    },
+    "DatabaseServer": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "VPCSecurityGroups": [
+          {
+            "Fn::GetAtt": ["DatabaseSecurityGroup", "GroupId"]
+          }
+        ],
+        "AllocatedStorage": "5",
+        "DBInstanceClass": "db.t3.small",
+        "Engine": "postgres",
+        "MasterUsername": {
+          "Ref": "DatabaseUsername"
+        },
+        "MasterUserPassword": {
+          "Ref": "DatabasePassword"
+        },
+        "DBName": "tots"
+      },
+      "DeletionPolicy": "Snapshot"
+    },
+    "AppServerLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "TOTSAppServer"
+      }
+    },
+    "AppServerExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "TOTSAppServerRole",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ecs-tasks.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "AppServerPolicy": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "ManagedPolicyName": "TOTSAppServerPolicy",
+        "Roles": [
+          {
+            "Ref": "AppServerExecutionRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "S3Access",
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject",
+                "s3:ListBucket"
+              ],
+              "Resource": [
+                "arn:aws:s3:::tots-content-e1",
+                "arn:aws:s3:::tots-content-e1/*"
+              ]
+            },{
+              "Sid": "ParameterStoreAccess",
+              "Effect": "Allow",
+              "Action": [
+                  "ssm:GetParametersByPath",
+                  "ssm:GetParameters",
+                  "ssm:GetParameter"
+              ],
+              "Resource": {"Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"}
+            },{
+              "Sid": "ParameterStoreDescribe",
+              "Effect": "Allow",
+              "Action": [
+                  "ssm:DescribeParameters"
+              ],
+              "Resource": "*"
+            },{
+              "Sid": "LogsAccess",
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogStream",
+                "logs:DescribeLogGroups",
+                "logs:DescribeLogStreams",
+                "logs:PutLogEvents"
+              ],
+              "Resource": [
+                {"Fn::GetAtt": ["AppServerLogGroup", "Arn"]}
+              ]
+            },{
+              "Sid": "ECR",
+              "Effect": "Allow",
+              "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "AppServerTaskDef": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "ContainerDefinitions": [
+          {
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "AppServerLogGroup"
+                },
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": "ecs"
+              }
+            },
+            "PortMappings": [
+              {
+                "HostPort": 80,
+                "Protocol": "tcp",
+                "ContainerPort": 80
+              }
+            ],
+            "Cpu": 1024,
+            "Secrets": [
+              {
+                "Name": "SENTRY_DSN",
+                "ValueFrom": "TOTSSentryDSN"
+              },{
+                "Name": "SES_ACCESS_KEY",
+                "ValueFrom": "TOTSAccessKey"
+              },{
+                "Name": "SES_SECRET_KEY",
+                "ValueFrom": "TOTSSecretKey"
+              },{
+                "Name": "DJANGO_SECRET_KEY",
+                "ValueFrom": "TOTSAppSecret"
+              }
+            ],
+            "Environment": [
+              {
+                "Name": "DATABASE_URL",
+                "Value": {
+                  "Fn::Sub": [
+                    "postgresql://${DatabaseUsername}:${DatabasePassword}@${DatabaseHostname}:5432/tots",
+                    {
+                      "DatabaseHostname": {
+                        "Fn::GetAtt": [
+                          "DatabaseServer",
+                          "Endpoint.Address"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "Name": "DJANGO_DEBUG",
+                "Value": "False"
+              },{
+                "Name": "DJANGO_EMAIL_BACKEND",
+                "Value": "anymail.backends.amazon_ses.EmailBackend"
+              },{
+                "Name": "FROM_EMAIL",
+                "Value": "noreply@233analytics.com"
+              },{
+                "Name": "AWS_STORAGE_BUCKET_NAME",
+                "Value": "tots-content-e1"
+              }
+            ],
+            "Image": {
+              "Fn::Sub": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${DockerRepositoryName}:latest"
+            },
+            "HealthCheck": {
+              "Retries": 3,
+              "Command": [
+                "CMD-SHELL",
+                "curl -f http://127.0.0.1/users/accounts/login/ || exit 1"
+              ],
+              "Timeout": 5,
+              "Interval": 30,
+              "StartPeriod": 60
+            },
+            "Name": "TOTS"
+          }
+        ],
+        "Cpu": "1024",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "AppServerExecutionRole",
+            "Arn"
+          ]
+        },
+        "Family": "TOTSTaskDef",
+        "Memory": "2048",
+        "NetworkMode": "awsvpc",
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "AppServerExecutionRole",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "ServerTargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "HealthCheckEnabled": true,
+        "HealthCheckIntervalSeconds": 30,
+        "HealthCheckPath": "/users/accounts/login/",
+        "HealthCheckPort": "traffic-port",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckTimeoutSeconds": 5,
+        "HealthyThresholdCount": 4,
+        "UnhealthyThresholdCount": 5,
+        "Name": "TOTSAppServerTG",
+        "Port": 80,
+        "Protocol": "HTTP",
+        "TargetType": "ip",
+        "VpcId": {"Ref": "VPC"}
+      }
+    },
+    "LoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Name": "TOTSApplicationLB",
+        "Subnets": {
+          "Ref": "AppServerSubnets"
+        },
+        "SecurityGroups": [{
+          "Fn::GetAtt": ["LoadBalancerSG", "GroupId"]
+        }]
+      }
+    },
+    "HttpsRedirectListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "LoadBalancerArn": {"Ref": "LoadBalancer"},
+        "Port": 80,
+        "Protocol": "HTTP",
+        "DefaultActions": [{
+          "RedirectConfig": {
+            "Host": "#{host}",
+            "Path": "/#{path}",
+            "Port": 443,
+            "Protocol": "HTTPS",
+            "Query": "#{query}",
+            "StatusCode": "HTTP_301"
+          },
+          "Type": "redirect"
+        }]
+      }
+    },
+    "HttpsListener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "LoadBalancerArn": {"Ref": "LoadBalancer"},
+        "Port": 443,
+        "Certificates": [{"CertificateArn": {"Ref": "SSLCertificate"}}],
+        "Protocol": "HTTPS",
+        "DefaultActions": [{
+          "FixedResponseConfig": {
+            "StatusCode": 503
+          },
+          "Type": "fixed-response"
+        }]
+      }
+    },
+    "AppServerLBRule": {
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": {"Ref": "ServerTargetGroup"}
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": ["/*"]
+        }],
+        "ListenerArn": {"Ref": "HttpsListener"},
+        "Priority": 1
+      }
+    },
+    "ECSCluster": {
+      "Type": "AWS::ECS::Cluster",
+      "Properties": {
+        "ClusterName": "TOTSCluster"
+      }
+    },
+    "AppService": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "Cluster": {
+          "Ref": "ECSCluster"
+        },
+        "DesiredCount": 1,
+        "HealthCheckGracePeriodSeconds": 15,
+        "LaunchType": "FARGATE",
+        "ServiceName": "TOTSAppService",
+        "LoadBalancers": [{
+          "ContainerName": "TOTS",
+          "ContainerPort": 80,
+          "TargetGroupArn": {"Ref": "ServerTargetGroup"}
+        }],
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "ENABLED",
+            "SecurityGroups": [
+              {
+                "Fn::GetAtt": [
+                  "AppServerContainerSG",
+                  "GroupId"
+                ]
+              }
+            ],
+            "Subnets": {
+              "Ref": "AppServerSubnets"
+            }
+          }
+        },
+        "TaskDefinition": {
+          "Ref": "AppServerTaskDef"
+        }
+      }
+    }
+  }
+}
