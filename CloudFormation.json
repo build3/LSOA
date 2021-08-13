@@ -201,8 +201,7 @@
               "Sid": "S3Access",
               "Effect": "Allow",
               "Action": [
-                "s3:GetObject",
-                "s3:ListBucket"
+                "s3:*"
               ],
               "Resource": [
                 "arn:aws:s3:::tots-content-e1",
