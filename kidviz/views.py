@@ -342,7 +342,7 @@ class ObservationDetailView(SuccessMessageMixin, LoginRequiredMixin, UpdateView)
         kwargs['created'] = self.object.created
         kwargs['course'] = self.object.course
         kwargs['grouping'] = self.object.grouping
-        kwargs['tags'] = ContextTag.objects.filter(owner=self.request.user, pk__in=available_tags)
+        kwargs['tags'] = ContextTag.objects.filter(Q(owner=self.request.user) | Q(owner__isnull=True), pk__in=available_tags)
         kwargs['construct_choices'] = get_constructs(pk_list=self.object.construct_choices)
         kwargs['chosen_students'] = json.dumps(list(self.object.students.all().values_list('id', flat=True)))
         kwargs['chosen_constructs'] = json.dumps(list(self.object.constructs.all().values_list('id', flat=True)))
@@ -532,8 +532,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         self.request.session.pop('read_only', None)
 
         session_course = self.request.session.get('course')
-        course_ids = [self.request.user.get_course(session_course)]
-        date_filtering_form = self._init_filter_form(self.request.GET)
+        star_courses = self.request.session.get('star_courses', [])
+        course_ids = list(dict.fromkeys([self.request.user.get_course(session_course)] + star_courses))
+        date_filtering_form = self._init_filter_form(self.request.GET, course_ids)
 
         date_from = None
         date_to = None
@@ -553,6 +554,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             if self.request.GET:
                 if courses:
                     course_ids = [course.id for course in courses]
+                    self.request.session['star_courses'] = course_ids
 
         (observations, star_chart_4_obs) = Observation.get_observations(
             course_ids, date_from, date_to, tags, learning_constructs)
@@ -683,7 +685,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         return data
 
-    def _init_filter_form(self, GET_DATA):
+    def _init_filter_form(self, GET_DATA, courses):
         return DateFilteringForm(GET_DATA, initial={
             'course': GET_DATA.get('course', None),
             'date_from': GET_DATA.get('date_from', None),
