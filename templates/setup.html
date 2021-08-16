@@ -343,7 +343,7 @@
                                   <h3><b>{{ sublevel.name }}'s</b> examples</h3>
                                   {% for example in sublevel.examples.all %}
                                     <hr>
-                                    <p>{{ example.text }}</p>
+                                    <p>{{ example.text | safe }}</p>
                                     {% if example.image %}
                                       <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
                                         <img src="{{ example.image.url }}" class-"example-image"/>
