@@ -273,7 +273,7 @@
                            {% if forloop.first %}data-sublevel-id="{{ sublevel.id }}"{% endif %}
                            style="text-align: center;">
                         <h4>{{ sublevel.name }}</h4>
-                        <p>{{ example.text | text }}</p>
+                        <p>{{ example.text | safe }}</p>
                         {% if example.image %}
                           <a href="{{ example.image.url }}" data-lightbox="{{ example.image.url }}">
                             <img src="{{ example.image.url }}" style="max-height: 280px; max-width: 20vw;"/>
