@@ -8,6 +8,7 @@ from datetime import timedelta
 from functools import reduce
 
 from braces.views import JSONResponseMixin
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -528,6 +529,40 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         return chart_keys[0]
 
+    def _duplicate_observations_by_mappings(self, mappings, star_matrix_by_class):
+        """
+        Duplicates observations from one construct sublevel to another according
+        to defined mappings. This is used by some schools where learning one construct
+        is equivalent to learning another, to reflect that in the reports.
+
+        The mappings are defined in LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS
+        settings variable as a JSON representation of a dict, i.e.
+
+        {"ToML 2A": "ToMAº 1A"}
+        """
+        if not mappings:
+            mappings = {}
+
+        saved_observations = {}
+
+        # Copy source observations
+        for construct, classes in star_matrix_by_class.items():
+            for student_class, students in classes.items():
+                for student, sublevels in students.items():
+                    for sublevel, observations in sublevels.items():
+                        if sublevel.name in mappings:
+                            saved_observations[
+                                (student, mappings[sublevel.name])
+                            ] = observations
+
+        # Extend second lists
+        for construct, classes in star_matrix_by_class.items():
+            for student_class, students in classes.items():
+                for student, sublevels in students.items():
+                    for sublevel, observations in sublevels.items():
+                        if (student, sublevel.name) in saved_observations:
+                            observations.extend(saved_observations[(student, sublevel.name)])
+
     def get_context_data(self, **kwargs):
         self.request.session.pop('read_only', None)
 
@@ -655,6 +690,16 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                                     star_matrix_by_class[construct][observation.course][student][sub] = []
 
                             star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
+
+        # Manipulate star_matrix_by_class to conditionally duplicate some observations
+        # for one of the schools needing this feature. To control which learning
+        # construct sublevels are duplicated, set the settings dictionary
+        # LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS.
+
+        self._duplicate_observations_by_mappings(
+            json.loads(settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS),
+            star_matrix_by_class
+        )
 
         min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
         star_chart_4, star_chart_4_dates = Observation.create_star_chart_4(
