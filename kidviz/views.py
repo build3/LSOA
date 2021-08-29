@@ -550,6 +550,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             for student_class, students in classes.items():
                 for student, sublevels in students.items():
                     for sublevel, observations in sublevels.items():
+                        print("Looking for " + sublevel.name + "in mappings")
                         if sublevel.name in mappings:
                             saved_observations[
                                 (student, mappings[sublevel.name])
@@ -695,7 +696,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
         # for one of the schools needing this feature. To control which learning
         # construct sublevels are duplicated, set the settings dictionary
         # LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS.
-
+        print("Mappings to duplicate are " + settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS)
         self._duplicate_observations_by_mappings(
             json.loads(settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS),
             star_matrix_by_class
