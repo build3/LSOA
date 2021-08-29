@@ -229,3 +229,23 @@ AWS_S3_REGION_NAME = 'us-east-1'
 
 # OTHER PLUGIN SETTINGS
 TINYMCE_DEFAULT_CONFIG = {'height': 400, 'width': 600}
+
+# DUPLICATE CONSTRUCTS MAPPING
+
+"""
+Used to duplicate observations from one construct sublevel to another according
+to defined mappings. This is used by some schools where learning one construct
+is equivalent to learning another, to reflect that in the reports.
+
+The mappings must be defined as a JSON string of a plain dict with source
+sublevel construct names as keys, and target sublevel construct names as values.
+
+Can be set through an environment varibale.
+
+Example: {"ToML 2A": "ToMAº 1A"}
+"""
+
+LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS = os.getenv(
+    'LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS',
+    '{}'
+)
