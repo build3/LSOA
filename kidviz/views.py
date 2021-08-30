@@ -554,7 +554,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                             saved_observations[
                                 (student, mappings[sublevel.name])
                             ] = observations
-        print("Saved observations are " + json.dumps(saved_observations))
         # Extend second lists
         for construct, classes in star_matrix_by_class.items():
             for student_class, students in classes.items():
