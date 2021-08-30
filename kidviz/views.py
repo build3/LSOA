@@ -560,7 +560,6 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 for student, sublevels in students.items():
                     for sublevel, observations in sublevels.items():
                         if (student, sublevel.name) in saved_observations:
-                            print("adding observation to " + sublevel.name)
                             observations.extend(saved_observations[(student, sublevel.name)])
 
     def get_context_data(self, **kwargs):
