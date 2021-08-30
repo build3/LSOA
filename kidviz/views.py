@@ -550,8 +550,9 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             for student_class, students in classes.items():
                 for student, sublevels in students.items():
                     for sublevel, observations in sublevels.items():
-                        print("Looking for " + sublevel.name + "in mappings")
+                        print("Looking for " + sublevel.name + " in mappings " + json.dumps(mappings))
                         if sublevel.name in mappings:
+                            print("Found it")
                             saved_observations[
                                 (student, mappings[sublevel.name])
                             ] = observations
