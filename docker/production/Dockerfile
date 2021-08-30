@@ -1,6 +1,6 @@
 FROM python:3.6-slim
 
-RUN apt update && apt install -y gcc libpq-dev netcat pipenv curl
+RUN apt-get clean && apt-get update && apt-get install -y gcc libpq-dev netcat pipenv curl
 COPY tools/wait-for /tools/wait-for
 COPY tools/run-production.sh /tools/run.sh
 
