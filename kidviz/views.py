@@ -550,19 +550,18 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             for student_class, students in classes.items():
                 for student, sublevels in students.items():
                     for sublevel, observations in sublevels.items():
-                        print("Looking for " + sublevel.name + " in mappings " + json.dumps(mappings))
                         if sublevel.name in mappings:
-                            print("Found it")
                             saved_observations[
                                 (student, mappings[sublevel.name])
                             ] = observations
-
+        print("Saved observations are " + json.dumps(saved_observations))
         # Extend second lists
         for construct, classes in star_matrix_by_class.items():
             for student_class, students in classes.items():
                 for student, sublevels in students.items():
                     for sublevel, observations in sublevels.items():
                         if (student, sublevel.name) in saved_observations:
+                            print("adding observation to " + sublevel.name)
                             observations.extend(saved_observations[(student, sublevel.name)])
 
     def get_context_data(self, **kwargs):
