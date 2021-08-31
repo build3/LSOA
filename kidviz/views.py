@@ -529,7 +529,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
         return chart_keys[0]
 
-    def _duplicate_observations_by_mappings(self, mappings, star_matrix_by_class):
+    def _duplicate_star_matrix_by_class_observations_by_mappings(self, mappings, star_matrix_by_class):
         """
         Duplicates observations from one construct sublevel to another according
         to defined mappings. This is used by some schools where learning one construct
@@ -554,6 +554,7 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                             saved_observations[
                                 (student, mappings[sublevel.name])
                             ] = observations
+
         # Extend second lists
         for construct, classes in star_matrix_by_class.items():
             for student_class, students in classes.items():
@@ -561,6 +562,38 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                     for sublevel, observations in sublevels.items():
                         if (student, sublevel.name) in saved_observations:
                             observations.extend(saved_observations[(student, sublevel.name)])
+
+    def _duplicate_dot_matrix_observations_by_mappings(self, mappings, dot_matrix):
+        """
+        Duplicates observations from one construct sublevel to another according
+        to defined mappings. This is used by some schools where learning one construct
+        is equivalent to learning another, to reflect that in the reports.
+
+        The mappings are defined in LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS
+        settings variable as a JSON representation of a dict, i.e.
+
+        {"ToML 2A": "ToMAº 1A"}
+        """
+        if not mappings:
+            mappings = {}
+
+        saved_observations = {}
+
+        # Copy source observations
+        for construct, courses in dot_matrix.items():
+            for course, sublevels in courses.items():
+                for sublevel, observations in sublevels.items():
+                    if sublevel.name in mappings:
+                        saved_observations[
+                            (course, mappings[sublevel.name])
+                        ] = observations
+
+        # Extend second lists
+        for construct, courses in dot_matrix.items():
+            for course, sublevels in courses.items():
+                for sublevel, observations in sublevels.items():
+                    if (course, sublevel.name) in saved_observations:
+                        observations.extend(saved_observations[(course, sublevel.name)])
 
     def get_context_data(self, **kwargs):
         self.request.session.pop('read_only', None)
@@ -690,14 +723,17 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
 
                             star_matrix_by_class[construct][observation.course][student][sublevel].append(observation)
 
-        # Manipulate star_matrix_by_class to conditionally duplicate some observations
-        # for one of the schools needing this feature. To control which learning
-        # construct sublevels are duplicated, set the settings dictionary
+        # Manipulate star_matrix_by_class and dot_matrix to conditionally duplicate
+        # some observations for one of the schools needing this feature. To control
+        # which learning construct sublevels are duplicated, set the settings dictionary
         # LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS.
-        print("Mappings to duplicate are " + settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS)
-        self._duplicate_observations_by_mappings(
+        self._duplicate_star_matrix_by_class_observations_by_mappings(
             json.loads(settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS),
             star_matrix_by_class
+        )
+        self._duplicate_dot_matrix_observations_by_mappings(
+            json.loads(settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS),
+            dot_matrix
         )
 
         min_date = Observation.get_min_date_from_observation(star_chart_4_obs)
