@@ -414,6 +414,10 @@
             <a href="{% url 'observation_detail_view' pk=observation.id %}" class="btn btn-primary pull-right">Edit</a>
           </h3>
           <small class="d-block">
+            <b>Observation ID:</b>
+            #{{ observation.id }}
+          </small>
+          <small class="d-block">
             <b>Students Observed:</b>
             {{ observation.students.all|join:', ' }}
           </small>
