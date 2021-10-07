@@ -163,7 +163,8 @@ class ObservationAdmin(admin.ModelAdmin):
                 'curricular_focus',
                 'observation_date',
                 'parent',
-                'is_draft'
+                'is_draft',
+                'is_imported'
             )
         }),
         ('Notes', {
