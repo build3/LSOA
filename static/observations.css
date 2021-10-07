@@ -17,9 +17,29 @@ table, .ios .page {
 [data-modal-launch-observations] i {
     color: goldenrod;
 }
+[data-modal-launch-observations] i.observation-imported-true {
+    color: blue;
+}
+[data-modal-launch-observations] i.observation-imported-mixed {
+    background: linear-gradient(to left, blue 49%, goldenrod 50%);
+    color: transparent;
+
+    -webkit-background-clip: text;
+    background-clip: text;
+}
 
 [data-modal-launch-observations]:hover i {
     color: darkgoldenrod;
+}
+[data-modal-launch-observations]:hover i.observation-imported-true {
+    color: navy;
+}
+[data-modal-launch-observations]:hover i.observation-imported-mixed {
+    background: linear-gradient(to left, navy 49%, darkgoldenrod 50%);
+    color: transparent;
+
+    -webkit-background-clip: text;
+    background-clip: text;
 }
 
 .star-number {
@@ -68,7 +88,7 @@ input[type="date"] {
     width: 530px;
     height: 332px !important;
 }
-  
+
 .pinch-zoom {
     width: 530px;
     height: 332px !important;
