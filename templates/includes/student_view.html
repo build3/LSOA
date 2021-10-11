@@ -71,7 +71,7 @@ $(document).ready(function() {
                             <th scope="row" class="student-{{ construct.id }} thicker class-{{ class.id }} student-cell fixed-student"
                                 >{{ student }}{% if not student.consented_to_research and not perms.kidviz.can_view_nonconsent_observations %}*{% endif %}
                             </th>
-                    
+
                             {% for sublevel, observations in sublevels.items %}
                                 <td data-csl-id="{{ csl_id }}" style="border-bottom: 3pt solid black;"
                                     class="text-center thicker" data-class="{{ class.id }}"
@@ -79,13 +79,34 @@ $(document).ready(function() {
                                         data-modal-launch-observations="{{ observations|observation_pks }}"
                                     {% endif %}>
 
+                                    {% regroup observations|dictsort:"is_imported" by is_imported as observations_by_source %}
+
                                     {% if observations %}
-                                        <i data-toggle="tooltip" title="" class="fa fa-star"></i>
-                                    {% endif %}
-                                    {% if observations|length > 1 %}
-                                        <span class="star-number">({{ observations|length }})</span>
-                                    {% else %}
-                                        &nbsp;
+                                        {% if observations_by_source|length == 1 %}
+                                        <i
+                                            data-toggle="tooltip"
+                                            title=""
+                                            class="fa fa-star observation-imported-{{ observations_by_source.0.grouper|lower }}">
+                                        </i>
+                                        {% else %}
+                                        <i
+                                            data-toggle="tooltip"
+                                            title=""
+                                            class="fa fa-star observation-imported-mixed">
+                                        </i>
+                                        {% endif %}
+
+                                        {% if observations|length > 1 %}
+                                            <span class="star-number">
+                                                {% if observations_by_source|length == 1 %}
+                                                    ({{ observations|length }})
+                                                {% else %}
+                                                    ({{ observations_by_source.0.list|length }}&nbsp;+&nbsp;{{ observations_by_source.1.list|length }})
+                                                {% endif %}
+                                            </span>
+                                        {% else %}
+                                            &nbsp;
+                                        {% endif %}
                                     {% endif %}
                                 </td>
                             {% endfor %}
@@ -96,7 +117,7 @@ $(document).ready(function() {
                             <th scope="row" class="student-{{ construct.id }} class-{{ class.id }} student-cell fixed-student"
                                 >{{ student }}{% if not student.consented_to_research and not perms.kidviz.can_view_nonconsent_observations %}*{% endif %}
                             </th>
-                    
+
                             {% for sublevel, observations in sublevels.items %}
                                 <td data-csl-id="{{ csl_id }}"
                                     class="text-center" data-class="{{ class.id }}"
@@ -104,13 +125,34 @@ $(document).ready(function() {
                                         data-modal-launch-observations="{{ observations|observation_pks }}"
                                     {% endif %}>
 
+                                    {% regroup observations|dictsort:"is_imported" by is_imported as observations_by_source %}
+
                                     {% if observations %}
-                                        <i data-toggle="tooltip" title="" class="fa fa-star"></i>
-                                    {% endif %}
-                                    {% if observations|length > 1 %}
-                                        <span class="star-number">({{ observations|length }})</span>
-                                    {% else %}
-                                        &nbsp;
+                                        {% if observations_by_source|length == 1 %}
+                                        <i
+                                            data-toggle="tooltip"
+                                            title=""
+                                            class="fa fa-star observation-imported-{{ observations_by_source.0.grouper|lower }}">
+                                        </i>
+                                        {% else %}
+                                        <i
+                                            data-toggle="tooltip"
+                                            title=""
+                                            class="fa fa-star observation-imported-mixed">
+                                        </i>
+                                        {% endif %}
+
+                                        {% if observations|length > 1 %}
+                                            <span class="star-number">
+                                                {% if observations_by_source|length == 1 %}
+                                                    ({{ observations|length }})
+                                                {% else %}
+                                                    ({{ observations_by_source.0.list|length }}&nbsp;+&nbsp;{{ observations_by_source.1.list|length }})
+                                                {% endif %}
+                                            </span>
+                                        {% else %}
+                                            &nbsp;
+                                        {% endif %}
                                     {% endif %}
                                 </td>
                             {% endfor %}
