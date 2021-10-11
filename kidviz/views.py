@@ -198,6 +198,8 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if request.POST.get('use_recent_observation'):
             return self.get(request, *args, **kwargs)
         else:
+            context = self.get_context_data()
+
             if request.POST.get('is_draft', None) == 'True':
                 if request.session.get('create_new', None):
                     form = DraftObservationForm(request.POST, request.FILES)
@@ -238,7 +240,12 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
                 messages.add_message(request, messages.SUCCESS, message)
                 return HttpResponseRedirect(self.get_success_url())
             else:
-                form = ObservationForm(request.POST, request.FILES)
+                form = ObservationForm(
+                    request.POST,
+                    request.FILES,
+                    # XXX: dirty passing context to form
+                    form_context=context
+                )
                 return self.form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -289,6 +296,10 @@ class ObservationCreateView(SuccessMessageMixin, LoginRequiredMixin, FormView):
         if self.request.POST.get('use_recent_observation'):
             kwargs['use_last_sample'] = True
             kwargs['form'] = ObservationForm(initial=self.initial)
+
+        # Form save was submitted with use last sample, so that we know
+        if self.request.POST.get('use_last_sample'):
+            kwargs['use_last_sample'] = True
 
         if not self.request.POST.get('use_recent_observation') and not create_new:
             draft_observation = Observation.objects.filter(is_draft=True, owner=self.request.user) \

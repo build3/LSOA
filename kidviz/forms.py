@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import logging
+
 from django import forms
 from django.db.models import Q
 from django.forms.utils import ErrorList
@@ -13,6 +15,8 @@ from kidviz.models import (Course, LearningConstruct, LearningConstructSublevel,
 from kidviz.widgets import CustomCheckboxWidget
 
 from users.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class TagWidget(SelectMultiple):
@@ -118,9 +122,13 @@ class ObservationForm(forms.ModelForm):
 
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
                  initial=None, error_class=ErrorList, label_suffix=None,
-                 empty_permitted=False, instance=None, use_required_attribute=None, read_only=False):
+                 empty_permitted=False, instance=None, use_required_attribute=None, read_only=False,
+                 **kwargs):
+        self.form_context = kwargs.pop('form_context', {})
+
         if data:
             data = data.copy()
+
             if not data.get('useMostRecentMedia'):
                 data['parent'] = None
 
@@ -146,6 +154,16 @@ class ObservationForm(forms.ModelForm):
         if not (self.cleaned_data['constructs'] or self.cleaned_data['no_constructs']):
             self.add_error(field='constructs',
                            error='You must choose at least one learning construct for the observation')
+
+        use_last_sample = self.form_context.get('use_last_sample', None)
+        recent_observation = self.form_context.get('recent_observation', None)
+
+        has_image_or_video = self.cleaned_data['original_image'] or self.cleaned_data['video']
+
+        if use_last_sample and recent_observation and not has_image_or_video:
+            # We have recent observation that should be used
+            self.cleaned_data['original_image'] = recent_observation.original_image
+            self.cleaned_data['video'] = recent_observation.video
 
         return self.cleaned_data
 
@@ -238,7 +256,7 @@ class DateFilteringForm(forms.Form):
 
 class DraftObservationForm(ObservationForm):
     """This form is used to save draft observation without any validation."""
-    
+
     def clean(self):
         """Remove validation from parent form."""
         return self.cleaned_data
