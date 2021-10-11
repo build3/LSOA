@@ -110,6 +110,10 @@
           <input type="hidden" id="annotated-image" name="annotation_data" value="">
           <input type="hidden" id="image-width" name="image_width" value="">
           <input type="hidden" id="has-been-reset" name="has_been_reset" value="False">
+
+          {% if use_last_sample %}
+          <input type="hidden" id="use_last_sample" name="use_last_sample" value="True">
+          {% endif %}
         </div>
 
         <div class="btn-group-lg text-center mt-1" id="buttons-capture">

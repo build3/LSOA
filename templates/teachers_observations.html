@@ -295,6 +295,10 @@
             </a>
             <a href="{% url 'observation_detail_view' pk=observation.id %}" class=" btn btn-primary pull-right">Edit</a>
           </h3>
+          <small class="d-block">
+            <b>Observation ID:</b>
+            #{{ observation.id }}
+          </small>
           <small class="d-block"><b>Constructs:</b> {{ observation.constructs.all|join:', ' }}</small>
           <small class="d-block"><b>Observation date:</b> {{ observation.observation_date }}</small>
           <small class="d-block"><b>Recorded on:</b> {{ observation.created }}</small>

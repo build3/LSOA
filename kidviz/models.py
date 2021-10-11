@@ -207,6 +207,9 @@ class Observation(TimeStampedModel, OwnerMixin):
     observation_date = models.DateField(default=now)
     is_draft = models.BooleanField(default=False)
 
+    # denotes observations imported from external sources
+    is_imported = models.BooleanField(default=False)
+
     image_width = models.CharField(null=True, blank=True, max_length=255)
 
     @property
