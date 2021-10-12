@@ -28,7 +28,7 @@
                             {% for observation in observations %}
                                 <div class="row">
                                     <span
-                                        class="dot"
+                                        class="dot {% if observation.is_imported %} dot-imported {% endif %}"
                                         data-csl-id="{{ observation.id }}"
                                         data-modal-launch-observations="[{{ observation.id }}]"/>
                                 </div>
