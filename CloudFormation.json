@@ -247,6 +247,11 @@
               "Resource": [
                 "*"
               ]
+            },{
+              "Sid": "SES",
+              "Effect": "Allow",
+              "Action": ["ses:SendRawEmail"],
+              "Resource": "*"
             }
           ]
         }
