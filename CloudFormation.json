@@ -250,7 +250,8 @@
             },{
               "Sid": "SES",
               "Effect": "Allow",
-              "Action": ["ses:SendRawEmail"]
+              "Action": ["ses:SendRawEmail"],
+              "Resource": "*"
             }
           ]
         }
