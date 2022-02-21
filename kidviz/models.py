@@ -245,6 +245,15 @@ class Observation(TimeStampedModel, OwnerMixin):
         self.original_image = None
         self.save()
 
+    @property
+    def should_be_blue(self):
+        """
+        Some observations are treated differently in display and are
+        rendered as blue. Those are observations with is_imported=True
+        or belonging to the Formative Assessment tag.
+        """
+        return self.is_imported or self.tags.filter(text='Formative Assessment').exists()
+
     @classmethod
     def get_observations(
         cls, course_id, date_from, date_to, tags, learning_constructs):
