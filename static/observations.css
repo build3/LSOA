@@ -55,6 +55,10 @@ table, .ios .page {
     margin: 3px auto;
 }
 
+.dot-imported {
+  background-color: navy;
+}
+
 .dot:hover {
     background-color: #cb6634;
 }

@@ -79,7 +79,7 @@ $(document).ready(function() {
                                         data-modal-launch-observations="{{ observations|observation_pks }}"
                                     {% endif %}>
 
-                                    {% regroup observations|dictsort:"is_imported" by is_imported as observations_by_source %}
+                                    {% regroup observations|dictsort:"should_be_blue" by should_be_blue as observations_by_source %}
 
                                     {% if observations %}
                                         {% if observations_by_source|length == 1 %}
@@ -125,7 +125,7 @@ $(document).ready(function() {
                                         data-modal-launch-observations="{{ observations|observation_pks }}"
                                     {% endif %}>
 
-                                    {% regroup observations|dictsort:"is_imported" by is_imported as observations_by_source %}
+                                    {% regroup observations|dictsort:"should_be_blue" by should_be_blue as observations_by_source %}
 
                                     {% if observations %}
                                         {% if observations_by_source|length == 1 %}
