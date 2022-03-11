@@ -34,7 +34,7 @@ gunicorn = "==19.8.1"
 raven = "==6.9.0"
 django-debug-toolbar = "==1.10.1"
 Django = "==2.2.13"
-Pillow = "==6.2.0"
+Pillow = "==9.0.1"
 
 [requires]
 python_version = "3.7"
