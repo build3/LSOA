@@ -562,9 +562,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 for student, sublevels in students.items():
                     for sublevel, observations in sublevels.items():
                         if sublevel.name in mappings:
+                            if not (student, mappings[sublevel.name]) in saved_observations:
+                                saved_observations[
+                                    (student, mappings[sublevel.name])
+                                ] = []
+
                             saved_observations[
                                 (student, mappings[sublevel.name])
-                            ] = observations
+                            ].extend(observations)
 
         # Extend second lists
         for construct, classes in star_matrix_by_class.items():
@@ -595,9 +600,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             for course, sublevels in courses.items():
                 for sublevel, observations in sublevels.items():
                     if sublevel.name in mappings:
+                        if not (course, mappings[sublevel.name]) in saved_observations:
+                            saved_observations[
+                                (course, mappings[sublevel.name])
+                            ] = []
+
                         saved_observations[
                             (course, mappings[sublevel.name])
-                        ] = observations
+                        ].extend(observations)
 
         # Extend second lists
         for construct, courses in dot_matrix.items():
@@ -628,13 +638,22 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             for course, sublevels in courses.items():
                 for sublevel, observations in sublevels.items():
                     if sublevel.name in mappings:
+                        if not (course, mappings[sublevel.name]) in saved_observations:
+                            saved_observations[
+                                (course, mappings[sublevel.name])
+                            ] = []
+
+                            saved_observations_dates[
+                                (course, mappings[sublevel.name])
+                            ] = []
+
                         saved_observations[
                             (course, mappings[sublevel.name])
-                        ] = observations
+                        ].extend(observations)
 
                         saved_observations_dates[
                             (course, mappings[sublevel.name])
-                        ] = star_chart_4_dates[construct.id][course.id][sublevel.id]
+                        ].extend(star_chart_4_dates[construct.id][course.id][sublevel.id])
 
         # Extend second lists
         for construct, courses in start_chart_4.items():
