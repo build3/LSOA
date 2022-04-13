@@ -666,6 +666,37 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                             saved_observations_dates[(course, sublevel.name)]
                         )
 
+    def _extend_filtered_constructs_with_mappings(self, constructs):
+        """
+        When user filters constructs, this method goes through construct
+        mappings copying observation between constructs to make sure both
+        ends of the mappings are always filtered together.
+        """
+        mappings = json.loads(settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS)
+
+        mapped_abbreviations = {}
+
+        for k, v in mappings.items():
+            k = k.split(' ')[0]
+            v = v.split(' ')[0]
+
+            if not v in mapped_abbreviations:
+                mapped_abbreviations[v] = set()
+
+            mapped_abbreviations[v].add(k)
+
+        abbreviations_to_add = []
+
+        for abbreviation in LearningConstruct.objects.filter(
+            pk__in=constructs
+        ).values_list('abbreviation', flat=True):
+            if abbreviation in mapped_abbreviations:
+                abbreviations_to_add.extend(list(mapped_abbreviations[abbreviation]))
+
+        return constructs + [str(a) for a in LearningConstruct.objects.filter(
+            abbreviation__in=abbreviations_to_add
+        ).values_list('pk', flat=True)]
+
     def get_context_data(self, **kwargs):
         self.request.session.pop('read_only', None)
 
@@ -687,7 +718,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
             courses = date_filtering_form.cleaned_data['courses']
-            learning_constructs = date_filtering_form.cleaned_data['learning_constructs']
+            learning_constructs = self._extend_filtered_constructs_with_mappings(
+                date_filtering_form.cleaned_data['learning_constructs']
+            )
+
             # If there aren't any query params use default course.
             if self.request.GET:
                 if courses:
