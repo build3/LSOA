@@ -562,9 +562,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                 for student, sublevels in students.items():
                     for sublevel, observations in sublevels.items():
                         if sublevel.name in mappings:
+                            if not (student, mappings[sublevel.name]) in saved_observations:
+                                saved_observations[
+                                    (student, mappings[sublevel.name])
+                                ] = []
+
                             saved_observations[
                                 (student, mappings[sublevel.name])
-                            ] = observations
+                            ].extend(observations)
 
         # Extend second lists
         for construct, classes in star_matrix_by_class.items():
@@ -595,9 +600,14 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             for course, sublevels in courses.items():
                 for sublevel, observations in sublevels.items():
                     if sublevel.name in mappings:
+                        if not (course, mappings[sublevel.name]) in saved_observations:
+                            saved_observations[
+                                (course, mappings[sublevel.name])
+                            ] = []
+
                         saved_observations[
                             (course, mappings[sublevel.name])
-                        ] = observations
+                        ].extend(observations)
 
         # Extend second lists
         for construct, courses in dot_matrix.items():
@@ -628,13 +638,22 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             for course, sublevels in courses.items():
                 for sublevel, observations in sublevels.items():
                     if sublevel.name in mappings:
+                        if not (course, mappings[sublevel.name]) in saved_observations:
+                            saved_observations[
+                                (course, mappings[sublevel.name])
+                            ] = []
+
+                            saved_observations_dates[
+                                (course, mappings[sublevel.name])
+                            ] = []
+
                         saved_observations[
                             (course, mappings[sublevel.name])
-                        ] = observations
+                        ].extend(observations)
 
                         saved_observations_dates[
                             (course, mappings[sublevel.name])
-                        ] = star_chart_4_dates[construct.id][course.id][sublevel.id]
+                        ].extend(star_chart_4_dates[construct.id][course.id][sublevel.id])
 
         # Extend second lists
         for construct, courses in start_chart_4.items():
@@ -646,6 +665,37 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
                         star_chart_4_dates[construct.id][course.id][sublevel.id].extend(
                             saved_observations_dates[(course, sublevel.name)]
                         )
+
+    def _extend_filtered_constructs_with_mappings(self, constructs):
+        """
+        When user filters constructs, this method goes through construct
+        mappings copying observation between constructs to make sure both
+        ends of the mappings are always filtered together.
+        """
+        mappings = json.loads(settings.LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS)
+
+        mapped_abbreviations = {}
+
+        for k, v in mappings.items():
+            k = k.split(' ')[0]
+            v = v.split(' ')[0]
+
+            if not v in mapped_abbreviations:
+                mapped_abbreviations[v] = set()
+
+            mapped_abbreviations[v].add(k)
+
+        abbreviations_to_add = []
+
+        for abbreviation in LearningConstruct.objects.filter(
+            pk__in=constructs
+        ).values_list('abbreviation', flat=True):
+            if abbreviation in mapped_abbreviations:
+                abbreviations_to_add.extend(list(mapped_abbreviations[abbreviation]))
+
+        return constructs + [str(a) for a in LearningConstruct.objects.filter(
+            abbreviation__in=abbreviations_to_add
+        ).values_list('pk', flat=True)]
 
     def get_context_data(self, **kwargs):
         self.request.session.pop('read_only', None)
@@ -668,7 +718,10 @@ class ObservationAdminView(LoginRequiredMixin, TemplateView):
             selected_constructs = date_filtering_form.cleaned_data['constructs']
             tags = date_filtering_form.cleaned_data['tags']
             courses = date_filtering_form.cleaned_data['courses']
-            learning_constructs = date_filtering_form.cleaned_data['learning_constructs']
+            learning_constructs = self._extend_filtered_constructs_with_mappings(
+                date_filtering_form.cleaned_data['learning_constructs']
+            )
+
             # If there aren't any query params use default course.
             if self.request.GET:
                 if courses:
