@@ -249,5 +249,5 @@ LEARNING_CONSTRUCT_SUBLEVELS_DUPLICATION_MAPPINGS = os.getenv(
     '{"RNQ 1": "ToML 4A", "RNQ 2": "ToML 4A", "RNQ 3A": "ToML 4A", "RNQ 3B": "ToML 4C", "RNQ 4A": "ToML 4A", '
     '"RNQ 4B": "ToML 4C", "RNQ 5A": "ToML 4A", "RNQ 5B": "ToML 4C", "RNQ 6A": "ToML 5A","RNQ 6B": "ToML 5A", '
     '"RNO 2E": "ToML 4D", "RNO 3D": "ToML 5G","RNO 4C": "ToML 5G", "RNO 6A": "ToML 4A", "RNO 6B": "ToML 4C",'
-    '"RNO 6c": "ToMV 6A"} '
+    '"RNO 6C": "ToMV 6A"} '
 )
